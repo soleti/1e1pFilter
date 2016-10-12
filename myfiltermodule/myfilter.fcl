@@ -1,0 +1,10 @@
+BEGIN_PROLOG
+
+pizero_myfilter:
+{ 
+    module_type:                "MyPi0Filter"
+
+}
+
+END_PROLOG
+
