@@ -165,7 +165,10 @@ bool MyPi0Filter::filter(art::Event & evt)
   double true_neutrino_vertex[3] = {generator[0].GetNeutrino().Nu().Vx(),generator[0].GetNeutrino().Nu().Vy(),generator[0].GetNeutrino().Nu().Vz()};
   double closest_distance = std::numeric_limits<double>::max();
 
-  //if (!(is_electron && !is_pion && protons >= 1 && nu_energy > 0.2)) return false;
+  if (!(is_electron && !is_pion && protons >= 1 && nu_energy > 0.2)) {
+    std::cout << "NO CCQE EVENT" << std::endl;
+    //return false;
+  }
 
   try {
     auto const& pfparticle_handle = evt.getValidHandle< std::vector< recob::PFParticle > >( pandoraNu_tag );
