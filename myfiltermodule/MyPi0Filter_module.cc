@@ -159,6 +159,7 @@ bool MyPi0Filter::filter(art::Event & evt)
 
   double nu_energy = generator[0].GetNeutrino().Nu().E();
   double true_neutrino_vertex[3] = {generator[0].GetNeutrino().Nu().Vx(),generator[0].GetNeutrino().Nu().Vy(),generator[0].GetNeutrino().Nu().Vz()};
+  double closest_distance = std::numeric_limits<double>::max();
 
   if (is_electron && !is_pion && protons >= 1 && nu_energy > 0.2) {
     std::cout << "CCQE 1e1p event" << std::endl;
@@ -170,7 +171,6 @@ bool MyPi0Filter::filter(art::Event & evt)
       auto const& pfparticles(*pfparticle_handle);
 
       art::FindOneP< recob::Vertex > vertex_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
-      double closest_distance = std::numeric_limits<double>::max();
 
 
       for (size_t ipf = 0; ipf < pfparticles.size(); ipf++) {
@@ -213,7 +213,7 @@ bool MyPi0Filter::filter(art::Event & evt)
 
         if (showers >= 1 && tracks >= 1) {
           closest_distance = std::min(distance(neutrino_vertex,true_neutrino_vertex),closest_distance);
-          pass = true
+          pass = true;
         }
 
       } // end for pfparticles
@@ -227,7 +227,7 @@ bool MyPi0Filter::filter(art::Event & evt)
 
 
   } // end CCQE if
-
+  std::cout << closest_distance << std::endl;
   return pass && closest_distance < 5;
 }
 
