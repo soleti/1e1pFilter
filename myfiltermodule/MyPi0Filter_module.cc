@@ -156,7 +156,7 @@ bool MyPi0Filter::filter(art::Event & e)
 
   double nu_energy = generator[0].GetNeutrino().Nu().E();
 
-  if (is_electron && !is_pion && protons == 1 && nu_energy > 0.2) {
+  if (is_electron && !is_pion && protons >= 1 && nu_energy > 0.2) {
     std::cout << "CCQE 1e1p event" << std::endl;
 
     int showers = 0;
