@@ -103,6 +103,7 @@ MyPi0Filter::MyPi0Filter(fhicl::ParameterSet const & p)
 // :
 // Initialize member data here.
 {
+  art::ServiceHandle<art::TFileService> tfs;
   e_energy = tfs->make<TEfficiency>("e_energy",";#nu_{e} energy [GeV];",30,0,3);
 
   // Call appropriate produces<>() functions here.
