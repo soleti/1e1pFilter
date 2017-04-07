@@ -158,18 +158,19 @@ bool MyPi0Filter::filter(art::Event & evt)
   }
 
   double nu_energy = generator[0].GetNeutrino().Nu().E();
+  double true_neutrino_vertex[3] = {generator[0].GetNeutrino().Nu().Vx(),generator[0].GetNeutrino().Nu().Vy(),generator[0].GetNeutrino().Nu().Vz()};
 
   if (is_electron && !is_pion && protons >= 1 && nu_energy > 0.2) {
     std::cout << "CCQE 1e1p event" << std::endl;
 
-    int showers = 0;
-    int tracks = 0;
+
 
     try {
       auto const& pfparticle_handle = evt.getValidHandle< std::vector< recob::PFParticle > >( pandoraNu_tag );
       auto const& pfparticles(*pfparticle_handle);
 
       art::FindOneP< recob::Vertex > vertex_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
+      double closest_distance = std::numeric_limits<double>::max();
 
 
       for (size_t ipf = 0; ipf < pfparticles.size(); ipf++) {
@@ -179,7 +180,8 @@ bool MyPi0Filter::filter(art::Event & evt)
         // Is a nu_e or nu_mu PFParticle?
         if (!is_neutrino) continue;
 
-        double closest_distance = std::numeric_limits<double>::max();
+        int showers = 0;
+        int tracks = 0;
 
         double neutrino_vertex[3];
 
@@ -189,7 +191,6 @@ bool MyPi0Filter::filter(art::Event & evt)
         // Is the vertex within fiducial volume?
         if (!is_fiducial(neutrino_vertex, fidvol)) continue;
 
-        closest_distance = std::min(distance(neutrino_vertex,neutrino_vertex),closest_distance);
         //cout << pfparticles[ipf].PdgCode() << " " << distance(neutrino_vertex,correct_neutrino_vertex) << endl;
 
         // Loop over the neutrino daughters and check if there is a shower and a track
@@ -210,20 +211,24 @@ bool MyPi0Filter::filter(art::Event & evt)
 
         } // end for pfparticle daughters
 
+        if (showers >= 1 && tracks >= 1) {
+          closest_distance = std::min(distance(neutrino_vertex,true_neutrino_vertex),closest_distance);
+          pass = true
+        }
 
       } // end for pfparticles
 
+      e_energy->Fill(pass, nu_energy);
 
     } catch (...) {
       std::cout << "NO RECO DATA PRODUCTS" << std::endl;
     }
 
-    e_energy->Fill(showers >= 1 && tracks >= 1, nu_energy);
-    pass = showers >= 1 && tracks >= 1 && closest_distance < 5;
+
 
   } // end CCQE if
 
-  return pass;
+  return pass && closest_distance < 5;
 }
 
 void MyPi0Filter::beginJob()
