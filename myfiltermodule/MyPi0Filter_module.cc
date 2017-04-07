@@ -179,7 +179,7 @@ bool MyPi0Filter::filter(art::Event & evt)
 
     for (size_t ipf = 0; ipf < pfparticles.size(); ipf++) {
 
-      bool is_neutrino = (abs(pfparticles[ipf].PdgCode()) == 12 || abs(pfparticles[ipf].PdgCode()) == 14) && pfparticles[ipf].IsPrimary();
+      bool is_neutrino = abs(pfparticles[ipf].PdgCode()) == 12 && pfparticles[ipf].IsPrimary();
 
       // Is a nu_e or nu_mu PFParticle?
       if (!is_neutrino) continue;
