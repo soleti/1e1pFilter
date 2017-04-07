@@ -1,2 +1,2 @@
-# myfilter
-A simple filter to select 1004 CC RES pi0 events# myfiltermodule
+# CCQE filter
+A filter that selects CCQE-like true events with at least a neutrino vertex candidate closer than 5 cm the true neutrino vertex
