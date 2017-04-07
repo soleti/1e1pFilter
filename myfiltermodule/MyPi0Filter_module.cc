@@ -161,7 +161,7 @@ bool MyPi0Filter::filter(art::Event & evt)
     }
   }
 
-  //double nu_energy = generator[0].GetNeutrino().Nu().E();
+  double nu_energy = generator[0].GetNeutrino().Nu().E();
   //double true_neutrino_vertex[3] = {generator[0].GetNeutrino().Nu().Vx(),generator[0].GetNeutrino().Nu().Vy(),generator[0].GetNeutrino().Nu().Vz()};
   //double closest_distance = std::numeric_limits<double>::max();
 
@@ -187,10 +187,10 @@ bool MyPi0Filter::filter(art::Event & evt)
       int showers = 0;
       int tracks = 0;
 
-      //double neutrino_vertex[3];
+      double neutrino_vertex[3];
 
-      //auto const& neutrino_vertex_obj = vertex_per_pfpart.at(ipf);
-      //neutrino_vertex_obj->XYZ(neutrino_vertex); // PFParticle neutrino vertex coordinates
+      auto const& neutrino_vertex_obj = vertex_per_pfpart.at(ipf);
+      neutrino_vertex_obj->XYZ(neutrino_vertex); // PFParticle neutrino vertex coordinates
 
       // Is the vertex within fiducial volume?
       if (!is_fiducial(neutrino_vertex, fidvol)) continue;
