@@ -70,6 +70,9 @@ double distance(double a[3], double b[3]) {
   return sqrt(d);
 }
 
+using namespace lar_pandora;
+
+
 class MyPi0Filter;
 
 class MyPi0Filter : public art::EDFilter {
