@@ -228,6 +228,9 @@ bool MyPi0Filter::filter(art::Event & evt)
     std::cout << "NO RECO DATA PRODUCTS" << std::endl;
   }
 
+  if (pass) {
+    std::cout << "EVENT SELECTED" << std::endl;
+  }
   //std::cout << closest_distance << std::endl;
   return pass;
 }
