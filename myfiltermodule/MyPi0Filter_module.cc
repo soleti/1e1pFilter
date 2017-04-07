@@ -92,6 +92,7 @@ public:
   void reconfigure(fhicl::ParameterSet const & p) override;
 
 private:
+  TEfficiency * e_energy;
 
   // Declare member data here.
 
@@ -102,10 +103,12 @@ MyPi0Filter::MyPi0Filter(fhicl::ParameterSet const & p)
 // :
 // Initialize member data here.
 {
+  e_energy = tfs->make<TEfficiency>("e_energy",";#nu_{e} energy [GeV];",30,0,3);
+
   // Call appropriate produces<>() functions here.
 }
 
-bool MyPi0Filter::filter(art::Event & e)
+bool MyPi0Filter::filter(art::Event & evt)
 {
   bool pass = false;
 
@@ -216,7 +219,7 @@ bool MyPi0Filter::filter(art::Event & e)
     }
 
     e_energy->Fill(showers >= 1 && tracks >= 1, nu_energy);
-    pass = showers >= 1 && tracks >= 1;
+    pass = showers >= 1 && tracks >= 1 && closest_distance < 5;
 
   } // end CCQE if
 
