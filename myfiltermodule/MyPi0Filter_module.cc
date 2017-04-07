@@ -165,72 +165,66 @@ bool MyPi0Filter::filter(art::Event & evt)
   double true_neutrino_vertex[3] = {generator[0].GetNeutrino().Nu().Vx(),generator[0].GetNeutrino().Nu().Vy(),generator[0].GetNeutrino().Nu().Vz()};
   double closest_distance = std::numeric_limits<double>::max();
 
-  if (is_electron && !is_pion && protons >= 1 && nu_energy > 0.2) {
-    std::cout << "CCQE 1e1p event" << std::endl;
+  //if (!(is_electron && !is_pion && protons >= 1 && nu_energy > 0.2)) return false;
+
+  try {
+    auto const& pfparticle_handle = evt.getValidHandle< std::vector< recob::PFParticle > >( pandoraNu_tag );
+    auto const& pfparticles(*pfparticle_handle);
+
+    art::FindOneP< recob::Vertex > vertex_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
 
 
+    for (size_t ipf = 0; ipf < pfparticles.size(); ipf++) {
 
-    try {
-      auto const& pfparticle_handle = evt.getValidHandle< std::vector< recob::PFParticle > >( pandoraNu_tag );
-      auto const& pfparticles(*pfparticle_handle);
+      bool is_neutrino = (abs(pfparticles[ipf].PdgCode()) == 12 || abs(pfparticles[ipf].PdgCode()) == 14) && pfparticles[ipf].IsPrimary();
 
-      art::FindOneP< recob::Vertex > vertex_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
+      // Is a nu_e or nu_mu PFParticle?
+      if (!is_neutrino) continue;
 
+      int showers = 0;
+      int tracks = 0;
 
-      for (size_t ipf = 0; ipf < pfparticles.size(); ipf++) {
+      double neutrino_vertex[3];
 
-        bool is_neutrino = (abs(pfparticles[ipf].PdgCode()) == 12 || abs(pfparticles[ipf].PdgCode()) == 14) && pfparticles[ipf].IsPrimary();
+      auto const& neutrino_vertex_obj = vertex_per_pfpart.at(ipf);
+      neutrino_vertex_obj->XYZ(neutrino_vertex); // PFParticle neutrino vertex coordinates
 
-        // Is a nu_e or nu_mu PFParticle?
-        if (!is_neutrino) continue;
+      // Is the vertex within fiducial volume?
+      if (!is_fiducial(neutrino_vertex, fidvol)) continue;
 
-        int showers = 0;
-        int tracks = 0;
+      //cout << pfparticles[ipf].PdgCode() << " " << distance(neutrino_vertex,correct_neutrino_vertex) << endl;
 
-        double neutrino_vertex[3];
+      // Loop over the neutrino daughters and check if there is a shower and a track
+      for (auto const& pfdaughter: pfparticles[ipf].Daughters()) {
 
-        auto const& neutrino_vertex_obj = vertex_per_pfpart.at(ipf);
-        neutrino_vertex_obj->XYZ(neutrino_vertex); // PFParticle neutrino vertex coordinates
+        // auto const& daughter_vertex_obj = vertex_per_pfpart.at(pfdaughter);
+        // double daughter_vertex[3];
+        // daughter_vertex_obj->XYZ(daughter_vertex);
+        // double distance_daugther = distance(neutrino_vertex,daughter_vertex);
 
-        // Is the vertex within fiducial volume?
-        if (!is_fiducial(neutrino_vertex, fidvol)) continue;
-
-        //cout << pfparticles[ipf].PdgCode() << " " << distance(neutrino_vertex,correct_neutrino_vertex) << endl;
-
-        // Loop over the neutrino daughters and check if there is a shower and a track
-        for (auto const& pfdaughter: pfparticles[ipf].Daughters()) {
-
-          // auto const& daughter_vertex_obj = vertex_per_pfpart.at(pfdaughter);
-          // double daughter_vertex[3];
-          // daughter_vertex_obj->XYZ(daughter_vertex);
-          // double distance_daugther = distance(neutrino_vertex,daughter_vertex);
-
-          if (pfparticles[pfdaughter].PdgCode() == 11) {
-            showers++;
-          }
-
-          if (pfparticles[pfdaughter].PdgCode() == 13) {
-            tracks++;
-          }
-
-        } // end for pfparticle daughters
-
-        if (showers >= 1 && tracks >= 1) {
-          closest_distance = std::min(distance(neutrino_vertex,true_neutrino_vertex),closest_distance);
-          pass = true;
+        if (pfparticles[pfdaughter].PdgCode() == 11) {
+          showers++;
         }
 
-      } // end for pfparticles
+        if (pfparticles[pfdaughter].PdgCode() == 13) {
+          tracks++;
+        }
 
-      e_energy->Fill(pass, nu_energy);
+      } // end for pfparticle daughters
 
-    } catch (...) {
-      std::cout << "NO RECO DATA PRODUCTS" << std::endl;
-    }
+      if (showers >= 1 && tracks >= 1) {
+        closest_distance = std::min(distance(neutrino_vertex,true_neutrino_vertex),closest_distance);
+        pass = true;
+      }
 
+    } // end for pfparticles
 
+    e_energy->Fill(pass, nu_energy);
 
-  } // end CCQE if
+  } catch (...) {
+    std::cout << "NO RECO DATA PRODUCTS" << std::endl;
+  }
+
   std::cout << closest_distance << std::endl;
   return pass && closest_distance < 5;
 }
