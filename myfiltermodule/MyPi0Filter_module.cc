@@ -161,9 +161,9 @@ bool MyPi0Filter::filter(art::Event & evt)
     }
   }
 
-  double nu_energy = generator[0].GetNeutrino().Nu().E();
-  double true_neutrino_vertex[3] = {generator[0].GetNeutrino().Nu().Vx(),generator[0].GetNeutrino().Nu().Vy(),generator[0].GetNeutrino().Nu().Vz()};
-  double closest_distance = std::numeric_limits<double>::max();
+  //double nu_energy = generator[0].GetNeutrino().Nu().E();
+  //double true_neutrino_vertex[3] = {generator[0].GetNeutrino().Nu().Vx(),generator[0].GetNeutrino().Nu().Vy(),generator[0].GetNeutrino().Nu().Vz()};
+  //double closest_distance = std::numeric_limits<double>::max();
 
   if (!(is_electron && !is_pion && protons >= 1 && nu_energy > 0.2)) {
     std::cout << "NO CCQE EVENT" << std::endl;
@@ -187,10 +187,10 @@ bool MyPi0Filter::filter(art::Event & evt)
       int showers = 0;
       int tracks = 0;
 
-      double neutrino_vertex[3];
+      //double neutrino_vertex[3];
 
-      auto const& neutrino_vertex_obj = vertex_per_pfpart.at(ipf);
-      neutrino_vertex_obj->XYZ(neutrino_vertex); // PFParticle neutrino vertex coordinates
+      //auto const& neutrino_vertex_obj = vertex_per_pfpart.at(ipf);
+      //neutrino_vertex_obj->XYZ(neutrino_vertex); // PFParticle neutrino vertex coordinates
 
       // Is the vertex within fiducial volume?
       if (!is_fiducial(neutrino_vertex, fidvol)) continue;
@@ -216,7 +216,7 @@ bool MyPi0Filter::filter(art::Event & evt)
       } // end for pfparticle daughters
 
       if (showers >= 1 && tracks >= 1) {
-        closest_distance = std::min(distance(neutrino_vertex,true_neutrino_vertex),closest_distance);
+        //closest_distance = std::min(distance(neutrino_vertex,true_neutrino_vertex),closest_distance);
         pass = true;
       }
 
@@ -228,8 +228,8 @@ bool MyPi0Filter::filter(art::Event & evt)
     std::cout << "NO RECO DATA PRODUCTS" << std::endl;
   }
 
-  std::cout << closest_distance << std::endl;
-  return pass && closest_distance < 5;
+  //std::cout << closest_distance << std::endl;
+  return pass;
 }
 
 void MyPi0Filter::beginJob()
