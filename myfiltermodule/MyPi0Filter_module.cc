@@ -164,8 +164,8 @@ bool MyPi0Filter::filter(art::Event & evt)
           double start_point[3];
           double end_point[3];
 
-          shower_length = shower_obj->Length();
-          for (int ix = 0; ix < 3; i++) {
+          double shower_length = shower_obj->Length();
+          for (int ix = 0; ix < 3; ix++) {
             start_point[ix] = shower_obj->ShowerStart()[ix];
             end_point[ix] = shower_obj->ShowerStart()[ix]+shower_obj->Length()*shower_obj->Direction()[ix];
           }
