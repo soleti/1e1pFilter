@@ -166,7 +166,7 @@ bool MyFilter::filter(art::Event & evt)
 
   int nu_candidates = 0;
 
-  // try {
+  try {
     auto const& pfparticle_handle = evt.getValidHandle< std::vector< recob::PFParticle > >( pandoraNu_tag );
     auto const& pfparticles(*pfparticle_handle);
 
@@ -225,9 +225,9 @@ bool MyFilter::filter(art::Event & evt)
 
     } // end for pfparticles
 
-  // } catch (...) {
-  //   std::cout << "NO RECO DATA PRODUCTS" << std::endl;
-  // }
+  } catch (...) {
+    std::cout << "NO RECO DATA PRODUCTS" << std::endl;
+  }
 
   h_n_candidates->Fill(nu_candidates);
 
