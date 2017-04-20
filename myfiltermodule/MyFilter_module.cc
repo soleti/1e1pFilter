@@ -142,7 +142,7 @@ bool MyFilter::is_fiducial(double x[3]) const
   return is_x && is_y && is_z;
 }
 
-bool MyFilter::is_contained(const recob::Shower & shower) const
+bool MyFilter::is_contained(const art::Ptr<recob::Shower> shower) const
 {
   double start_point[3];
   double end_point[3];
