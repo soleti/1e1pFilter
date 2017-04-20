@@ -96,7 +96,7 @@ public:
 
 private:
   TEfficiency * e_energy;
-
+  int m_nTracks;
   // Declare member data here.
 
 };
@@ -117,58 +117,6 @@ bool MyPi0Filter::filter(art::Event & evt)
   bool pass = false;
 
   art::InputTag pandoraNu_tag { "pandoraNu" };
-  art::InputTag generator_tag { "generator" };
-
-
-  auto const& generator_handle = evt.getValidHandle< std::vector< simb::MCTruth > >( generator_tag );
-  auto const& generator(*generator_handle);
-
-  std::vector<simb::MCParticle> nu_mcparticles;
-  for (int i = 0; i < generator[0].NParticles(); i++) {
-    if (generator[0].Origin() == 1) {
-      nu_mcparticles.push_back(generator[0].GetParticle(i));
-    }
-  }
-
-  double proton_energy = 0;
-  double electron_energy = 0;
-  int protons = 0;
-  bool is_pion = false;
-  bool is_electron = false;
-  double proton_energy_threshold = 0.06;
-  double electron_energy_threshold = 0.035;
-
-  for (auto& mcparticle: nu_mcparticles) {
-    if (mcparticle.Process() == "primary" and mcparticle.T() != 0 and mcparticle.StatusCode() == 1) {
-
-      double position[3] = {mcparticle.Position().X(),mcparticle.Position().Y(),mcparticle.Position().Z()};
-      double end_position[3] = {mcparticle.EndPosition().X(),mcparticle.EndPosition().Y(),mcparticle.EndPosition().Z()};
-
-      if (mcparticle.PdgCode() == 2212 && (mcparticle.E()-mcparticle.Mass()) > proton_energy_threshold && is_fiducial(position,fidvol) && is_fiducial(end_position,fidvol)) {
-        protons++;
-        proton_energy = std::max(mcparticle.E()-mcparticle.Mass(), proton_energy);
-      }
-
-      if (mcparticle.PdgCode() == 11 && (mcparticle.E()-mcparticle.Mass()) > electron_energy_threshold && is_fiducial(position,fidvol)) {
-        is_electron = true;
-        electron_energy = std::max(mcparticle.E()-mcparticle.Mass(), electron_energy);
-      }
-
-      if (mcparticle.PdgCode() == 211 || mcparticle.PdgCode() == 111) {
-        is_pion = true;
-      }
-
-    }
-  }
-
-  //double nu_energy = generator[0].GetNeutrino().Nu().E();
-  //double true_neutrino_vertex[3] = {generator[0].GetNeutrino().Nu().Vx(),generator[0].GetNeutrino().Nu().Vy(),generator[0].GetNeutrino().Nu().Vz()};
-  //double closest_distance = std::numeric_limits<double>::max();
-
-  if (!(is_electron && !is_pion && protons >= 1)) {
-    std::cout << "NO CCQE EVENT" << std::endl;
-    //return false;
-  }
 
   try {
     auto const& pfparticle_handle = evt.getValidHandle< std::vector< recob::PFParticle > >( pandoraNu_tag );
@@ -176,10 +124,11 @@ bool MyPi0Filter::filter(art::Event & evt)
 
     art::FindOneP< recob::Vertex > vertex_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
 
+    bool shower_and_tracks = false;
 
     for (size_t ipf = 0; ipf < pfparticles.size(); ipf++) {
 
-      bool is_neutrino = abs(pfparticles[ipf].PdgCode()) == 12 && pfparticles[ipf].IsPrimary();
+      bool is_neutrino = (abs(pfparticles[ipf].PdgCode()) == 12 || abs(pfparticles[ipf].PdgCode()) == 14) && pfparticles[ipf].IsPrimary();
 
       // Is a nu_e or nu_mu PFParticle?
       if (!is_neutrino) continue;
@@ -205,8 +154,25 @@ bool MyPi0Filter::filter(art::Event & evt)
         // daughter_vertex_obj->XYZ(daughter_vertex);
         // double distance_daugther = distance(neutrino_vertex,daughter_vertex);
 
+
+
         if (pfparticles[pfdaughter].PdgCode() == 11) {
-          showers++;
+          art::FindOneP< recob::Shower > showers_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
+          auto const& shower_obj = showers_per_pfpart.at(pfdaughter);
+          bool contained_shower = false;
+          double start_point[3];
+          double end_point[3];
+
+          shower_length = shower_obj.Length();
+          for (int ix = 0; ix < 3; i++) {
+            start_point[ix] = shower_obj.ShowerStart()[ix];
+            end_point[ix] = shower_obj.ShowerStart()[ix]+shower_obj.Length()*shower_obj.Direction()[ix];
+          }
+
+          contained_shower = is_fiducial(start_point, fidvol) && is_fiducial(end_point, fidvol);
+
+          if (contained_shower) showers++;
+
         }
 
         if (pfparticles[pfdaughter].PdgCode() == 13) {
@@ -215,9 +181,9 @@ bool MyPi0Filter::filter(art::Event & evt)
 
       } // end for pfparticle daughters
 
-      if (showers >= 1 && tracks >= 1) {
+      if (showers >= 1 && tracks >= m_nTracks) {
         //closest_distance = std::min(distance(neutrino_vertex,true_neutrino_vertex),closest_distance);
-        pass = true;
+        shower_and_tracks = true;
       }
 
     } // end for pfparticles
@@ -243,6 +209,8 @@ void MyPi0Filter::beginJob()
 void MyPi0Filter::reconfigure(fhicl::ParameterSet const & p)
 {
   // Implementation of optional member function here.
+  m_nTracks = pset.get<int>("nTracks",1);
+
 }
 
 DEFINE_ART_MODULE(MyPi0Filter)
