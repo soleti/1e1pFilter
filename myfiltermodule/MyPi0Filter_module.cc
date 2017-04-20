@@ -44,6 +44,7 @@
 #include "TTree.h"
 #include "TFile.h"
 #include "TEfficiency.h"
+#include "TH1F.h"
 
 double x_start = 0;
 double x_end = 256.35;
@@ -89,6 +90,8 @@ public:
 
 private:
   TEfficiency * e_energy;
+  TH1F * h_track_length;
+
   int m_nTracks;
   double m_fidvolXstart;
   double m_fidvolXend;
@@ -98,6 +101,8 @@ private:
 
   double m_fidvolZstart;
   double m_fidvolZend;
+
+  double m_trackLength;
 
   bool is_fiducial(double x[3]) const;
 
@@ -112,6 +117,8 @@ MyPi0Filter::MyPi0Filter(fhicl::ParameterSet const & p)
 {
   art::ServiceHandle<art::TFileService> tfs;
   e_energy = tfs->make<TEfficiency>("e_energy",";#nu_{e} energy [GeV];",30,0,3);
+  h_track_length = tfs->make<TH1F>("h_track_length",";Track length [cm]; N. Entries / 2 cm",150,0,300);
+
   this->reconfigure(p);
 
   // Call appropriate produces<>() functions here.
@@ -130,7 +137,7 @@ bool MyPi0Filter::filter(art::Event & evt)
   bool pass = false;
 
   art::InputTag pandoraNu_tag { "pandoraNu" };
-  
+
   int nu_candidates = 0;
 
   try {
@@ -162,8 +169,8 @@ bool MyPi0Filter::filter(art::Event & evt)
 
 
         if (pfparticles[pfdaughter].PdgCode() == 11) {
-          art::FindOneP< recob::Shower > showers_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
-          auto const& shower_obj = showers_per_pfpart.at(pfdaughter);
+          art::FindOneP< recob::Shower > shower_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
+          auto const& shower_obj = shower_per_pfpart.at(pfdaughter);
           bool contained_shower = false;
           double start_point[3];
           double end_point[3];
@@ -181,7 +188,11 @@ bool MyPi0Filter::filter(art::Event & evt)
         }
 
         if (pfparticles[pfdaughter].PdgCode() == 13) {
-          tracks++;
+          art::FindOneP< recob::Track > track_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
+          auto const& track_obj = shower_per_pfpart.at(pfdaughter);
+
+          if (track_obj->Length() < m_trackLength) tracks++;
+          h_track_length->Fill(track_obj->Length());
         }
 
       } // end for pfparticle daughters
@@ -216,6 +227,8 @@ void MyPi0Filter::reconfigure(fhicl::ParameterSet const & p)
 {
   // Implementation of optional member function here.
   m_nTracks = p.get<int>("nTracks",1);
+
+  m_trackLength = p.get<int>("trackLength",100);
 
   m_fidvolXstart = p.get<double>("fidvolXstart",10);
   m_fidvolXend = p.get<double>("fidvolXstart",10);
