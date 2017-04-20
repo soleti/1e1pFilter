@@ -98,7 +98,7 @@ private:
 
   bool is_fiducial(double x[3]) const;
   double distance(double a[3], double b[3]) const;
-  bool is_contained(const recob::Shower & shower) const;
+  bool is_contained(const art::Ptr<recob::Shower> shower) const;
 
   // Declare member data here.
 
