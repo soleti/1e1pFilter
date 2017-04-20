@@ -127,7 +127,7 @@ MyFilter::MyFilter(fhicl::ParameterSet const & p)
 bool MyFilter::is_fiducial(double x[3]) const
 {
   art::ServiceHandle<geo::Geometry> geo;
-  double bnd[6] = {0.,2.*geo.DetHalfWidth(),-geo.DetHalfHeight(),geo.DetHalfHeight(),0.,geo.>DetLength()};
+  double bnd[6] = {0.,2.*geo->DetHalfWidth(),-geo->DetHalfHeight(),geo->DetHalfHeight(),0.,geo->DetLength()};
 
   bool is_x = x[0] > (x_start+m_fidvolXstart) && x[0] < (x_end-m_fidvolXend);
   bool is_y = x[1] > (y_start+m_fidvolYstart) && x[1] < (y_end-m_fidvolYend);
