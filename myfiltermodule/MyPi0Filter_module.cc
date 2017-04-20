@@ -53,13 +53,6 @@ double z_start = 0;
 double z_end = 1036.8;
 double fidvol = 10;
 
-bool is_fiducial(double x[3], double d) {
-  bool is_x = x[0] > (x_start+d) && x[0] < (x_end-d);
-  bool is_y = x[1] > (y_start+d) && x[1] < (y_end-d);
-  bool is_z = x[2] > (z_start+d) && x[2] < (z_end-d);
-  return is_x && is_y && is_z;
-}
-
 double distance(double a[3], double b[3]) {
   double d = 0;
 
@@ -93,10 +86,19 @@ public:
   // Selected optional functions.
   void beginJob() override;
   void reconfigure(fhicl::ParameterSet const & p) override;
+  bool is_fiducial(double x[3]) const;
 
 private:
   TEfficiency * e_energy;
   int m_nTracks;
+  double m_fidvolXstart;
+  double m_fidvolXend;
+
+  double m_fidvolYstart;
+  double m_fidvolYend;
+
+  double m_fidvolZstart;
+  double m_fidvolZend;
   // Declare member data here.
 
 };
@@ -113,6 +115,14 @@ MyPi0Filter::MyPi0Filter(fhicl::ParameterSet const & p)
   // Call appropriate produces<>() functions here.
 }
 
+bool MyPi0Filter::is_fiducial(double x[3])
+{
+  bool is_x = x[0] > (x_start+m_fidvolXstart) && x[0] < (x_end-m_fidvolXend);
+  bool is_y = x[1] > (y_start+m_fidvolYstart) && x[1] < (y_end-m_fidvolYend);
+  bool is_z = x[2] > (z_start+m_fidvolZstart) && x[2] < (z_end-m_fidvolZend);
+  return is_x && is_y && is_z;
+}
+
 bool MyPi0Filter::filter(art::Event & evt)
 {
   bool pass = false;
@@ -125,7 +135,6 @@ bool MyPi0Filter::filter(art::Event & evt)
 
     art::FindOneP< recob::Vertex > vertex_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
 
-    bool shower_and_tracks = false;
 
     for (size_t ipf = 0; ipf < pfparticles.size(); ipf++) {
 
@@ -143,18 +152,10 @@ bool MyPi0Filter::filter(art::Event & evt)
       neutrino_vertex_obj->XYZ(neutrino_vertex); // PFParticle neutrino vertex coordinates
 
       // Is the vertex within fiducial volume?
-      if (!is_fiducial(neutrino_vertex, fidvol)) continue;
-
-      //cout << pfparticles[ipf].PdgCode() << " " << distance(neutrino_vertex,correct_neutrino_vertex) << endl;
+      if (!is_fiducial(neutrino_vertex)) continue;
 
       // Loop over the neutrino daughters and check if there is a shower and a track
       for (auto const& pfdaughter: pfparticles[ipf].Daughters()) {
-
-        // auto const& daughter_vertex_obj = vertex_per_pfpart.at(pfdaughter);
-        // double daughter_vertex[3];
-        // daughter_vertex_obj->XYZ(daughter_vertex);
-        // double distance_daugther = distance(neutrino_vertex,daughter_vertex);
-
 
 
         if (pfparticles[pfdaughter].PdgCode() == 11) {
@@ -167,11 +168,11 @@ bool MyPi0Filter::filter(art::Event & evt)
           double shower_length = shower_obj->Length();
           for (int ix = 0; ix < 3; ix++) {
             start_point[ix] = shower_obj->ShowerStart()[ix];
-            end_point[ix] = shower_obj->ShowerStart()[ix]+shower_obj->Length()*shower_obj->Direction()[ix];
+            end_point[ix] = shower_obj->ShowerStart()[ix]+shower_length*shower_obj->Direction()[ix];
           }
 
-          contained_shower = is_fiducial(start_point, fidvol) && is_fiducial(end_point, fidvol);
-
+          contained_shower = is_fiducial(start_point) && is_fiducial(end_point);
+          // TODO flash position check
           if (contained_shower) showers++;
 
         }
@@ -182,9 +183,11 @@ bool MyPi0Filter::filter(art::Event & evt)
 
       } // end for pfparticle daughters
 
+      int nu_candidates = 0
+
       if (showers >= 1 && tracks >= m_nTracks) {
         //closest_distance = std::min(distance(neutrino_vertex,true_neutrino_vertex),closest_distance);
-        shower_and_tracks = true;
+        nu_candidates++;
       }
 
     } // end for pfparticles
@@ -195,10 +198,11 @@ bool MyPi0Filter::filter(art::Event & evt)
     std::cout << "NO RECO DATA PRODUCTS" << std::endl;
   }
 
+  if (nu_candidates >= 1) pass = true;
   if (pass) {
     std::cout << "EVENT SELECTED" << std::endl;
   }
-  //std::cout << closest_distance << std::endl;
+
   return pass;
 }
 
@@ -211,6 +215,15 @@ void MyPi0Filter::reconfigure(fhicl::ParameterSet const & p)
 {
   // Implementation of optional member function here.
   m_nTracks = p.get<int>("nTracks",1);
+
+  m_fidvolXstart = p.get<double>("fidvolXstart",10);
+  m_fidvolXend = p.get<double>("fidvolXstart",10);
+
+  m_fidvolYstart = p.get<double>("fidvolYstart",20);
+  m_fidvolYend = p.get<double>("fidvolYend",20);
+
+  m_fidvolZstart = p.get<double>("fidvolZstart",10);
+  m_fidvolZend = p.get<double>("fidvolZend",50);
 
 }
 
