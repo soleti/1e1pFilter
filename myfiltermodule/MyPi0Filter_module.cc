@@ -108,6 +108,7 @@ MyPi0Filter::MyPi0Filter(fhicl::ParameterSet const & p)
 {
   art::ServiceHandle<art::TFileService> tfs;
   e_energy = tfs->make<TEfficiency>("e_energy",";#nu_{e} energy [GeV];",30,0,3);
+  this->reconfigure(p);
 
   // Call appropriate produces<>() functions here.
 }
@@ -163,10 +164,10 @@ bool MyPi0Filter::filter(art::Event & evt)
           double start_point[3];
           double end_point[3];
 
-          shower_length = shower_obj.Length();
+          shower_length = shower_obj->Length();
           for (int ix = 0; ix < 3; i++) {
-            start_point[ix] = shower_obj.ShowerStart()[ix];
-            end_point[ix] = shower_obj.ShowerStart()[ix]+shower_obj.Length()*shower_obj.Direction()[ix];
+            start_point[ix] = shower_obj->ShowerStart()[ix];
+            end_point[ix] = shower_obj->ShowerStart()[ix]+shower_obj->Length()*shower_obj->Direction()[ix];
           }
 
           contained_shower = is_fiducial(start_point, fidvol) && is_fiducial(end_point, fidvol);
@@ -209,7 +210,7 @@ void MyPi0Filter::beginJob()
 void MyPi0Filter::reconfigure(fhicl::ParameterSet const & p)
 {
   // Implementation of optional member function here.
-  m_nTracks = pset.get<int>("nTracks",1);
+  m_nTracks = p.get<int>("nTracks",1);
 
 }
 
