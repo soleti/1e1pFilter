@@ -86,7 +86,6 @@ public:
   // Selected optional functions.
   void beginJob() override;
   void reconfigure(fhicl::ParameterSet const & p) override;
-  bool is_fiducial(double x[3]) const;
 
 private:
   TEfficiency * e_energy;
@@ -99,6 +98,9 @@ private:
 
   double m_fidvolZstart;
   double m_fidvolZend;
+
+  bool is_fiducial(double x[3]) const;
+
   // Declare member data here.
 
 };
@@ -134,7 +136,7 @@ bool MyPi0Filter::filter(art::Event & evt)
     auto const& pfparticles(*pfparticle_handle);
 
     art::FindOneP< recob::Vertex > vertex_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
-
+    int nu_candidates = 0;
 
     for (size_t ipf = 0; ipf < pfparticles.size(); ipf++) {
 
@@ -182,8 +184,6 @@ bool MyPi0Filter::filter(art::Event & evt)
         }
 
       } // end for pfparticle daughters
-
-      int nu_candidates = 0
 
       if (showers >= 1 && tracks >= m_nTracks) {
         //closest_distance = std::min(distance(neutrino_vertex,true_neutrino_vertex),closest_distance);
