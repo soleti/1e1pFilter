@@ -2,8 +2,9 @@
 
 art_make(
 	  MODULE_LIBRARIES
-			larpandora_LArPandoraInterface
-
+			# larpandora_LArPandoraInterface
+                        lardataobj_RecoBase
+                        larcore_Geometry
 	                ${ART_FRAMEWORK_CORE}
 			${ART_FRAMEWORK_IO_SOURCES}
                         ${ART_FRAMEWORK_PRINCIPAL}

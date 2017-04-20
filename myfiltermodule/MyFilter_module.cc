@@ -39,7 +39,7 @@
 #include "canvas/Persistency/Common/FindOneP.h"
 #include "canvas/Utilities/InputTag.h"
 
-#include "larpandora/LArPandoraInterface/LArPandoraHelper.h"
+// #include "larpandora/LArPandoraInterface/LArPandoraHelper.h"
 
 #include "TTree.h"
 #include "TFile.h"
@@ -54,7 +54,7 @@ double z_start = 0;
 double z_end = 1036.8;
 double fidvol = 10;
 
-using namespace lar_pandora;
+// using namespace lar_pandora;
 
 
 class MyFilter;
