@@ -96,7 +96,7 @@ private:
 
   bool is_fiducial(double x[3]) const;
   double distance(double a[3], double b[3]) const;
-  bool is_contained(recob::Shower & shower) const;
+  bool is_contained(const recob::Shower & shower) const;
 
   // Declare member data here.
 
@@ -195,19 +195,10 @@ bool MyFilter::filter(art::Event & evt)
         if (pfparticles[pfdaughter].PdgCode() == 11) {
           art::FindOneP< recob::Shower > shower_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
           auto const& shower_obj = shower_per_pfpart.at(pfdaughter);
-          // bool contained_shower = false;
-          // double start_point[3];
-          // double end_point[3];
-          //
-          // double shower_length = shower_obj->Length();
-          // for (int ix = 0; ix < 3; ix++) {
-          //   start_point[ix] = shower_obj->ShowerStart()[ix];
-          //   end_point[ix] = shower_obj->ShowerStart()[ix]+shower_length*shower_obj->Direction()[ix];
-          // }
 
-          bool contained_shower = is_contained(shower_obj);
           // TODO flash position check
-          if (contained_shower) showers++;
+
+          if (is_contained(shower_obj)) showers++;
 
         }
 
