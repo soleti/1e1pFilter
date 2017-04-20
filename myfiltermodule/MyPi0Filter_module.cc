@@ -130,13 +130,14 @@ bool MyPi0Filter::filter(art::Event & evt)
   bool pass = false;
 
   art::InputTag pandoraNu_tag { "pandoraNu" };
+  
+  int nu_candidates = 0;
 
   try {
     auto const& pfparticle_handle = evt.getValidHandle< std::vector< recob::PFParticle > >( pandoraNu_tag );
     auto const& pfparticles(*pfparticle_handle);
 
     art::FindOneP< recob::Vertex > vertex_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
-    int nu_candidates = 0;
 
     for (size_t ipf = 0; ipf < pfparticles.size(); ipf++) {
 
