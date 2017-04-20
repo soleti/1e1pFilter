@@ -79,8 +79,10 @@ public:
   void reconfigure(fhicl::ParameterSet const & p) override;
 
 private:
-  TEfficiency * e_energy;
   TH1F * h_track_length;
+  TH1F * h_n_showers;
+  TH1F * h_n_tracks;
+  TH1F * h_n_candidates;
 
   int m_nTracks;
   double m_fidvolXstart;
@@ -108,8 +110,10 @@ MyFilter::MyFilter(fhicl::ParameterSet const & p)
 // Initialize member data here.
 {
   art::ServiceHandle<art::TFileService> tfs;
-  e_energy = tfs->make<TEfficiency>("e_energy",";#nu_{e} energy [GeV];",30,0,3);
   h_track_length = tfs->make<TH1F>("h_track_length",";Track length [cm]; N. Entries / 2 cm",150,0,300);
+  h_n_showers = tfs->make<TH1F>("h_n_showers",";N. showers; N. Entries / 1",10,0,10);
+  h_n_tracks = tfs->make<TH1F>("h_n_tracks",";N. tracks; N. Entries / 1",10,0,10);
+  h_n_candidates = tfs->make<TH1F>("h_n_candidates",";N. #nu_{e} candidates; N. Entries / 1",10,0,10);
 
   this->reconfigure(p);
 
@@ -212,18 +216,20 @@ bool MyFilter::filter(art::Event & evt)
 
       } // end for pfparticle daughters
 
+      h_n_showers->Fill(showers);
+      h_n_tracks->Fill(tracks);
+
       if (showers >= 1 && tracks >= m_nTracks) {
-        //closest_distance = std::min(distance(neutrino_vertex,true_neutrino_vertex),closest_distance);
         nu_candidates++;
       }
 
     } // end for pfparticles
 
-    //e_energy->Fill(pass, nu_energy);
-
   } catch (...) {
     std::cout << "NO RECO DATA PRODUCTS" << std::endl;
   }
+
+  h_n_candidates->Fill(nu_candidates);
 
   if (nu_candidates >= 1) pass = true;
   if (pass) {
