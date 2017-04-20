@@ -143,10 +143,10 @@ bool MyFilter::is_contained(recob::Shower & shower) const
   double start_point[3];
   double end_point[3];
 
-  double shower_length = shower->Length();
+  double shower_length = shower.Length();
   for (int ix = 0; ix < 3; ix++) {
-    start_point[ix] = shower->ShowerStart()[ix];
-    end_point[ix] = shower->ShowerStart()[ix]+shower_length*shower->Direction()[ix];
+    start_point[ix] = shower.ShowerStart()[ix];
+    end_point[ix] = shower.ShowerStart()[ix]+shower_length*shower.Direction()[ix];
   }
 
   return is_fiducial(start_point) && is_fiducial(end_point);
@@ -205,7 +205,7 @@ bool MyFilter::filter(art::Event & evt)
           //   end_point[ix] = shower_obj->ShowerStart()[ix]+shower_length*shower_obj->Direction()[ix];
           // }
 
-          contained_shower = is_contained(shower_obj);
+          contained_shower = is_contained(*shower_obj);
           // TODO flash position check
           if (contained_shower) showers++;
 
