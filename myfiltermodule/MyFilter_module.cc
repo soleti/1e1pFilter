@@ -205,7 +205,7 @@ bool MyFilter::filter(art::Event & evt)
           //   end_point[ix] = shower_obj->ShowerStart()[ix]+shower_length*shower_obj->Direction()[ix];
           // }
 
-          bool contained_shower = is_contained(&shower_obj);
+          bool contained_shower = is_contained(*shower_obj);
           // TODO flash position check
           if (contained_shower) showers++;
 
