@@ -189,7 +189,7 @@ bool MyPi0Filter::filter(art::Event & evt)
 
         if (pfparticles[pfdaughter].PdgCode() == 13) {
           art::FindOneP< recob::Track > track_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
-          auto const& track_obj = shower_per_pfpart.at(pfdaughter);
+          auto const& track_obj = track_per_pfpart.at(pfdaughter);
 
           if (track_obj->Length() < m_trackLength) tracks++;
           h_track_length->Fill(track_obj->Length());
