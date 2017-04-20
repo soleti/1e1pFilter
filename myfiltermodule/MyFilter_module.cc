@@ -31,15 +31,16 @@
 #include "lardataobj/RecoBase/Vertex.h"
 #include "lardataobj/RecoBase/Track.h"
 #include "lardataobj/RecoBase/Shower.h"
+#include "lardataobj/RecoBase/SpacePoint.h"
 #include "lardataobj/RecoBase/Cluster.h"
 #include "lardataobj/RecoBase/Hit.h"
 #include "lardataobj/MCBase/MCShower.h"
 #include "nusimdata/SimulationBase/MCTruth.h"
 #include "nusimdata/SimulationBase/MCParticle.h"
 #include "canvas/Persistency/Common/FindOneP.h"
+#include "canvas/Persistency/Common/FindManyP.h"
 #include "canvas/Utilities/InputTag.h"
 
-// #include "larpandora/LArPandoraInterface/LArPandoraHelper.h"
 
 #include "TTree.h"
 #include "TFile.h"
@@ -54,7 +55,16 @@ double z_start = 0;
 double z_end = 1036.8;
 double fidvol = 10;
 
-// using namespace lar_pandora;
+
+double distance(double a[3], double b[3]) {
+  double d = 0;
+
+  for (int i = 0; i < 3; i++) {
+    d += pow((a[i]-b[i]),2);
+  }
+
+  return sqrt(d);
+}
 
 
 class MyFilter;
@@ -78,11 +88,10 @@ public:
   void beginJob() override;
   void reconfigure(fhicl::ParameterSet const & p) override;
 
+
 private:
+  TEfficiency * e_energy;
   TH1F * h_track_length;
-  TH1F * h_n_showers;
-  TH1F * h_n_tracks;
-  TH1F * h_n_candidates;
 
   int m_nTracks;
   double m_fidvolXstart;
@@ -97,11 +106,13 @@ private:
   double m_trackLength;
 
   bool is_fiducial(double x[3]) const;
-  double distance(double a[3], double b[3]) const;
-  bool is_contained(const art::Ptr<recob::Shower> shower) const;
 
-  // Declare member data here.
+  ////////////////////////////// WOUTER APRIL 20 //////////////////////////
 
+  void spacepointchargecollector(size_t ipf, std::map< art::Ptr<recob::SpacePoint>, double > & map_spacepoint_weight,const std::vector<recob::PFParticle> & pfparticles,art::Event & evt);
+  void chargecentrePFP(size_t ipf, std::vector<double> & chargecenter,const std::vector<recob::PFParticle> & pfparticles,art::Event & evt);
+  bool opticalfilter(size_t ipf, const std::vector<recob::PFParticle> & pfparticles, const std::vector<recob::OpFlash> & optical_vec,art::Event & evt);
+  ////////////////////////////// WOUTER APRIL 20 //////////////////////////END
 };
 
 
@@ -110,59 +121,119 @@ MyFilter::MyFilter(fhicl::ParameterSet const & p)
 // Initialize member data here.
 {
   art::ServiceHandle<art::TFileService> tfs;
+  e_energy = tfs->make<TEfficiency>("e_energy",";#nu_{e} energy [GeV];",30,0,3);
   h_track_length = tfs->make<TH1F>("h_track_length",";Track length [cm]; N. Entries / 2 cm",150,0,300);
-  h_n_showers = tfs->make<TH1F>("h_n_showers",";N. showers; N. Entries / 1",10,0,10);
-  h_n_tracks = tfs->make<TH1F>("h_n_tracks",";N. tracks; N. Entries / 1",10,0,10);
-  h_n_candidates = tfs->make<TH1F>("h_n_candidates",";N. #nu_{e} candidates; N. Entries / 1",10,0,10);
 
   this->reconfigure(p);
 
   // Call appropriate produces<>() functions here.
 }
 
-double MyFilter::distance(double a[3], double b[3]) const
-{
-  double d = 0;
-
-  for (int i = 0; i < 3; i++) {
-    d += pow((a[i]-b[i]),2);
-  }
-
-  return sqrt(d);
-}
-
 bool MyFilter::is_fiducial(double x[3]) const
 {
   art::ServiceHandle<geo::Geometry> geo;
-  double bnd[6] = {0.,2.*geo->DetHalfWidth(),-geo->DetHalfHeight(),geo->DetHalfHeight(),0.,geo->DetLength()};
+  //double bnd[6] = {0.,2.*geo->DetHalfWidth(),-geo->DetHalfHeight(),geo->DetHalfHeight(),0.,geo->DetLength()};
 
-  bool is_x = x[0] > (bnd[0]+m_fidvolXstart) && x[0] < (bnd[1]-m_fidvolXend);
-  bool is_y = x[1] > (bnd[2]+m_fidvolYstart) && x[1] < (bnd[3]-m_fidvolYend);
-  bool is_z = x[2] > (bnd[4]+m_fidvolZstart) && x[2] < (bnd[5]-m_fidvolZend);
+  bool is_x = x[0] > (x_start+m_fidvolXstart) && x[0] < (x_end-m_fidvolXend);
+  bool is_y = x[1] > (y_start+m_fidvolYstart) && x[1] < (y_end-m_fidvolYend);
+  bool is_z = x[2] > (z_start+m_fidvolZstart) && x[2] < (z_end-m_fidvolZend);
   return is_x && is_y && is_z;
 }
 
-bool MyFilter::is_contained(const art::Ptr<recob::Shower> shower) const
-{
-  double start_point[3];
-  double end_point[3];
+////////////////////////////// WOUTER APRIL 20 //////////////////////////
 
-  double shower_length = shower->Length();
-  for (int ix = 0; ix < 3; ix++) {
-    start_point[ix] = shower->ShowerStart()[ix];
-    end_point[ix] = shower->ShowerStart()[ix]+shower_length*shower->Direction()[ix];
+
+// Method that returns a map of all spacepoints and their deposited charge for a PFP, asks for the index of the pfp 
+void MyFilter::spacepointchargecollector(size_t ipf, std::map< art::Ptr<recob::SpacePoint>, double > & map_spacepoint_weight,const std::vector<recob::PFParticle> & pfparticles,art::Event & evt)
+{
+
+  art::InputTag pandoraNu_tag { "pandoraNu" };
+  auto const& pfparticle_handle = evt.getValidHandle< std::vector< recob::PFParticle > >( pandoraNu_tag );
+  auto const& spacepoint_handle = evt.getValidHandle<std::vector<recob::SpacePoint>>(pandoraNu_tag);
+
+  art::FindManyP<recob::SpacePoint > spcpnts_per_pfpart ( pfparticle_handle, evt, pandoraNu_tag );
+  art::FindManyP<recob::Hit > hits_per_spcpnts ( spacepoint_handle, evt, pandoraNu_tag );
+
+  recob::PFParticle pfp = pfparticles[ipf];
+  if (pfp.PdgCode() == 11 or pfp.PdgCode() ==13)
+  {
+    std::vector<art::Ptr<recob::SpacePoint>> spcpnts = spcpnts_per_pfpart.at(ipf);
+    for(unsigned int i=0; i<spcpnts.size(); ++i)
+    {
+      double weight = 0;
+      std::vector<art::Ptr<recob::Hit>> hits = hits_per_spcpnts.at(spcpnts[i]->ID());
+      for (unsigned int j=0; j<hits.size(); ++j)
+          {
+              weight+=(hits[j]->Integral()+hits[j]->SummedADC()+hits[j]->PeakAmplitude()*10)/1000; //voodoo to avoid to large numbers
+          }
+          map_spacepoint_weight[spcpnts[i]]=weight;
+    }
   }
 
-  return is_fiducial(start_point) && is_fiducial(end_point);
-
+  // recursive part
+  for(size_t childi: pfp.Daughters ())
+  {
+    MyFilter::spacepointchargecollector(childi, map_spacepoint_weight,pfparticles,evt);
+  }
 }
+
+// Method to calculate the total the center for a parent particle (index of neutrino pfp)
+void MyFilter::chargecentrePFP(size_t ipf, std::vector<double> & chargecenter,const std::vector<recob::PFParticle> & pfparticles,art::Event & evt)
+{
+  double totalweight=0;
+  std::map< art::Ptr<recob::SpacePoint>, double > map_spacepoint_weight;
+
+  MyFilter::spacepointchargecollector(ipf, map_spacepoint_weight,pfparticles,evt);
+  
+  for(auto const& spacepoint : map_spacepoint_weight)
+  {
+    const double *  xyz = spacepoint.first->XYZ();
+    const double weight = spacepoint.second;
+    chargecenter[0]+=(xyz[0])*weight;
+        chargecenter[1]+=(xyz[1])*weight;
+        chargecenter[2]+=(xyz[2])*weight;
+        totalweight=+weight;
+  }
+  chargecenter[0]/=totalweight;
+  chargecenter[1]/=totalweight;
+  chargecenter[2]/=totalweight;
+}
+
+
+bool MyFilter::opticalfilter(size_t ipf, const std::vector<recob::PFParticle> & pfparticles, const std::vector<recob::OpFlash> & optical_vec,art::Event & evt)
+{
+  double par1=2.0;       // fraction of flash sigma that is requested
+  double par2=30.0;      // or also ok if it is closer than this number in cm
+
+  bool pass = false;
+  std::vector<double> chargecenter(3,0.0);
+  MyFilter::chargecentrePFP(ipf,chargecenter,pfparticles,evt);
+
+  {
+    for(unsigned int ifl =0; ifl<optical_vec.size(); ++ifl)
+    {
+      recob::OpFlash const& flash = optical_vec[ifl];
+      if(flash.Time() >4.8 || flash.Time() <3.2) continue;
+      bool sigma    = flash.ZCenter()+flash.ZWidth()/par1 > chargecenter[2] && flash.ZCenter()+flash.ZWidth()/par1 < chargecenter[2];
+      bool absolute = std::abs(flash.ZCenter()-chargecenter[2])<par2;
+      if(sigma || absolute)
+      {
+        pass =true;
+      }
+    }
+  }
+  return pass;
+}
+
+////////////////////////////// WOUTER APRIL 20 //////////////////////////END
+
 
 bool MyFilter::filter(art::Event & evt)
 {
   bool pass = false;
 
   art::InputTag pandoraNu_tag { "pandoraNu" };
-
+  art::InputTag optical_tag   {"simpleFlashBeam"};
 
   int nu_candidates = 0;
 
@@ -170,9 +241,10 @@ bool MyFilter::filter(art::Event & evt)
     auto const& pfparticle_handle = evt.getValidHandle< std::vector< recob::PFParticle > >( pandoraNu_tag );
     auto const& pfparticles(*pfparticle_handle);
 
-    art::FindOneP< recob::Vertex > vertex_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
+    auto const& optical_handle =    evt.getValidHandle<std::vector<recob::OpFlash>>(optical_tag);
+    auto const& optical_vec(*optical_handle);
 
-    // TODO flash in time
+    art::FindOneP< recob::Vertex > vertex_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
 
     for (size_t ipf = 0; ipf < pfparticles.size(); ipf++) {
 
@@ -180,6 +252,12 @@ bool MyFilter::filter(art::Event & evt)
 
       // Is a nu_e or nu_mu PFParticle?
       if (!is_neutrino) continue;
+
+      ////////////////////////////// WOUTER APRIL 20 //////////////////////////
+
+      if(MyFilter::opticalfilter(ipf,pfparticles,optical_vec,evt)) continue;
+
+      ////////////////////////////// WOUTER APRIL 20 //////////////////////////END
 
       int showers = 0;
       int tracks = 0;
@@ -199,10 +277,19 @@ bool MyFilter::filter(art::Event & evt)
         if (pfparticles[pfdaughter].PdgCode() == 11) {
           art::FindOneP< recob::Shower > shower_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
           auto const& shower_obj = shower_per_pfpart.at(pfdaughter);
+          bool contained_shower = false;
+          double start_point[3];
+          double end_point[3];
 
+          double shower_length = shower_obj->Length();
+          for (int ix = 0; ix < 3; ix++) {
+            start_point[ix] = shower_obj->ShowerStart()[ix];
+            end_point[ix] = shower_obj->ShowerStart()[ix]+shower_length*shower_obj->Direction()[ix];
+          }
+
+          contained_shower = is_fiducial(start_point) && is_fiducial(end_point);
           // TODO flash position check
-
-          if (is_contained(shower_obj)) showers++;
+          if (contained_shower) showers++;
 
         }
 
@@ -216,20 +303,18 @@ bool MyFilter::filter(art::Event & evt)
 
       } // end for pfparticle daughters
 
-      h_n_showers->Fill(showers);
-      h_n_tracks->Fill(tracks);
-
       if (showers >= 1 && tracks >= m_nTracks) {
+        //closest_distance = std::min(distance(neutrino_vertex,true_neutrino_vertex),closest_distance);
         nu_candidates++;
       }
 
     } // end for pfparticles
 
+    //e_energy->Fill(pass, nu_energy);
+
   } catch (...) {
     std::cout << "NO RECO DATA PRODUCTS" << std::endl;
   }
-
-  h_n_candidates->Fill(nu_candidates);
 
   if (nu_candidates >= 1) pass = true;
   if (pass) {
