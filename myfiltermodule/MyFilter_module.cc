@@ -110,8 +110,6 @@ MyFilter::MyFilter(fhicl::ParameterSet const & p)
 // Initialize member data here.
 {
   art::ServiceHandle<art::TFileService> tfs;
-  art::ServiceHandle<geo::Geometry> geo;
-
   h_track_length = tfs->make<TH1F>("h_track_length",";Track length [cm]; N. Entries / 2 cm",150,0,300);
   h_n_showers = tfs->make<TH1F>("h_n_showers",";N. showers; N. Entries / 1",10,0,10);
   h_n_tracks = tfs->make<TH1F>("h_n_tracks",";N. tracks; N. Entries / 1",10,0,10);
@@ -135,6 +133,7 @@ double MyFilter::distance(double a[3], double b[3]) const
 
 bool MyFilter::is_fiducial(double x[3]) const
 {
+  art::ServiceHandle<geo::Geometry> geo;
   double bnd[6] = {0.,2.*geo->DetHalfWidth(),-geo->DetHalfHeight(),geo->DetHalfHeight(),0.,geo->DetLength()};
 
   bool is_x = x[0] > (bnd[0]+m_fidvolXstart) && x[0] < (bnd[1]-m_fidvolXend);
