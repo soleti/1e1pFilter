@@ -117,7 +117,7 @@ MyPi0Filter::MyPi0Filter(fhicl::ParameterSet const & p)
   // Call appropriate produces<>() functions here.
 }
 
-bool MyPi0Filter::is_fiducial(double x[3])
+bool MyPi0Filter::is_fiducial(double x[3]) const
 {
   bool is_x = x[0] > (x_start+m_fidvolXstart) && x[0] < (x_end-m_fidvolXend);
   bool is_y = x[1] > (y_start+m_fidvolYstart) && x[1] < (y_end-m_fidvolYend);
