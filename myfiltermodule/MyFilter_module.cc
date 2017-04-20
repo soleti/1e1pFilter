@@ -138,7 +138,7 @@ bool MyFilter::is_fiducial(double x[3]) const
   return is_x && is_y && is_z;
 }
 
-bool MyFilter::is_contained(recob::Shower & shower) const
+bool MyFilter::is_contained(const recob::Shower & shower) const
 {
   double start_point[3];
   double end_point[3];
@@ -205,7 +205,7 @@ bool MyFilter::filter(art::Event & evt)
           //   end_point[ix] = shower_obj->ShowerStart()[ix]+shower_length*shower_obj->Direction()[ix];
           // }
 
-          bool contained_shower = is_contained(*shower_obj);
+          bool contained_shower = is_contained(shower_obj);
           // TODO flash position check
           if (contained_shower) showers++;
 
