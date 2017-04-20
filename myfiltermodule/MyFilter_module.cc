@@ -98,7 +98,7 @@ private:
 
   bool is_fiducial(double x[3]) const;
   double distance(double a[3], double b[3]) const;
-  bool is_contained(const recob::Shower & shower) const;
+  bool is_contained(const art::Ptr<recob::Shower> shower) const;
 
   // Declare member data here.
 
@@ -142,15 +142,15 @@ bool MyFilter::is_fiducial(double x[3]) const
   return is_x && is_y && is_z;
 }
 
-bool MyFilter::is_contained(const recob::Shower & shower) const
+bool MyFilter::is_contained(const art::Ptr<recob::Shower> shower) const
 {
   double start_point[3];
   double end_point[3];
 
-  double shower_length = shower.Length();
+  double shower_length = shower->Length();
   for (int ix = 0; ix < 3; ix++) {
-    start_point[ix] = shower.ShowerStart()[ix];
-    end_point[ix] = shower.ShowerStart()[ix]+shower_length*shower.Direction()[ix];
+    start_point[ix] = shower->ShowerStart()[ix];
+    end_point[ix] = shower->ShowerStart()[ix]+shower_length*shower->Direction()[ix];
   }
 
   return is_fiducial(start_point) && is_fiducial(end_point);
