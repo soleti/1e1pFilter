@@ -57,7 +57,7 @@ physics: {
           
              ]
   path0: [ electronfilterpandora ]
-  stream: [ outPass ]
+  stream: [ outPass, outFail ]
   #path1 : [  comma separated list of module labels of producer or filter modules  ]
 
   #path2 : [  comma separated list of module labels of analyzer or output modules  ]
@@ -74,12 +74,14 @@ outputs: {
                fileName: "pandoraElectronFilterPass.root"
                SelectEvents: [ path0 ] 
                compressionLevel: 1
+               outputCommands: [ "keep *", "drop sim::SimChannels_*_*_*", "drop simb::MCParticles_*_*_*" ]
              }
-    # outFail: { module_type: RootOutput
-    #            fileName: "pandoraElectronFilterFail.root"
-    #            SelectEvents: { SelectEvents: [ path0 ] }
-    #            compressionLevel: 1
-    #          }
+    outFail: { module_type: RootOutput
+               fileName: "pandoraElectronFilterFail.root"
+               SelectEvents: [ "!path0" ] 
+               compressionLevel: 1
+               outputCommands: [ "keep *", "drop sim::SimChannels_*_*_*", "drop simb::MCParticles_*_*_*" ]
+             }
 }
 
 #services.user.DetectorProperties.NumberTimeSamples:                             6400
