@@ -57,17 +57,6 @@ double fidvol = 10;
 
 namespace lee{
 
-double distance(double a[3], double b[3]) {
-  double d = 0;
-
-  for (int i = 0; i < 3; i++) {
-    d += pow((a[i]-b[i]),2);
-  }
-
-  return sqrt(d);
-}
-
-
 class ElectronFilterPandora;
 
 class ElectronFilterPandora : public art::EDFilter {
@@ -112,8 +101,10 @@ private:
   void spacepointchargecollector(size_t ipf, std::map< art::Ptr<recob::SpacePoint>, double > & map_spacepoint_weight,const std::vector<recob::PFParticle> & pfparticles,art::Event & evt);
   void chargecentrePFP(size_t ipf, std::vector<double> & chargecenter,const std::vector<recob::PFParticle> & pfparticles,art::Event & evt);
   bool opticalfilter(size_t ipf, const std::vector<recob::PFParticle> & pfparticles, const std::vector<recob::OpFlash> & optical_vec,art::Event & evt);
+  double distance(double a[3], double b[3]);
 
 };
+
 
 
 ElectronFilterPandora::ElectronFilterPandora(fhicl::ParameterSet const & p)
@@ -129,14 +120,24 @@ ElectronFilterPandora::ElectronFilterPandora(fhicl::ParameterSet const & p)
   // Call appropriate produces<>() functions here.
 }
 
+double ElectronFilterPandora::distance(double a[3], double b[3]) {
+  double d = 0;
+
+  for (int i = 0; i < 3; i++) {
+    d += pow((a[i]-b[i]),2);
+  }
+
+  return sqrt(d);
+}
+
 bool ElectronFilterPandora::is_fiducial(double x[3]) const
 {
   art::ServiceHandle<geo::Geometry> geo;
-  //double bnd[6] = {0.,2.*geo->DetHalfWidth(),-geo->DetHalfHeight(),geo->DetHalfHeight(),0.,geo->DetLength()};
+  double bnd[6] = {0.,2.*geo->DetHalfWidth(),-geo->DetHalfHeight(),geo->DetHalfHeight(),0.,geo->DetLength()};
 
-  bool is_x = x[0] > (x_start+m_fidvolXstart) && x[0] < (x_end-m_fidvolXend);
-  bool is_y = x[1] > (y_start+m_fidvolYstart) && x[1] < (y_end-m_fidvolYend);
-  bool is_z = x[2] > (z_start+m_fidvolZstart) && x[2] < (z_end-m_fidvolZend);
+  bool is_x = x[0] > (bnd[0]+m_fidvolXstart) && x[0] < (bnd[1]-m_fidvolXend);
+  bool is_y = x[1] > (bnd[2]+m_fidvolYstart) && x[1] < (bnd[3]-m_fidvolYend);
+  bool is_z = x[2] > (bnd[4]+m_fidvolZstart) && x[2] < (bnd[5]-m_fidvolZend);
   return is_x && is_y && is_z;
 }
 
@@ -210,7 +211,6 @@ bool ElectronFilterPandora::opticalfilter(size_t ipf, const std::vector<recob::P
     for(unsigned int ifl =0; ifl<optical_vec.size(); ++ifl)
     {
       recob::OpFlash const& flash = optical_vec[ifl];
-      std::cout << flash.Time() << std::endl;
       if((flash.Time() >4.8 || flash.Time() <3.2)) continue;
       bool sigma    = flash.ZCenter()+flash.ZWidth()/par1 > chargecenter[2] && flash.ZCenter()+flash.ZWidth()/par1 < chargecenter[2];
       bool absolute = std::abs(flash.ZCenter()-chargecenter[2])<par2;
