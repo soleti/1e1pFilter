@@ -140,7 +140,7 @@ bool ElectronFilterPandora::is_fiducial(double x[3]) const
   return is_x && is_y && is_z;
 }
 
-// Method that returns a map of all spacepoints and their deposited charge for a PFP, asks for the index of the pfp 
+// Method that returns a map of all spacepoints and their deposited charge for a PFP, asks for the index of the pfp
 void ElectronFilterPandora::spacepointchargecollector(size_t ipf, std::map< art::Ptr<recob::SpacePoint>, double > & map_spacepoint_weight,const std::vector<recob::PFParticle> & pfparticles,art::Event & evt)
 {
 
@@ -181,7 +181,7 @@ void ElectronFilterPandora::chargecentrePFP(size_t ipf, std::vector<double> & ch
   std::map< art::Ptr<recob::SpacePoint>, double > map_spacepoint_weight;
 
   ElectronFilterPandora::spacepointchargecollector(ipf, map_spacepoint_weight,pfparticles,evt);
-  
+
   for(auto const& spacepoint : map_spacepoint_weight)
   {
     const double *  xyz = spacepoint.first->XYZ();
@@ -210,6 +210,7 @@ bool ElectronFilterPandora::opticalfilter(size_t ipf, const std::vector<recob::P
     for(unsigned int ifl =0; ifl<optical_vec.size(); ++ifl)
     {
       recob::OpFlash const& flash = optical_vec[ifl];
+      std::cout << flash.Time() << std:endl;
       if(!(flash.Time() >4.8 || flash.Time() <3.2)) continue;
       bool sigma    = flash.ZCenter()+flash.ZWidth()/par1 > chargecenter[2] && flash.ZCenter()+flash.ZWidth()/par1 < chargecenter[2];
       bool absolute = std::abs(flash.ZCenter()-chargecenter[2])<par2;
