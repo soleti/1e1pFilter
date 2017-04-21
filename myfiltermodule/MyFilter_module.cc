@@ -246,6 +246,7 @@ bool MyFilter::filter(art::Event & evt)
       // Is a nu_e or nu_mu PFParticle?
       if (!is_neutrino) continue;
 
+
       if(!MyFilter::opticalfilter(ipf,pfparticles,optical_vec,evt)) continue;
 
       int showers = 0;
