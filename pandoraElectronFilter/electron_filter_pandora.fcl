@@ -11,6 +11,8 @@ lee_electron_filter:
     fidvolYend:                 20
     fidvolZstart:               10
     fidvolZend:                 50
+    fractionsigmaflashwidth:	2.0
+    absoluteflashdist:			50.0
 
 }
 
