@@ -1,5 +1,5 @@
 # ======================================================================
-#  myfiltermodule main build file
+#  pandoraElectronFilter main build file
 #
 #  cd .../path/to/build/directory
 #  source .../path/to/mypandoraanalysis/ups/setup_for_development <-d|-p>
@@ -16,7 +16,7 @@
 # use cmake 2.8 or later
 cmake_minimum_required (VERSION 2.8)
 
-project(myfiltermodule)
+project(pandoraElectronFilter)
 
 # cetbuildtools contains our cmake modules
 SET ( CETBUILDTOOLS_VERSION $ENV{CETBUILDTOOLS_VERSION} )
@@ -55,7 +55,7 @@ include(ArtMake)
 include(BuildPlugins)
 
 # source
-add_subdirectory(myfiltermodule)
+add_subdirectory(pandoraElectronFilter)
 
 # ups - table and config files
 add_subdirectory(ups)

@@ -1,0 +1,18 @@
+BEGIN_PROLOG
+
+lee_electron_filter:
+{ 
+    module_type:                "ElectronFilterPandora"
+    nTracks:                    1
+    trackLength:                100
+    fidvolXstart:               10
+    fidvolXstart:               10
+    fidvolYstart:               20
+    fidvolYend:                 20
+    fidvolZstart:               10
+    fidvolZend:                 50
+
+}
+
+END_PROLOG
+

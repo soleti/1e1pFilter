@@ -1,7 +1,7 @@
 #include "services_microboone.fcl"
-#include "myfilter.fcl"
+#include "electron_filter_pandora.fcl"
 
-process_name: MyPi0Filter      #The process name must NOT contain any underscores
+process_name: ElectronFilterPandora      #The process name must NOT contain any underscores
 
 source: 
 {
@@ -12,7 +12,7 @@ source:
 services: {
 
   scheduler:               { defaultExceptions: false }    # Make all uncaught exceptions fatal.
-  TFileService: { fileName: "MyPi0Filter.root" }
+  TFileService: { fileName: "ElectronFilterPandora_ana.root" }
 #  Timing:       {}
 #  SimpleMemoryCheck:     { ignoreTotal: 1 }     #default is one
   RandomNumberGenerator: {}                     #ART native random number generator
@@ -21,8 +21,8 @@ services: {
 #  user:
 #  {
 	#BELOW you see a list of the common services! Uncomment the ones you need.
-#  	ExptGeoHelperInterface:         @local::microboone_geometry_helper
-#  	Geometry:                       @local::microboone_geo
+  	ExptGeoHelperInterface:         @local::microboone_geometry_helper
+  	Geometry:                       @local::microboone_geo
 # 	DetectorProperties:             @local::microboone_detproperties
 # 	LArProperties:                  @local::microboone_properties
 # 	DatabaseUtil:                   @local::microboone_database
@@ -48,8 +48,7 @@ physics: {
   }
 
   filters: {
-         myfilter: { module_type: MyPi0Filter}	
-	#myfilter: @local::myfilter
+    electronfilterpandora: @local::lee_electron_filter	
 
      # ParameterSets for zero or more filter modules
   }
@@ -57,8 +56,8 @@ physics: {
   analyzeIt:[
           
              ]
-  path0: [ myfilter ]
-  stream: [ out0 ]
+  path0: [ electronfilterpandora ]
+  stream: [ outPass ]
   #path1 : [  comma separated list of module labels of producer or filter modules  ]
 
   #path2 : [  comma separated list of module labels of analyzer or output modules  ]
@@ -71,11 +70,16 @@ physics: {
 }
 
 outputs: {
-    out0: { module_type: RootOutput
-            fileName: "output_file_reco12.root"
-            SelectEvents: { SelectEvents: [ path0 ] }
-            compressionLevel: 1
-            }
+    outPass: { module_type: RootOutput
+               fileName: "pandoraElectronFilterPass.root"
+               SelectEvents: [ path0 ] 
+               compressionLevel: 1
+             }
+    # outFail: { module_type: RootOutput
+    #            fileName: "pandoraElectronFilterFail.root"
+    #            SelectEvents: { SelectEvents: [ path0 ] }
+    #            compressionLevel: 1
+    #          }
 }
 
 #services.user.DetectorProperties.NumberTimeSamples:                             6400
