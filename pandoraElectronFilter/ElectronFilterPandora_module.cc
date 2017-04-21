@@ -210,7 +210,7 @@ bool ElectronFilterPandora::opticalfilter(size_t ipf, const std::vector<recob::P
     for(unsigned int ifl =0; ifl<optical_vec.size(); ++ifl)
     {
       recob::OpFlash const& flash = optical_vec[ifl];
-      if(flash.Time() >4.8 || flash.Time() <3.2) continue;
+      if(!(flash.Time() >4.8 || flash.Time() <3.2)) continue;
       bool sigma    = flash.ZCenter()+flash.ZWidth()/par1 > chargecenter[2] && flash.ZCenter()+flash.ZWidth()/par1 < chargecenter[2];
       bool absolute = std::abs(flash.ZCenter()-chargecenter[2])<par2;
       sigma=true; //added until centre of charge works properly
