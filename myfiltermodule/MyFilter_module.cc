@@ -106,12 +106,11 @@ private:
 
   bool is_fiducial(double x[3]) const;
 
-  ////////////////////////////// WOUTER APRIL 20 //////////////////////////
 
   void spacepointchargecollector(size_t ipf, std::map< art::Ptr<recob::SpacePoint>, double > & map_spacepoint_weight,const std::vector<recob::PFParticle> & pfparticles,art::Event & evt);
   void chargecentrePFP(size_t ipf, std::vector<double> & chargecenter,const std::vector<recob::PFParticle> & pfparticles,art::Event & evt);
   bool opticalfilter(size_t ipf, const std::vector<recob::PFParticle> & pfparticles, const std::vector<recob::OpFlash> & optical_vec,art::Event & evt);
-  ////////////////////////////// WOUTER APRIL 20 //////////////////////////END
+
 };
 
 
@@ -138,9 +137,6 @@ bool MyFilter::is_fiducial(double x[3]) const
   bool is_z = x[2] > (z_start+m_fidvolZstart) && x[2] < (z_end-m_fidvolZend);
   return is_x && is_y && is_z;
 }
-
-////////////////////////////// WOUTER APRIL 20 //////////////////////////
-
 
 // Method that returns a map of all spacepoints and their deposited charge for a PFP, asks for the index of the pfp 
 void MyFilter::spacepointchargecollector(size_t ipf, std::map< art::Ptr<recob::SpacePoint>, double > & map_spacepoint_weight,const std::vector<recob::PFParticle> & pfparticles,art::Event & evt)
@@ -224,8 +220,6 @@ bool MyFilter::opticalfilter(size_t ipf, const std::vector<recob::PFParticle> & 
   return pass;
 }
 
-////////////////////////////// WOUTER APRIL 20 //////////////////////////END
-
 
 bool MyFilter::filter(art::Event & evt)
 {
@@ -252,11 +246,7 @@ bool MyFilter::filter(art::Event & evt)
       // Is a nu_e or nu_mu PFParticle?
       if (!is_neutrino) continue;
 
-      ////////////////////////////// WOUTER APRIL 20 //////////////////////////
-
       if(!MyFilter::opticalfilter(ipf,pfparticles,optical_vec,evt)) continue;
-
-      ////////////////////////////// WOUTER APRIL 20 //////////////////////////END
 
       int showers = 0;
       int tracks = 0;
