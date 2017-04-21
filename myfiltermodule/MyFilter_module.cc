@@ -255,7 +255,7 @@ bool MyFilter::filter(art::Event & evt)
 
       ////////////////////////////// WOUTER APRIL 20 //////////////////////////
 
-      if(MyFilter::opticalfilter(ipf,pfparticles,optical_vec,evt)) continue;
+      if(!MyFilter::opticalfilter(ipf,pfparticles,optical_vec,evt)) continue;
 
       ////////////////////////////// WOUTER APRIL 20 //////////////////////////END
 
