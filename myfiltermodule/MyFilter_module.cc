@@ -41,8 +41,6 @@
 #include "canvas/Persistency/Common/FindManyP.h"
 #include "canvas/Utilities/InputTag.h"
 
-//#include "larpandora/LArPandoraInterface/LArPandoraHelper.h"
-
 #include "TTree.h"
 #include "TFile.h"
 #include "TEfficiency.h"
@@ -56,6 +54,7 @@ double z_start = 0;
 double z_end = 1036.8;
 double fidvol = 10;
 
+
 double distance(double a[3], double b[3]) {
   double d = 0;
 
@@ -65,8 +64,6 @@ double distance(double a[3], double b[3]) {
 
   return sqrt(d);
 }
-
-//using namespace lar_pandora;
 
 
 class MyFilter;
@@ -257,7 +254,7 @@ bool MyFilter::filter(art::Event & evt)
 
       ////////////////////////////// WOUTER APRIL 20 //////////////////////////
 
-      if(MyFilter::opticalfilter(ipf,pfparticles,optical_vec,evt)) continue;
+      if(!MyFilter::opticalfilter(ipf,pfparticles,optical_vec,evt)) continue;
 
       ////////////////////////////// WOUTER APRIL 20 //////////////////////////END
 
