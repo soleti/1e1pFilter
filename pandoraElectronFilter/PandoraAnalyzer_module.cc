@@ -556,7 +556,7 @@ void lee::PandoraAnalyzer::reconfigure(fhicl::ParameterSet const & pset)
   //TODO: add an external fcl file to change configuration
   //add what you want to read, and default values of your labels etc. example:
   //  m_particleLabel = pset.get<std::string>("PFParticleModule","pandoraNu");
-  fElectronEventSelectionAlg.reconfigure(p.get<fhicl::ParameterSet>("ElectronSelectionAlg"));
+  fElectronEventSelectionAlg.reconfigure(pset.get<fhicl::ParameterSet>("ElectronSelectionAlg"));
 
   m_printDebug = pset.get<bool>("PrintDebug",false);
   m_trackLength = pset.get<int>("trackLength",100);
