@@ -3,6 +3,8 @@
 link_libraries( -L$ENV{BOOST_LIB} -lboost_system)
 
 art_make(
+          LIBRARY_NAME  
+                        ElectronFilter
           LIB_LIBRARIES 
                         lardataobj_RecoBase
                         larcore_Geometry
@@ -32,6 +34,7 @@ art_make(
                         ${SIMULATIONBASE}
 
           MODULE_LIBRARIES
+                        ElectronFilter
                         lardataobj_RecoBase
                         larcore_Geometry
                         larcore_Geometry_Geometry_service
