@@ -3,9 +3,10 @@
 link_libraries( -L$ENV{BOOST_LIB} -lboost_system)
 
 art_make(
-          LIBRARY_NAME  
+          LIBRARY_NAME
                         ElectronFilter
-          LIB_LIBRARIES 
+          LIB_LIBRARIES
+                        larpandora_LArPandoraInterface
                         lardataobj_RecoBase
                         larcore_Geometry
                         larcore_Geometry_Geometry_service
@@ -13,9 +14,9 @@ art_make(
                         art_Framework_Services_Registry
                         art_Framework_Principal
                         art_Utilities canvas_Utilities
-                     	art_Persistency_Common canvas_Persistency_Common
-			art_Persistency_Provenance canvas_Persistency_Provenance
-			${ART_FRAMEWORK_CORE}
+                        art_Persistency_Common canvas_Persistency_Common
+                        art_Persistency_Provenance canvas_Persistency_Provenance
+                        ${ART_FRAMEWORK_CORE}
                         ${ART_FRAMEWORK_IO_SOURCES}
                         ${ART_FRAMEWORK_PRINCIPAL}
                         ${ART_FRAMEWORK_SERVICES_REGISTRY}
@@ -37,6 +38,8 @@ art_make(
 
           MODULE_LIBRARIES
                         ElectronFilter
+                        larpandora_LArPandoraInterface
+                        PandoraAnalyzer
                         lardataobj_RecoBase
                         larcore_Geometry
                         larcore_Geometry_Geometry_service
@@ -44,9 +47,9 @@ art_make(
                         art_Framework_Services_Registry
                         art_Framework_Principal
                         art_Utilities canvas_Utilities
-                   	art_Persistency_Common canvas_Persistency_Common
-			art_Persistency_Provenance canvas_Persistency_Provenance
-			${ART_FRAMEWORK_CORE}
+                        art_Persistency_Common canvas_Persistency_Common
+                        art_Persistency_Provenance canvas_Persistency_Provenance
+                        ${ART_FRAMEWORK_CORE}
                         ${ART_FRAMEWORK_IO_SOURCES}
                         ${ART_FRAMEWORK_PRINCIPAL}
                         ${ART_FRAMEWORK_SERVICES_REGISTRY}
@@ -65,7 +68,7 @@ art_make(
                         ${ROOT_GDML}
                         ${ROOT_BASIC_LIB_LIST}
                         ${SIMULATIONBASE}
-)                                                                                           
+)
 
 install_headers()
 install_source()
