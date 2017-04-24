@@ -120,6 +120,18 @@ public:
   void clear();
 
 
+public:
+
+  // Access functions for the saved data:
+
+  const size_t & get_n_neutrino_candidates() const {return _n_neutrino_candidates;}
+  const std::vector<bool> & get_neutrino_candidate_passed() const {return _neutrino_candidate_passed;}
+  const std::vector<TVector3> & get_center_of_charge() const {return _center_of_charge;}
+  const std::vector<int > & get_op_flash_indexes() const {return _op_flash_indexes;}
+  const std::vector<TVector3> & get_neutrino_vertex() const {return _neutrino_vertex;}
+  const std::vector<int> & get_n_showers() const {return _n_showers;}
+  const std::vector<int> & get_n_tracks() const {return _n_tracks;}
+
 protected:
 
   // Variables that are used to determine the selection and might be worth passing
