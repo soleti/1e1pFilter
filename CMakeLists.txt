@@ -46,6 +46,7 @@ find_ups_product( lardata v1_00_00 )
 find_ups_product( larevt v1_00_00 )
 find_ups_product( larsim v1_00_00 )
 find_ups_product( nutools v1_00_00 )
+find_ups_product( boost v1_00_00 )
 find_ups_product( art v1_09_00 )
 find_ups_product( cetbuildtools v4_09_00 )
 
