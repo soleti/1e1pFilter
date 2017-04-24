@@ -12,7 +12,7 @@ art_make(
                         art_Framework_Core
                         art_Framework_Services_Registry
                         art_Framework_Principal
-                        art_Utilities canvas
+                        art_Utilities_canvas
                         ${ART_FRAMEWORK_CORE}
                         ${ART_FRAMEWORK_IO_SOURCES}
                         ${ART_FRAMEWORK_PRINCIPAL}
