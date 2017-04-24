@@ -6,6 +6,7 @@ art_make(
           LIBRARY_NAME
                         ElectronFilter
           LIB_LIBRARIES
+                        lee_PandoraAnalyzer
                         larpandora_LArPandoraInterface
                         lardataobj_RecoBase
                         larcore_Geometry
@@ -39,7 +40,7 @@ art_make(
           MODULE_LIBRARIES
                         ElectronFilter
                         larpandora_LArPandoraInterface
-                        PandoraAnalyzer
+                        lee_PandoraAnalyzer
                         lardataobj_RecoBase
                         larcore_Geometry
                         larcore_Geometry_Geometry_service
