@@ -20,10 +20,8 @@ bool ElectronEventSelectionAlg::is_fiducial(const std::vector<double> & x) const
     return false;
   }
 
-  // art::ServiceHandle<geo::Geometry> geo;
-  // std::vector<double> bnd = {0., 2.*geo->DetHalfWidth(), -geo->DetHalfHeight(), geo->DetHalfHeight(), 0., geo->DetLength()};
-  std::vector<double> bnd;
-  bnd.resize(6);
+  art::ServiceHandle<geo::Geometry> geo;
+  std::vector<double> bnd = {0., 2.*geo->DetHalfWidth(), -geo->DetHalfHeight(), geo->DetHalfHeight(), 0., geo->DetLength()};
 
   bool is_x = x[0] > (bnd[0] + m_fidvolXstart) && x[0] < (bnd[1] - m_fidvolXend);
   bool is_y = x[1] > (bnd[2] + m_fidvolYstart) && x[1] < (bnd[3] - m_fidvolYend);
@@ -33,11 +31,8 @@ bool ElectronEventSelectionAlg::is_fiducial(const std::vector<double> & x) const
 
 bool ElectronEventSelectionAlg::is_fiducial(const TVector3 & x) const {
 
-  // art::ServiceHandle<geo::Geometry> geo;
-  // std::vector<double> bnd = {0., 2.*geo->DetHalfWidth(), -geo->DetHalfHeight(), geo->DetHalfHeight(), 0., geo->DetLength()};
-
-  std::vector<double> bnd;
-  bnd.resize(6);
+  art::ServiceHandle<geo::Geometry> geo;
+  std::vector<double> bnd = {0., 2.*geo->DetHalfWidth(), -geo->DetHalfHeight(), geo->DetHalfHeight(), 0., geo->DetLength()};
 
   bool is_x = x[0] > (bnd[0] + m_fidvolXstart) && x[0] < (bnd[1] - m_fidvolXend);
   bool is_y = x[1] > (bnd[2] + m_fidvolYstart) && x[1] < (bnd[3] - m_fidvolYend);
@@ -85,6 +80,7 @@ void ElectronEventSelectionAlg::reconfigure(fhicl::ParameterSet const & p)
   m_fractionsigmaflashwidth = p.get<double>("fractionsigmaflashwidth", 2.0);
   m_absoluteflashdist = p.get<double>("absoluteflashdist", 50.0);
 
+  fOpticalFlashFinderLabel = p.get<std::string>("OpticalFlashFinderLabel", "simpleFlashBeam");
 }
 
 

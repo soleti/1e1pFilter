@@ -42,8 +42,8 @@ namespace lee {
 class ElectronEventSelectionAlg
 {
 public:
-  ElectronEventSelectionAlg();
-  ~ElectronEventSelectionAlg();
+  // ElectronEventSelectionAlg(){}
+  // ~ElectronEventSelectionAlg(){}
 
   /**
    * @brief Main Event Selection Function
