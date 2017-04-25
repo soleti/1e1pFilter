@@ -7,9 +7,6 @@
 // from cetpkgsupport v1_10_02.
 ////////////////////////////////////////////////////////////////////////
 
-// TODO
-// - Put fidvol, electron_energy_threshold and proton_energy_threshold as fcl parameters
-// - Use Geometry service for TPC size
 
 #include <fstream>
 
@@ -87,8 +84,7 @@ private:
   TH1F * h_dirt;
   TH1F * h_cosmic;
   TH1F * h_nc;
-  TH1F * h_track_dir;
-  TH1F * h_track_length;
+
   THStack * h_e_stacked;
 
 
@@ -112,6 +108,11 @@ private:
 
   double _energy;
   double _category;
+  double _track_dir_z;
+  double _track_length;
+
+  int _n_tracks;
+  int _n_showers;
 
   bool is_fiducial(double x[3]) const;
   double distance(double a[3], double b[3]);
@@ -146,11 +147,12 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const & pset)
 
   h_e_stacked = tfs->make<THStack>("h_e_stacked",";#nu_{e} energy [GeV];N. Entries / 0.1 GeV");
 
-  h_track_dir = tfs->make<TH1F>("h_track_dir",";Track direction [cos#theta];N. Entries / 0.1",20,-1,1);
-  h_track_length = tfs->make<TH1F>("h_track_length",";Track length [cm];N. Entries / 2",75,0,150);
-
   myTTree->Branch("category",  &_category, "category/i");
   myTTree->Branch("E",  &_energy, "E/d");
+  myTTree->Branch("trk_dir_z",  &_track_dir_z, "trk_dir_z/d");
+  myTTree->Branch("trk_len",  &_track_length, "trk_len/d");
+  myTTree->Branch("n_tracks",  &_n_tracks, "n_tracks/i");
+  myTTree->Branch("n_showers",  &_n_showers, "n_showers/i");
 
   this->reconfigure(pset);
 
@@ -195,7 +197,6 @@ lee::PandoraLEEAnalyzer::~PandoraLEEAnalyzer()
   h_e_stacked->Add(h_dirt);
   h_e_stacked->Write();
 
-  h_track_dir->Write();
   myTFile->Close();
 
 
@@ -411,7 +412,9 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
 
   bool event_passed = fElectronEventSelectionAlg.eventSelected(evt);
   if (event_passed){
-    // Find out how many passing neutrino candidates there are:
+    _n_tracks = fElectronEventSelectionAlg.get_n_tracks();
+    _n_showers = fElectronEventSelectionAlg.get_n_showers();
+
     for (size_t inu = 0; inu < fElectronEventSelectionAlg.get_n_neutrino_candidates(); inu++){
       if (fElectronEventSelectionAlg.get_neutrino_candidate_passed().at(inu)){
         nu_candidates.push_back(inu);
@@ -507,10 +510,8 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
     std::vector<art::Ptr<recob::Track>> chosen_tracks;
     get_daughter_tracks(ipf_candidate, evt, chosen_tracks);
 
-    std::cout << "Longest track dir " << get_longest_track(chosen_tracks)->StartDirection().Z() << std::endl;
-    h_track_dir->Fill(get_longest_track(chosen_tracks)->StartDirection().Z());
-    h_track_length->Fill(get_longest_track(chosen_tracks)->Length());
-
+    _track_dir_z = get_longest_track(chosen_tracks)->StartDirection().Z();
+    _track_length = get_longest_track(chosen_tracks)->Length();
     std::cout << "Chosen neutrino " << ipf_candidate << std::endl;
 
   } catch (...) {
