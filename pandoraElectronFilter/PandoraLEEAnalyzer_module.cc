@@ -123,8 +123,8 @@ private:
   bool is_dirt(double x[3]) const;
   void measure_energy(size_t ipf, const art::Event & evt, double & energy);
   size_t choose_candidate(std::vector<size_t> & candidates, const art::Event & evt);
-  void get_daughter_tracks( std::vector < size_t > pf_ids, const art::Event & evt, std::vector< art::Ptr<recob::Track> > &tracks)
-  void get_daughter_showers(size_t ipf, const art::Event & evt, std::vector< art::Ptr<recob::Shower> > &showers);
+  void get_daughter_tracks( std::vector < size_t > pf_ids, const art::Event & evt, std::vector< art::Ptr<recob::Track> > &tracks);
+  void get_daughter_showers( std::vector < size_t > pf_ids, const art::Event & evt, std::vector< art::Ptr<recob::Shower> > &showers);
   double trackEnergy(const art::Ptr<recob::Track>& track, const art::Event & evt);
 
   art::Ptr<recob::Track> get_longest_track(std::vector< art::Ptr<recob::Track> > &tracks);
