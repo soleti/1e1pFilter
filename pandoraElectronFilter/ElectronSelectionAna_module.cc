@@ -91,10 +91,10 @@ lee::ElectronSelectionAna::ElectronSelectionAna(fhicl::ParameterSet const & pset
   fTree  = tfs->make<TTree>("flashtree","FlashAnalysis Tree");
 
   //Set branches for truth information
-  fTree->Branch("mcevts_truth", &mcevts_truth,   "mcevts_truth/I"               );
-  fTree->Branch("nuPDG_truth",  &nuPDG_truth,    "nuPDG_truth[mcevts_truth]/I"  );
-  fTree->Branch("ccnc_truth",   &ccnc_truth,     "ccnc_truth[mcevts_truth]/I"   );
-  fTree->Branch("mode_truth",   &mode_truth,     "mode_truth[mcevts_truth]/I"   );
+  fTree->Branch("mcevts_truth", &mcevts_truth,   "mcevts_truth/S"               );
+  fTree->Branch("nuPDG_truth",  &nuPDG_truth,    "nuPDG_truth[mcevts_truth]/S"  );
+  fTree->Branch("ccnc_truth",   &ccnc_truth,     "ccnc_truth[mcevts_truth]/S"   );
+  fTree->Branch("mode_truth",   &mode_truth,     "mode_truth[mcevts_truth]/S"   );
   fTree->Branch("enu_truth",    &enu_truth,      "enu_truth[mcevts_truth]/F"    );
   fTree->Branch("nuvtxx_truth", &nuvtxx_truth,   "nuvtxx_truth[mcevts_truth]/F" );
   fTree->Branch("nuvtxy_truth", &nuvtxy_truth,   "nuvtxy_truth[mcevts_truth]/F" );
@@ -106,8 +106,8 @@ lee::ElectronSelectionAna::ElectronSelectionAna(fhicl::ParameterSet const & pset
   fTree->Branch("nuvtxy",     &nuvtxy,     "nuvtxy[nnuvtx]/F"     );
   fTree->Branch("nuvtxz",     &nuvtxz,     "nuvtxz[nnuvtx]/F"     );
   fTree->Branch("nuvtxpdg",   &nuvtxpdg,   "nuvtxpdg[nnuvtx]/S"   );
-  //fTree->Branch("chrgecenter",chrgecenter,"chrgecenter[nnuvtx]/S");  //????????????????????????????????
-
+  fTree->Branch("center_of_charge",&center_of_charge              );  //std::vector<TVector3>
+  
   //Set branches for optical information
   fTree->Branch("nfls",       &nfls,       "nfls/S"             );
   fTree->Branch("flsTime",    &flsTime,    "flash_time[nfls]/F" );
