@@ -62,11 +62,8 @@ private:
   Float_t nuvtxy[kMaxVertices];                         ///< y coordinate
   Float_t nuvtxz[kMaxVertices];                         ///< z coordinate
   Short_t nuvtxpdg[kMaxVertices];                       ///< PDG code assigned by PandoraNu
-<<<<<<< HEAD
-  //std::vector<TVector3> center_of_charge[kMaxVertices];  ///< Center of deposited charge
-=======
+
   std::vector<TVector3> center_of_charge[kMaxVertices];  ///< Center of deposited charge
->>>>>>> eb235963d2de95cc4970660dcd7c9e128758d2c0
   //Optical information
   Short_t nfls;                                         ///< Number of reconstructed flashes
   std::vector<Float_t> flsTime;                         ///< Flash time (us)
