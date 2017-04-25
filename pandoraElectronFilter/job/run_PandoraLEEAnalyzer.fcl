@@ -12,17 +12,10 @@ source : {
 services :
 {
   scheduler:                { defaultExceptions: false }    # Make all uncaught exceptions fatal.
-  TFileService:             { fileName: "MyPandoraLEEAnalyzer.root" }
+  TFileService:             { fileName: "PandoraLEEAnalyzer.root" }
   TimeTracker:              {}
   RandomNumberGenerator:    {}
-  UBOpReadoutMap:           @local::microboone_opreadoutmap
-  DetectorClocksService:    @local::microboone_detectorclocks
-  DatabaseUtil:             @local::microboone_database
-  SpaceCharge:              @local::microboone_spacecharge
-  message:                  @local::standard_info
-  Geometry: @local::microboone_geo
-  ExptGeoHelperInterface:         @local::microboone_geometry_helper
-  SpaceCharge: @local::microboone_spacecharge
+  @table::microboone_services_reco
 }
 
 outputs: {
