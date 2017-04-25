@@ -13,6 +13,8 @@ void ElectronEventSelectionAlg::clear() {
   _neutrino_vertex.clear();
   _n_showers.clear();
   _n_tracks.clear();
+  _pfp_id_showers_from_primary.clear();
+  _pfp_id_tracks_from_primary.clear();
 }
 
 bool ElectronEventSelectionAlg::is_fiducial(const std::vector<double> & x) const {
@@ -39,6 +41,18 @@ bool ElectronEventSelectionAlg::is_fiducial(const TVector3 & x) const {
   bool is_z = x[2] > (bnd[4] + m_fidvolZstart) && x[2] < (bnd[5] - m_fidvolZend);
   return is_x && is_y && is_z;
 }
+
+bool ElectronEventSelectionAlg::is_fiducial(double x[3]) const {
+
+  art::ServiceHandle<geo::Geometry> geo;
+  std::vector<double> bnd = {0., 2.*geo->DetHalfWidth(), -geo->DetHalfHeight(), geo->DetHalfHeight(), 0., geo->DetLength()};
+
+  bool is_x = x[0] > (bnd[0] + m_fidvolXstart) && x[0] < (bnd[1] - m_fidvolXend);
+  bool is_y = x[1] > (bnd[2] + m_fidvolYstart) && x[1] < (bnd[3] - m_fidvolYend);
+  bool is_z = x[2] > (bnd[4] + m_fidvolZstart) && x[2] < (bnd[5] - m_fidvolZend);
+  return is_x && is_y && is_z;
+}
+
 
 double ElectronEventSelectionAlg::distance(const std::vector<double> & a , const std::vector<double> & b) const {
 
@@ -262,6 +276,9 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
   _neutrino_vertex.resize(_n_neutrino_candidates);
   _n_showers.resize(_n_neutrino_candidates);
   _n_tracks.resize(_n_neutrino_candidates);
+  _pfp_id_showers_from_primary.resize(_n_neutrino_candidates);
+  _pfp_id_tracks_from_primary.resize(_n_neutrino_candidates);
+
 
   // For each of the primary particles, determine if it and it's daughters pass the cuts:
 
@@ -333,7 +350,10 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
 
         contained_shower = is_fiducial(start_point) && is_fiducial(end_point);
         // TODO flash position check
-        if (contained_shower) showers++;
+        if (contained_shower) {
+          _pfp_id_showers_from_primary[_primary_indexes[_i_primary]].push_back(pfdaughter);
+          showers++;
+        }
 
       }
 
@@ -342,7 +362,11 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
         art::FindOneP< recob::Track > track_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
         auto const& track_obj = track_per_pfpart.at(pfdaughter);
 
-        if (track_obj->Length() < m_trackLength) tracks++;
+        if (track_obj->Length() < m_trackLength) {
+          tracks++;
+          _pfp_id_tracks_from_primary[_primary_indexes[_i_primary]].push_back(pfdaughter);
+        }
+
         // h_track_length->Fill(track_obj->Length());
       }
 
