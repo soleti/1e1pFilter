@@ -1,6 +1,6 @@
 #include_directories( ${CMAKE_CURRENT_SOURCE_DIR} )
 
-link_libraries( -L$ENV{BOOST_LIB} -lboost_system)
+link_libraries( -L$ENV{BOOST_LIB} -lboost_filesystem)
 
 art_make(
           LIBRARY_NAME
