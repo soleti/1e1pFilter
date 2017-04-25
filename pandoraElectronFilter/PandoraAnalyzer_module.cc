@@ -110,6 +110,9 @@ private:
   const int k_nc = 4;
   const int k_dirt = 5;
 
+  double _energy;
+  double _category;
+
   bool is_fiducial(double x[3]) const;
   double distance(double a[3], double b[3]);
   bool is_dirt(double x[3]) const;
@@ -146,8 +149,8 @@ lee::PandoraAnalyzer::PandoraAnalyzer(fhicl::ParameterSet const & pset)
   h_track_dir = tfs->make<TH1F>("h_track_dir",";Track direction [cos#theta];N. Entries / 0.1",20,-1,1);
   h_track_length = tfs->make<TH1F>("h_track_length",";Track length [cm];N. Entries / 2",75,0,150);
 
-  //add branches
-
+  myTTree->Branch("category",  &_category, "category/i");
+  myTTree->Branch("E",  &_energy, "E/d");
 
   this->reconfigure(pset);
 
@@ -404,12 +407,25 @@ bool lee::PandoraAnalyzer::is_dirt(double x[3]) const
 
 void lee::PandoraAnalyzer::analyze(art::Event const & evt)
 {
+  std::vector<size_t> nu_candidates;
+
+  bool event_passed = fElectronEventSelectionAlg.eventSelected(evt);
+  if (event_passed){
+    // Find out how many passing neutrino candidates there are:
+    for (size_t inu = 0; inu < fElectronEventSelectionAlg.get_n_neutrino_candidates(); inu++){
+      if (fElectronEventSelectionAlg.get_neutrino_candidate_passed().at(inu)){
+        nu_candidates.push_back(inu);
+      }
+    }
+  } else {
+    return;
+  }
 
   //do the analysis
   art::InputTag pandoraNu_tag { "pandoraNu" };
   art::InputTag generator_tag { "generator" };
 
-  int bkg_category = 0;
+  int _category = 0;
 
   auto const& generator_handle = evt.getValidHandle< std::vector< simb::MCTruth > >( generator_tag );
   auto const& generator(*generator_handle);
@@ -420,7 +436,7 @@ void lee::PandoraAnalyzer::analyze(art::Event const & evt)
   if (generator.size() > 0) {
     ccnc = generator[0].GetNeutrino().CCNC();
     if (ccnc == 1) {
-      bkg_category = k_nc;
+      _category = k_nc;
     }
 
     true_neutrino_vertex[0] = generator[0].GetNeutrino().Nu().Vx();
@@ -428,7 +444,7 @@ void lee::PandoraAnalyzer::analyze(art::Event const & evt)
     true_neutrino_vertex[2] = generator[0].GetNeutrino().Nu().Vz();
 
     if (is_dirt(true_neutrino_vertex)) {
-      bkg_category = k_dirt;
+      _category = k_dirt;
     }
 
     for (int i = 0; i < generator[0].NParticles(); i++) {
@@ -437,7 +453,7 @@ void lee::PandoraAnalyzer::analyze(art::Event const & evt)
       }
     }
   } else {
-    bkg_category = k_cosmic;
+    _category = k_cosmic;
   }
 
   int protons = 0;
@@ -464,7 +480,8 @@ void lee::PandoraAnalyzer::analyze(art::Event const & evt)
 
     }
   }
-  double reco_energy = 0;
+
+  _energy = 0;
 
   try {
     auto const& pfparticle_handle = evt.getValidHandle< std::vector< recob::PFParticle > >( pandoraNu_tag );
@@ -473,31 +490,10 @@ void lee::PandoraAnalyzer::analyze(art::Event const & evt)
     art::FindOneP< recob::Shower > shower_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
     art::FindOneP< recob::Track > track_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
 
-    std::vector<size_t> nu_candidates;
-
-    for (size_t ipf = 0; ipf < pfparticles.size(); ipf++) {
-
-      bool is_neutrino = (abs(pfparticles[ipf].PdgCode()) == 12 || abs(pfparticles[ipf].PdgCode()) == 14) && pfparticles[ipf].IsPrimary();
-      if (!is_neutrino) continue;
-
-      std::vector<art::Ptr<recob::Track>> nu_tracks;
-      std::vector<art::Ptr<recob::Shower>> nu_showers;
-
-      get_daughter_tracks(ipf, evt, nu_tracks);
-      get_daughter_showers(ipf, evt, nu_showers);
-
-      if (nu_tracks.size() > 0 && nu_showers.size() > 0) {
-        nu_candidates.push_back(ipf);
-      }
-
-    } // end for pfparticles
-
-    if (nu_candidates.size() == 0) return;
-
     size_t ipf_candidate = choose_candidate(nu_candidates, evt);
 
-    measure_energy(ipf_candidate, evt, reco_energy);
-    std::cout << "Energy: " << reco_energy << std::endl;
+    measure_energy(ipf_candidate, evt, _energy);
+    std::cout << "Energy: " << _energy << std::endl;
     if (generator.size() > 0) {
       art::FindOneP< recob::Vertex > vertex_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
       auto const& vertex_obj = vertex_per_pfpart.at(ipf_candidate);
@@ -505,7 +501,7 @@ void lee::PandoraAnalyzer::analyze(art::Event const & evt)
       double reco_neutrino_vertex[3];
       vertex_obj->XYZ(reco_neutrino_vertex);
       if (distance(reco_neutrino_vertex,true_neutrino_vertex) > 10) {
-        bkg_category = k_cosmic;
+        _category = k_cosmic;
       }
     }
 
@@ -522,28 +518,15 @@ void lee::PandoraAnalyzer::analyze(art::Event const & evt)
     std::cout << "NO RECO DATA PRODUCTS" << std::endl;
   }
 
-  if (bkg_category != k_cosmic && bkg_category != k_dirt && bkg_category != k_nc) {
+  if (_category != k_cosmic && _category != k_dirt && _category != k_nc) {
     if (protons != 0 && electrons != 0) {
-      bkg_category = k_nu_e;
+      _category = k_nu_e;
     } else if (protons != 0 && muons != 0) {
-      bkg_category = k_nu_mu;
+      _category = k_nu_mu;
     }
   }
 
-  if (bkg_category == k_cosmic) {
-    h_cosmic->Fill(reco_energy);
-  } else if (bkg_category == k_nu_mu) {
-    h_nu_mu->Fill(reco_energy);
-  } else if (bkg_category == k_nu_e) {
-    h_nu_e->Fill(reco_energy);
-  } else if (bkg_category == k_dirt) {
-    h_dirt->Fill(reco_energy);
-  } else if (bkg_category == k_nc) {
-    h_nc->Fill(reco_energy);
-  }
-
-  std::cout << "Category " << bkg_category << std::endl;
-
+  myTTree->Fill();
 
 } // end analyze function
 
