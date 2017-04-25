@@ -461,6 +461,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
     }
   } else {
     _category = k_cosmic;
+    _nu_energy = std::numeric_limits<double>::lowest();
   }
 
   int protons = 0;
