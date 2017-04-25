@@ -527,7 +527,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
 
   _energy = std::numeric_limits<double>::lowest();
 
-  try {
+  //try {
     auto const& pfparticle_handle = evt.getValidHandle< std::vector< recob::PFParticle > >( pandoraNu_tag );
 
     size_t ipf_candidate = choose_candidate(nu_candidates, evt);
@@ -555,7 +555,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
     }
 
     std::vector<art::Ptr<recob::Track>> chosen_tracks;
-    std::vector< size_t > pfp_tracks_id = fElectronEventSelectionAlg.get_pfp_id_showers_from_primary().at(ipf_candidate);
+    std::vector< size_t > pfp_tracks_id = fElectronEventSelectionAlg.get_pfp_id_tracks_from_primary().at(ipf_candidate);
 
     get_daughter_tracks(pfp_tracks_id, evt, chosen_tracks);
 
@@ -566,9 +566,9 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
 
     std::cout << "Chosen neutrino " << ipf_candidate << std::endl;
 
-  } catch (...) {
-    std::cout << "NO RECO DATA PRODUCTS" << std::endl;
-  }
+  // } catch (...) {
+  //   std::cout << "NO RECO DATA PRODUCTS" << std::endl;
+  // }
 
   if (_category != k_cosmic && _category != k_dirt && _category != k_nc) {
     if (protons != 0 && electrons != 0) {

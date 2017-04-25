@@ -19,7 +19,9 @@ services :
   DetectorClocksService:    @local::microboone_detectorclocks
   DatabaseUtil:             @local::microboone_database
   message:                  @local::standard_info
-
+  Geometry: @local::microboone_geo
+  ExptGeoHelperInterface:         @local::microboone_geometry_helper
+  SpaceCharge: @local::microboone_spacecharge
 }
 
 outputs: {
