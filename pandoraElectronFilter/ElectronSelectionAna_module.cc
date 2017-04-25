@@ -21,7 +21,7 @@
 
 #include "TTree.h"
 #include "TFile.h"
-#include "TVector3"
+#include "TVector3.h"
 
 constexpr int kMaxVertices   = 10;                  ///< max number of PandoraNu neutrino candidate vertices
 constexpr int kMaxTruth      = 10;                  ///< max number of neutrino Interactions in the spill
@@ -75,7 +75,7 @@ private:
   Float_t nuvtxy[kMaxVertices];                         ///< y coordinate
   Float_t nuvtxz[kMaxVertices];                         ///< z coordinate
   Short_t nuvtxpdg[kMaxVertices];                       ///< PDG code assigned by PandoraNu
-  std::vector<TVector3> center_of_charge[kMaxVertices]  ///< Center of deposited charge 
+  std::vector<TVector3> center_of_charge[kMaxVertices]  ///< Center of deposited charge
 
   //Optical information
   Short_t nfls;                                         ///< Number of reconstructed flashes
@@ -103,7 +103,7 @@ lee::ElectronSelectionAna::ElectronSelectionAna(fhicl::ParameterSet const & p)
   fTFile = new TFile("FlashOutput.root", "RECREATE");
   fTree  = tfs->make<TTree>("flashtree","FlashAnalysis Tree");
 
-  //Set branches for truth information 
+  //Set branches for truth information
   fTree->Branch("mcevts_truth", &mcevts_truth,  "mcevts_truth/I"               );
   fTree->Branch("nuPDG_truth",  nuPDG_truth,    "nuPDG_truth[mcevts_truth]/I"  );
   fTree->Branch("ccnc_truth",   ccnc_truth,     "ccnc_truth[mcevts_truth]/I"   );
@@ -117,7 +117,7 @@ lee::ElectronSelectionAna::ElectronSelectionAna(fhicl::ParameterSet const & p)
   fTree->Branch("nnuvtx",     &nnuvtx,    "nnuvtx/S"             );
   fTree->Branch("nuvtxx",     nuvtxx,     "nuvtxx[nnuvtx]/F"     );
   fTree->Branch("nuvtxy",     nuvtxy,     "nuvtxy[nnuvtx]/F"     );
-  fTree->Branch("nuvtxz",     nuvtxz,     "nuvtxz[nnuvtx]/F"     ); 
+  fTree->Branch("nuvtxz",     nuvtxz,     "nuvtxz[nnuvtx]/F"     );
   fTree->Branch("nuvtxpdg",   nuvtxpdg,   "nuvtxpdg[nnuvtx]/S"   );
   fTree->Branch("chrgecenter",chrgecenter,"chrgecenter[nnuvtx]/S");  //????????????????????????????????
 
@@ -171,4 +171,3 @@ void lee::ElectronSelectionAna::fillTree(art::Event const & e)
 
 
 DEFINE_ART_MODULE(lee::ElectronSelectionAna)
-
