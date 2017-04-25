@@ -117,7 +117,7 @@ void ElectronEventSelectionAlg::reconfigure(fhicl::ParameterSet const & p)
 void ElectronEventSelectionAlg::traversePFParticleTree(
   const art::ValidHandle<std::vector<recob::PFParticle> > pfparticles,
   size_t top_index,
-  std::vector<size_t> unordered_daugthers )
+  std::vector<size_t> & unordered_daugthers )
 {
 
   // This is a tree-traversal algorithm.  It returns the index of the top particle, plus the index
@@ -152,6 +152,7 @@ TVector3 ElectronEventSelectionAlg::calculateChargeCenter(
   daughters.reserve(50);
   traversePFParticleTree( pfparticles, top_particle_index, daughters);
 
+
   // Get the associations from pfparticle to spacepoint
   art::InputTag pandoraNu_tag { "pandoraNu" };
   auto const& spacepoint_handle = evt.getValidHandle<std::vector<recob::SpacePoint>>(pandoraNu_tag);
@@ -180,6 +181,9 @@ TVector3 ElectronEventSelectionAlg::calculateChargeCenter(
         if (hit->View() == geo::kZ) {
           // Collection hits only
           double weight = hit->Integral();
+          // std::cout << "Hit Integral: " << hit->Integral() << std::endl;
+          // std::cout << "Hit PeakAmplitude: " << hit->PeakAmplitude() << std::endl;
+          // std::cout << "Hit SummedADC: " << hit->SummedADC() << std::endl;
           auto xyz = _sps->XYZ();
           chargecenter[0] += (xyz[0]) * weight;
           chargecenter[1] += (xyz[1]) * weight;
@@ -193,6 +197,7 @@ TVector3 ElectronEventSelectionAlg::calculateChargeCenter(
     } // spacepoints
 
   } // pfparticles
+
 
   // Normalize;
   chargecenter[0] /= totalweight;
@@ -232,15 +237,21 @@ bool ElectronEventSelectionAlg::opticalfilter(
   {
     recob::OpFlash const& flash = optical_handle->at(ifl);
     if ((flash.Time() > 4.8 || flash.Time() < 3.2)) continue;
-    bool sigma    = flash.ZCenter() + flash.ZWidth() / par1 > _this_center_of_charge.Z() && flash.ZCenter() + flash.ZWidth() / par1 < _this_center_of_charge.Z();
+    bool sigma    = flash.ZCenter() + flash.ZWidth() / par1 > _this_center_of_charge.Z() &&
+                    flash.ZCenter() + flash.ZWidth() / par1 < _this_center_of_charge.Z();
     bool absolute = std::abs(flash.ZCenter() - _this_center_of_charge.Z()) < par2;
-    //std::cout << "The flash time is " << flash.Time() << ", Zcentre: " << flash.ZCenter() << " and the Zwidth: " << flash.ZWidth() << std::endl;
+    std::cout << "The flash time is " << flash.Time()
+              << ", Zcentre: " << flash.ZCenter()
+              << " and the Zwidth: " << flash.ZWidth()
+              << std::endl;
+    std::cout << "Z Center of charge is " << _this_center_of_charge.Z() << std::endl;
     if (sigma || absolute)
     {
       pass = true;
       pass_index = ifl;
     }
   }
+
 
   if (pass_index != -1) {
     _selected_flash = pass_index;

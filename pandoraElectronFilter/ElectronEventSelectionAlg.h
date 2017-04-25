@@ -122,7 +122,7 @@ public:
 
   void traversePFParticleTree(const art::ValidHandle<std::vector<recob::PFParticle> > pfparticles,
                               size_t top_index,
-                              std::vector<size_t> unordered_daugthers );
+                              std::vector<size_t> & unordered_daugthers );
 
   /**
    * @brief Reset internal variables
