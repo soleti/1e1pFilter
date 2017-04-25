@@ -227,7 +227,7 @@ art::Ptr<recob::Shower> lee::PandoraLEEAnalyzer::get_most_energetic_shower(std::
 
   double max_energy = std::numeric_limits<double>::lowest();
   for (auto const& shower: showers) {
-    if (shower->Energy() > max_energy) {
+    if (shower->Energy()[shower->best_plane()] > max_energy) {
       most_energetic_shower = shower;
     }
   }
