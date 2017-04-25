@@ -14,6 +14,7 @@
 // #include "art/Framework/Principal/Run.h"
 // #include "art/Framework/Principal/SubRun.h"
 #include "art/Framework/Services/Registry/ServiceHandle.h"
+#include "art/Framework/Services/Registry/ServiceHandle.h"
 
 #include "canvas/Persistency/Common/FindOneP.h"
 #include "canvas/Persistency/Common/FindManyP.h"
@@ -32,8 +33,7 @@
 #include "lardataobj/RecoBase/OpFlash.h"
 
 #include "larcore/Geometry/Geometry.h"
-
-
+#include "uboone/SpaceChargeServices/SpaceChargeServiceMicroBooNE.h"
 
 
 namespace lee {
@@ -128,6 +128,8 @@ public:
    * @brief Reset internal variables
    */
   void clear();
+
+  TVector3 spaceChargeTrueToReco(const TVector3 & xyz);
 
 
 public:
