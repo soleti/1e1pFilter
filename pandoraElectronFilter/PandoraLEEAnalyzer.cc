@@ -125,8 +125,10 @@ private:
   size_t choose_candidate(std::vector<size_t> & candidates, const art::Event & evt);
   void get_daughter_tracks(size_t ipf, const art::Event & evt, std::vector< art::Ptr<recob::Track> > &tracks);
   void get_daughter_showers(size_t ipf, const art::Event & evt, std::vector< art::Ptr<recob::Shower> > &showers);
-  art::Ptr<recob::Track> get_longest_track(std::vector< art::Ptr<recob::Track> > &tracks);
   double trackEnergy(const art::Ptr<recob::Track>& track, const art::Event & evt);
+
+  art::Ptr<recob::Track> get_longest_track(std::vector< art::Ptr<recob::Track> > &tracks);
+  art::Ptr<recob::Shower> get_most_energetic_shower(std::vector< art::Ptr<recob::Shower> > &showers);
 
 };
 
@@ -218,6 +220,18 @@ double lee::PandoraLEEAnalyzer::distance(double a[3], double b[3]) {
   }
 
   return sqrt(d);
+}
+
+art::Ptr<recob::Shower> lee::PandoraLEEAnalyzer::get_most_energetic_shower(std::vector< art::Ptr<recob::Shower> > &showers) {
+  art::Ptr<recob::Shower> most_energetic_shower;
+
+  double max_energy = std::numeric_limits<double>::lowest();
+  for (auto const& shower: showers) {
+    if (shower->Energy() > max_energy) {
+      most_energetic_shower = shower;
+    }
+  }
+  return most_energetic_shower;
 }
 
 art::Ptr<recob::Track> lee::PandoraLEEAnalyzer::get_longest_track(std::vector< art::Ptr<recob::Track> > &tracks) {
