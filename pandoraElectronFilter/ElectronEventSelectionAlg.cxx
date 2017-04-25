@@ -240,11 +240,11 @@ bool ElectronEventSelectionAlg::opticalfilter(
     bool sigma    = flash.ZCenter() + flash.ZWidth() / par1 > _this_center_of_charge.Z() &&
                     flash.ZCenter() + flash.ZWidth() / par1 < _this_center_of_charge.Z();
     bool absolute = std::abs(flash.ZCenter() - _this_center_of_charge.Z()) < par2;
-    std::cout << "The flash time is " << flash.Time()
-              << ", Zcentre: " << flash.ZCenter()
-              << " and the Zwidth: " << flash.ZWidth()
-              << std::endl;
-    std::cout << "Z Center of charge is " << _this_center_of_charge.Z() << std::endl;
+    // std::cout << "The flash time is " << flash.Time()
+    //           << ", Zcentre: " << flash.ZCenter()
+    //           << " and the Zwidth: " << flash.ZWidth()
+    //           << std::endl;
+    // std::cout << "Z Center of charge is " << _this_center_of_charge.Z() << std::endl;
     if (sigma || absolute)
     {
       pass = true;
@@ -290,7 +290,6 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
   }
 
   // If there are no particles flagged as primary, return false
-  std::cout << "Primary indexes size " << _primary_indexes.size() << std::endl;
   if (_primary_indexes.size() == 0) {
     return false;
   }
@@ -327,7 +326,6 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
                                        _selected_flash,
                                        evt);
 
-    std::cout << "Flash passed " << _flash_passed << std::endl;
     if (! _flash_passed) {
       _neutrino_candidate_passed[_i_primary] = false;
       continue;
@@ -378,7 +376,7 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
         contained_shower = is_fiducial(start_point) && is_fiducial(end_point);
         // TODO flash position check
         if (contained_shower) {
-          _pfp_id_showers_from_primary[_primary_indexes[_i_primary]].push_back(pfdaughter);
+          _pfp_id_showers_from_primary[_i_primary].push_back(pfdaughter);
           showers++;
         }
 
@@ -391,7 +389,7 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
 
         if (track_obj->Length() < m_trackLength) {
           tracks++;
-          _pfp_id_tracks_from_primary[_primary_indexes[_i_primary]].push_back(pfdaughter);
+          _pfp_id_tracks_from_primary[_i_primary].push_back(pfdaughter);
         }
 
         // h_track_length->Fill(track_obj->Length());
@@ -400,6 +398,7 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
       _n_tracks[_i_primary] = tracks;
       _n_showers[_i_primary] = showers;
       std::cout << showers << " " << tracks << std::endl;
+
       if (showers >= 1 && tracks >= m_nTracks)
       {
         //closest_distance = std::min(distance(neutrino_vertex,true_neutrino_vertex),closest_distance);
