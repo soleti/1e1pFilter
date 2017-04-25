@@ -1,5 +1,6 @@
 #include "services_microboone.fcl"
 #include "detectorclocks_microboone.fcl"
+#include "pandora_lee_ana.fcl"
 
 process_name : PandoraLEEAnalyzer      #The process name must NOT contain any underscores
 
@@ -10,22 +11,23 @@ source : {
 
 services :
 {
-  scheduler:               { defaultExceptions: false }    # Make all uncaught exceptions fatal.
-  TFileService: { fileName: "MyPandoraLEEAnalyzer.root" }
-  TimeTracker:       {}
-  RandomNumberGenerator: {}
+  scheduler:                { defaultExceptions: false }    # Make all uncaught exceptions fatal.
+  TFileService:             { fileName: "MyPandoraLEEAnalyzer.root" }
+  TimeTracker:              {}
+  RandomNumberGenerator:    {}
   UBOpReadoutMap:           @local::microboone_opreadoutmap
-  DetectorClocksService:            @local::microboone_detectorclocks
-  DatabaseUtil:           @local::microboone_database
-
-  message:      @local::standard_info
+  DetectorClocksService:    @local::microboone_detectorclocks
+  DatabaseUtil:             @local::microboone_database
+  message:                  @local::standard_info
 
 }
 
 outputs: {
-  optionalout: { module_type: RootOutput
-                 fileName: "output_file.root"
-                 fastCloning: false }
+  optionalout: { 
+    module_type: RootOutput
+    fileName: "output_file.root"
+    fastCloning: false 
+  }
 }
 
 
@@ -36,8 +38,7 @@ physics: {
   }
   analyzers: {
      # ParameterSets for zero or more analyzer modules
-     myana: { module_type: PandoraLEEAnalyzer
-              input_param: "optional" }
+     myana:  @local::lee_pandora_analyzer
   }
 
   filters : {

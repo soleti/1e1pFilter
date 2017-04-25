@@ -81,6 +81,16 @@ public:
    */
   bool is_fiducial(const TVector3 & x) const;
 
+
+  /**
+  * @brief Determine if the specified point is in the fiducial volume
+  *        Not recommended, no array size checking is done.
+  *
+  * @param x array of 3D location
+  * @return True or false
+  */
+  bool is_fiducial(double x[3]) const;
+
   /**
    * @brief Compute the 3D distance between two points
    *
@@ -131,6 +141,11 @@ public:
   const std::vector<TVector3> & get_neutrino_vertex() const {return _neutrino_vertex;}
   const std::vector<int> & get_n_showers() const {return _n_showers;}
   const std::vector<int> & get_n_tracks() const {return _n_tracks;}
+  const std::vector< std::vector<size_t> > &
+  get_pfp_id_showers_from_primary() const {return _pfp_id_showers_from_primary;}
+  const std::vector< std::vector<size_t> > &
+  get_pfp_id_tracks_from_primary() const {return _pfp_id_tracks_from_primary;}
+
 
 protected:
 
@@ -144,7 +159,9 @@ protected:
   std::vector<int > _op_flash_indexes;
   std::vector<TVector3> _neutrino_vertex;
   std::vector<int> _n_showers;
+  std::vector< std::vector < size_t > > _pfp_id_showers_from_primary;
   std::vector<int> _n_tracks;
+  std::vector< std::vector < size_t > > _pfp_id_tracks_from_primary;
 
 
 protected:

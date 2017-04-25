@@ -13,19 +13,4 @@ lee_electron_alg: {
     absoluteflashdist:          50.0
 }
 
-lee_electron_filter:
-{ 
-    module_type:                "ElectronFilterPandora"
-
-
-}
-
-lee_electron_ana:
-{
-    module_type:                "ElectronSelectionAna"
-    ElectronSelectionAlg:       @local::lee_electron_alg
-
-}
-
 END_PROLOG
-

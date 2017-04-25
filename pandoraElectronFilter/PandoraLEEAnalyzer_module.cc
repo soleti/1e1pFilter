@@ -114,15 +114,21 @@ private:
   int _n_tracks;
   int _n_showers;
 
+  double _vx;
+  double _vy;
+  double _vz;
+
   bool is_fiducial(double x[3]) const;
   double distance(double a[3], double b[3]);
   bool is_dirt(double x[3]) const;
   void measure_energy(size_t ipf, const art::Event & evt, double & energy);
   size_t choose_candidate(std::vector<size_t> & candidates, const art::Event & evt);
-  void get_daughter_tracks(size_t ipf, const art::Event & evt, std::vector< art::Ptr<recob::Track> > &tracks);
+  void get_daughter_tracks( std::vector < size_t > pf_ids, const art::Event & evt, std::vector< art::Ptr<recob::Track> > &tracks)
   void get_daughter_showers(size_t ipf, const art::Event & evt, std::vector< art::Ptr<recob::Shower> > &showers);
-  art::Ptr<recob::Track> get_longest_track(std::vector< art::Ptr<recob::Track> > &tracks);
   double trackEnergy(const art::Ptr<recob::Track>& track, const art::Event & evt);
+
+  art::Ptr<recob::Track> get_longest_track(std::vector< art::Ptr<recob::Track> > &tracks);
+  art::Ptr<recob::Shower> get_most_energetic_shower(std::vector< art::Ptr<recob::Shower> > &showers);
 
 };
 
@@ -153,6 +159,9 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const & pset)
   myTTree->Branch("trk_len",  &_track_length, "trk_len/d");
   myTTree->Branch("n_tracks",  &_n_tracks, "n_tracks/i");
   myTTree->Branch("n_showers",  &_n_showers, "n_showers/i");
+  myTTree->Branch("vx",  &_vx, "vx/d");
+  myTTree->Branch("vy",  &_vy, "vy/d");
+  myTTree->Branch("vz",  &_vz, "vz/d");
 
   this->reconfigure(pset);
 
@@ -213,6 +222,18 @@ double lee::PandoraLEEAnalyzer::distance(double a[3], double b[3]) {
   return sqrt(d);
 }
 
+art::Ptr<recob::Shower> lee::PandoraLEEAnalyzer::get_most_energetic_shower(std::vector< art::Ptr<recob::Shower> > &showers) {
+  art::Ptr<recob::Shower> most_energetic_shower;
+
+  double max_energy = std::numeric_limits<double>::lowest();
+  for (auto const& shower: showers) {
+    if (shower->Energy()[shower->best_plane()] > max_energy) {
+      most_energetic_shower = shower;
+    }
+  }
+  return most_energetic_shower;
+}
+
 art::Ptr<recob::Track> lee::PandoraLEEAnalyzer::get_longest_track(std::vector< art::Ptr<recob::Track> > &tracks) {
   art::Ptr<recob::Track> longest_track;
 
@@ -225,7 +246,7 @@ art::Ptr<recob::Track> lee::PandoraLEEAnalyzer::get_longest_track(std::vector< a
   return longest_track;
 }
 
-void lee::PandoraLEEAnalyzer::get_daughter_tracks(size_t ipf, const art::Event & evt, std::vector< art::Ptr<recob::Track> > &tracks) {
+void lee::PandoraLEEAnalyzer::get_daughter_tracks( std::vector < size_t > pf_ids, const art::Event & evt, std::vector< art::Ptr<recob::Track> > &tracks) {
   art::InputTag pandoraNu_tag { "pandoraNu" };
 
   auto const& pfparticle_handle = evt.getValidHandle< std::vector< recob::PFParticle > >( pandoraNu_tag );
@@ -233,17 +254,13 @@ void lee::PandoraLEEAnalyzer::get_daughter_tracks(size_t ipf, const art::Event &
 
   art::FindOneP< recob::Track > track_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
 
-  for (auto const& pfdaughter: pfparticles[ipf].Daughters()) {
-    if (pfparticles[pfdaughter].PdgCode() == 13) {
-      auto const& track_obj = track_per_pfpart.at(pfdaughter);
-      if (track_obj->Length() < m_trackLength) {
-        tracks.push_back(track_obj);
-      }
-    }
+  for (auto const& pf_id: pf_ids) {
+    auto const& track_obj = track_per_pfpart.at(pf_id);
+    tracks.push_back(track_obj);
   }
 }
 
-void lee::PandoraLEEAnalyzer::get_daughter_showers(size_t ipf, const art::Event & evt, std::vector< art::Ptr<recob::Shower> > &showers) {
+void lee::PandoraLEEAnalyzer::get_daughter_showers(std::vector < size_t > pf_ids, const art::Event & evt, std::vector< art::Ptr<recob::Shower> > &showers) {
   art::InputTag pandoraNu_tag { "pandoraNu" };
 
   auto const& pfparticle_handle = evt.getValidHandle< std::vector< recob::PFParticle > >( pandoraNu_tag );
@@ -251,25 +268,11 @@ void lee::PandoraLEEAnalyzer::get_daughter_showers(size_t ipf, const art::Event 
 
   art::FindOneP< recob::Shower > shower_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
 
-  for (auto const& pfdaughter: pfparticles[ipf].Daughters()) {
-    if (pfparticles[pfdaughter].PdgCode() == 11) {
-      bool contained_shower = false;
-      double start_point[3];
-      double end_point[3];
-      auto const& shower_obj = shower_per_pfpart.at(pfdaughter);
-
-      double shower_length = shower_obj->Length();
-      for (int ix = 0; ix < 3; ix++) {
-        start_point[ix] = shower_obj->ShowerStart()[ix];
-        end_point[ix] = shower_obj->ShowerStart()[ix]+shower_length*shower_obj->Direction()[ix];
-      }
-
-      contained_shower = is_fiducial(start_point) && is_fiducial(end_point);
-
-      if (contained_shower) showers.push_back(shower_obj);
-
-    }
+  for (auto const& pf_id: pf_ids) {
+    auto const& shower_obj = shower_per_pfpart.at(pf_id);
+    showers.push_back(shower_obj);
   }
+
 }
 
 double lee::PandoraLEEAnalyzer::trackEnergy(const art::Ptr<recob::Track>& track, const art::Event & evt)
@@ -369,7 +372,8 @@ size_t lee::PandoraLEEAnalyzer::choose_candidate(std::vector<size_t> & candidate
 
     std::vector<art::Ptr<recob::Track>> nu_tracks;
 
-    get_daughter_tracks(ic, evt, nu_tracks);
+    std::vector< size_t > pfp_tracks_id = fElectronEventSelectionAlg.get_pfp_id_showers_from_primary().at(ic);
+    get_daughter_tracks(pfp_tracks_id, evt, nu_tracks);
     longest_track_dir = get_longest_track(nu_tracks)->StartDirection().Z();
 
     if (longest_track_dir > most_z) {
@@ -493,26 +497,32 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
     size_t ipf_candidate = choose_candidate(nu_candidates, evt);
 
     measure_energy(ipf_candidate, evt, _energy);
-    std::cout << "Energy: " << _energy << std::endl;
-    if (generator.size() > 0) {
-      art::FindOneP< recob::Vertex > vertex_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
-      auto const& vertex_obj = vertex_per_pfpart.at(ipf_candidate);
 
-      double reco_neutrino_vertex[3];
-      vertex_obj->XYZ(reco_neutrino_vertex);
+    art::FindOneP< recob::Vertex > vertex_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
+    auto const& vertex_obj = vertex_per_pfpart.at(ipf_candidate);
+
+    double reco_neutrino_vertex[3];
+    vertex_obj->XYZ(reco_neutrino_vertex);
+    _vx = reco_neutrino_vertex[0];
+    _vy = reco_neutrino_vertex[1];
+    _vz = reco_neutrino_vertex[2];
+
+    if (generator.size() > 0) {
       if (distance(reco_neutrino_vertex,true_neutrino_vertex) > 10) {
         _category = k_cosmic;
       }
     }
 
     std::vector<art::Ptr<recob::Track>> chosen_tracks;
-    get_daughter_tracks(ipf_candidate, evt, chosen_tracks);
+    std::vector< size_t > pfp_tracks_id = fElectronEventSelectionAlg.get_pfp_id_showers_from_primary().at(ipf_candidate);
+
+    get_daughter_tracks(pfp_tracks_id, evt, chosen_tracks);
 
     _track_dir_z = get_longest_track(chosen_tracks)->StartDirection().Z();
     _track_length = get_longest_track(chosen_tracks)->Length();
     _n_tracks = fElectronEventSelectionAlg.get_n_tracks().at(ipf_candidate);
     _n_showers = fElectronEventSelectionAlg.get_n_showers().at(ipf_candidate);
-    
+
     std::cout << "Chosen neutrino " << ipf_candidate << std::endl;
 
   } catch (...) {
