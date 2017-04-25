@@ -124,6 +124,10 @@ private:
   double _vy;
   double _vz;
 
+  double _true_vx;
+  double _true_vy;
+  double _true_vz;
+
   int _run;
   int _subrun;
   int _event;
@@ -180,6 +184,9 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const & pset)
   myTTree->Branch("vx",  &_vx, "vx/d");
   myTTree->Branch("vy",  &_vy, "vy/d");
   myTTree->Branch("vz",  &_vz, "vz/d");
+  myTTree->Branch("true_vx",  &_true_vx, "vx/d");
+  myTTree->Branch("true_vy",  &_true_vy, "vy/d");
+  myTTree->Branch("true_vz",  &_true_vz, "vz/d");
   myTTree->Branch("nu_E",  &_nu_energy, "nu_E/d");
   myTTree->Branch("passed",  &_event_passed, "passed/b");
 
@@ -485,7 +492,10 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
     true_neutrino_vertex[0] = generator[0].GetNeutrino().Nu().Vx();
     true_neutrino_vertex[1] = generator[0].GetNeutrino().Nu().Vy();
     true_neutrino_vertex[2] = generator[0].GetNeutrino().Nu().Vz();
-
+    _true_vx = true_neutrino_vertex[0];
+    _true_vy = true_neutrino_vertex[1];
+    _true_vz = true_neutrino_vertex[2];
+    
     if (is_dirt(true_neutrino_vertex)) {
       _category = k_dirt;
     }
