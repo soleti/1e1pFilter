@@ -21,17 +21,15 @@
 #include "TFile.h"
 #include "TVector3.h"
 #include "art/Framework/Services/Optional/TFileService.h"
-constexpr int kMaxVertices   = 10;                  ///< max number of PandoraNu neutrino candidate vertices
-constexpr int kMaxTruth      = 10;                  ///< max number of neutrino Interactions in the spill
+
 namespace lee {
   class ElectronSelectionAna;
 }
 class lee::ElectronSelectionAna : public art::EDAnalyzer {
 public:
   explicit ElectronSelectionAna(fhicl::ParameterSet const & pset);
-  // The compiler-generated destructor is fine for non-base
-  // classes without bare pointers or other resource use.
   virtual ~ElectronSelectionAna();
+
   void reconfigure(fhicl::ParameterSet const & pset);
   // Plugins should not be copied or assigned.
   ElectronSelectionAna(ElectronSelectionAna const &) = delete;
@@ -41,29 +39,34 @@ public:
   // Required functions.
   void analyze(art::Event const & e) override;
 private:
+
   // functions
   void fillTree(art::Event const & e);
+
+
   // variables
   lee::ElectronEventSelectionAlg fElectronEventSelectionAlg;
   TFile*      fTFile;
   TTree*      fTree;
+
   //Truth information
-  Int_t     mcevts_truth;                               ///< number of neutrino Interactions in the spill
-  Int_t     nuPDG_truth[kMaxTruth];                     ///< neutrino PDG code
-  Int_t     ccnc_truth[kMaxTruth];                      ///< 0=CC 1=NC
-  Int_t     mode_truth[kMaxTruth];                      ///< 0=QE/El, 1=RES, 2=DIS, 3=Coherent production
-  Float_t   enu_truth[kMaxTruth];                       ///< true neutrino energy
-  Float_t   nuvtxx_truth[kMaxTruth];                    ///< neutrino vertex x
-  Float_t   nuvtxy_truth[kMaxTruth];                    ///< neutrino vertex y
-  Float_t   nuvtxz_truth[kMaxTruth];                    ///< neutrino vertex z
+  std::vector<Short_t>   mcevts_truth;                    ///< number of neutrino Interactions in the spill
+  std::vector<Short_t>   nuPDG_truth;                     ///< neutrino PDG code
+  std::vector<Short_t>   ccnc_truth;                      ///< 0=CC 1=NC
+  std::vector<Short_t>   mode_truth;                      ///< 0=QE/El, 1=RES, 2=DIS, 3=Coherent production
+  std::vector<Float_t>   enu_truth;                       ///< true neutrino energy
+  std::vector<Float_t>   nuvtxx_truth;                    ///< neutrino vertex x
+  std::vector<Float_t>   nuvtxy_truth;                    ///< neutrino vertex y
+  std::vector<Float_t>   nuvtxz_truth;                    ///< neutrino vertex z
+
   //PandoraNu information
   Short_t nnuvtx;                                       ///< Number of PandoraNu neutrino candidate vertices
-  Float_t nuvtxx[kMaxVertices];                         ///< x coordinate
-  Float_t nuvtxy[kMaxVertices];                         ///< y coordinate
-  Float_t nuvtxz[kMaxVertices];                         ///< z coordinate
-  Short_t nuvtxpdg[kMaxVertices];                       ///< PDG code assigned by PandoraNu
+  std::vector<Float_t> nuvtxx;                          ///< x coordinate
+  std::vector<Float_t> nuvtxy;                          ///< y coordinate
+  std::vector<Float_t> nuvtxz;                          ///< z coordinate
+  std::vector<Short_t> nuvtxpdg;                        ///< PDG code assigned by PandoraNu
+  std::vector<TVector3>center_of_charge;                ///< Center of deposited charge
 
-  std::vector<TVector3> center_of_charge[kMaxVertices];  ///< Center of deposited charge
   //Optical information
   Short_t nfls;                                         ///< Number of reconstructed flashes
   std::vector<Float_t> flsTime;                         ///< Flash time (us)
@@ -86,22 +89,25 @@ lee::ElectronSelectionAna::ElectronSelectionAna(fhicl::ParameterSet const & pset
   art::ServiceHandle<art::TFileService> tfs;
   fTFile = new TFile("FlashOutput.root", "RECREATE");
   fTree  = tfs->make<TTree>("flashtree","FlashAnalysis Tree");
+
   //Set branches for truth information
-  fTree->Branch("mcevts_truth", &mcevts_truth,  "mcevts_truth/I"               );
-  fTree->Branch("nuPDG_truth",  nuPDG_truth,    "nuPDG_truth[mcevts_truth]/I"  );
-  fTree->Branch("ccnc_truth",   ccnc_truth,     "ccnc_truth[mcevts_truth]/I"   );
-  fTree->Branch("mode_truth",   mode_truth,     "mode_truth[mcevts_truth]/I"   );
-  fTree->Branch("enu_truth",    enu_truth,      "enu_truth[mcevts_truth]/F"    );
-  fTree->Branch("nuvtxx_truth", nuvtxx_truth,   "nuvtxx_truth[mcevts_truth]/F" );
-  fTree->Branch("nuvtxy_truth", nuvtxy_truth,   "nuvtxy_truth[mcevts_truth]/F" );
-  fTree->Branch("nuvtxz_truth", nuvtxz_truth,   "nuvtxz_truth[mcevts_truth]/F" );
+  fTree->Branch("mcevts_truth", &mcevts_truth,   "mcevts_truth/I"               );
+  fTree->Branch("nuPDG_truth",  &nuPDG_truth,    "nuPDG_truth[mcevts_truth]/I"  );
+  fTree->Branch("ccnc_truth",   &ccnc_truth,     "ccnc_truth[mcevts_truth]/I"   );
+  fTree->Branch("mode_truth",   &mode_truth,     "mode_truth[mcevts_truth]/I"   );
+  fTree->Branch("enu_truth",    &enu_truth,      "enu_truth[mcevts_truth]/F"    );
+  fTree->Branch("nuvtxx_truth", &nuvtxx_truth,   "nuvtxx_truth[mcevts_truth]/F" );
+  fTree->Branch("nuvtxy_truth", &nuvtxy_truth,   "nuvtxy_truth[mcevts_truth]/F" );
+  fTree->Branch("nuvtxz_truth", &nuvtxz_truth,   "nuvtxz_truth[mcevts_truth]/F" );
+
   //Set branches for PandoraNU information
-  fTree->Branch("nnuvtx",     &nnuvtx,    "nnuvtx/S"             );
-  fTree->Branch("nuvtxx",     nuvtxx,     "nuvtxx[nnuvtx]/F"     );
-  fTree->Branch("nuvtxy",     nuvtxy,     "nuvtxy[nnuvtx]/F"     );
-  fTree->Branch("nuvtxz",     nuvtxz,     "nuvtxz[nnuvtx]/F"     );
-  fTree->Branch("nuvtxpdg",   nuvtxpdg,   "nuvtxpdg[nnuvtx]/S"   );
+  fTree->Branch("nnuvtx",     &nnuvtx,     "nnuvtx/S"             );
+  fTree->Branch("nuvtxx",     &nuvtxx,     "nuvtxx[nnuvtx]/F"     );
+  fTree->Branch("nuvtxy",     &nuvtxy,     "nuvtxy[nnuvtx]/F"     );
+  fTree->Branch("nuvtxz",     &nuvtxz,     "nuvtxz[nnuvtx]/F"     );
+  fTree->Branch("nuvtxpdg",   &nuvtxpdg,   "nuvtxpdg[nnuvtx]/S"   );
   //fTree->Branch("chrgecenter",chrgecenter,"chrgecenter[nnuvtx]/S");  //????????????????????????????????
+
   //Set branches for optical information
   fTree->Branch("nfls",       &nfls,       "nfls/S"             );
   fTree->Branch("flsTime",    &flsTime,    "flash_time[nfls]/F" );
@@ -114,7 +120,7 @@ lee::ElectronSelectionAna::ElectronSelectionAna(fhicl::ParameterSet const & pset
 }
 lee::ElectronSelectionAna::~ElectronSelectionAna()
 {
-  //wrrite output file and tree
+  //write output file and tree
   std::cout << "Writing output..." << std::endl;
   fTFile->cd();
   fTree->Write("flashtree");
