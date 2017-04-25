@@ -423,6 +423,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
         nu_candidates.push_back(inu);
       }
     }
+    std::cout << "EVENT PASSED" << std::endl;
   } else {
     return;
   }
