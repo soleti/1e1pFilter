@@ -19,6 +19,7 @@
 
 #include "art/Framework/Services/Optional/TFileService.h"
 #include "lardataobj/RecoBase/OpFlash.h"
+#include "lardataobj/RecoBase/PFParticle.h"
 #include "TTree.h"
 #include "TFile.h"
 #include "TVector3.h"
@@ -173,7 +174,8 @@ void lee::ElectronSelectionAna::fillTree(art::Event const & e)
   //TODO
 
   // Fill PandoraNu information
-  //TODO: PandoraNu PDG code of passed
+  art::InputTag pandoraNu_tag{"pandoraNu"};
+  auto const& pfparticle_handle = e.getValidHandle< std::vector< recob::PFParticle > >( pandoraNu_tag );
   passed = fElectronEventSelectionAlg.eventSelected(e);
   if(passed)
   {
@@ -193,9 +195,13 @@ void lee::ElectronSelectionAna::fillTree(art::Event const & e)
         center_of_charge_x.push_back(center_of_charge.X());
         center_of_charge_y.push_back(center_of_charge.Y());
         center_of_charge_z.push_back(center_of_charge.Z());
+
+        recob::PFParticle const& pfp = pfparticle_handle->at(i);
+        nuvtxpdg.push_back(pfp.PdgCode());
       }
     }
   }
+
 
   // Fill optical information
   art::InputTag optical_tag{"simpleFlashBeam"};
