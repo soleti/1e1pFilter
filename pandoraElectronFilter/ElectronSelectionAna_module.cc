@@ -21,6 +21,7 @@
 
 #include "TTree.h"
 #include "TFile.h"
+#include "TVector3"
 
 constexpr int kMaxVertices   = 10;                  ///< max number of PandoraNu neutrino candidate vertices
 constexpr int kMaxTruth      = 10;                  ///< max number of neutrino Interactions in the spill
