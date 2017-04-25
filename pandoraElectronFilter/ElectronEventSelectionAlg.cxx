@@ -279,6 +279,7 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
   }
 
   // If there are no particles flagged as primary, return false
+  std::cout << "Primary indexes size " << _primary_indexes.size() << std::endl;
   if (_primary_indexes.size() == 0) {
     return false;
   }
@@ -315,6 +316,7 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
                                        _selected_flash,
                                        evt);
 
+    std::cout << "Flash passed " << _flash_passed << std::endl;
     if (! _flash_passed) {
       _neutrino_candidate_passed[_i_primary] = false;
       continue;
@@ -386,7 +388,7 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
 
       _n_tracks[_i_primary] = tracks;
       _n_showers[_i_primary] = showers;
-
+      std::cout << showers << " " << tracks << std::endl;
       if (showers >= 1 && tracks >= m_nTracks)
       {
         //closest_distance = std::min(distance(neutrino_vertex,true_neutrino_vertex),closest_distance);

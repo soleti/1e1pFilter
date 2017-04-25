@@ -37,6 +37,7 @@
 #include "larcore/Geometry/Geometry.h"
 #include "lardataobj/AnalysisBase/Calorimetry.h"
 #include "larpandora/LArPandoraInterface/LArPandoraHelper.h"
+#include "larcoreobj/SummaryData/POTSummary.h"
 
 #include "TTree.h"
 #include "TFile.h"
@@ -70,6 +71,7 @@ public:
 
   // Required functions.
   void analyze(art::Event const & e) override;
+  void endSubRun(const art::SubRun& sr);
   void reconfigure(fhicl::ParameterSet const &pset) override;
 
 private:
@@ -120,6 +122,14 @@ private:
   double _vy;
   double _vz;
 
+  int _run;
+  int _subrun;
+  int _event;
+
+  int _run_sr;
+  int _subrun_sr;
+  double _pot;
+
   bool is_fiducial(double x[3]) const;
   double distance(double a[3], double b[3]);
   bool is_dirt(double x[3]) const;
@@ -146,6 +156,10 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const & pset)
   myTFile = new TFile("PandoraLEEAnalyzerOutput.root", "RECREATE");
   myTTree = tfs->make<TTree>("pandoratree","PandoraAnalysis Tree");
 
+  myPOTTTree = tfs->make<TTree>("pot","POT Tree");
+
+
+
   e_energy = tfs->make<TEfficiency>("e_energy",";#nu_{e} energy [GeV];N. Entries / 0.1 GeV",30,0,3);
   h_cosmic = tfs->make<TH1F>("h_cosmic",";#nu_{e} energy [GeV];N. Entries / 0.1 GeV",30,0,3);
   h_nc = tfs->make<TH1F>("h_nc",";#nu_{e} energy [GeV];N. Entries / 0.1 GeV",30,0,3);
@@ -165,6 +179,11 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const & pset)
   myTTree->Branch("vy",  &_vy, "vy/d");
   myTTree->Branch("vz",  &_vz, "vz/d");
   myTTree->Branch("nu_E",  &_nu_energy, "nu_E/d");
+
+  myPOTTTree->Branch("run", &_run_sr, "run/i");
+  myPOTTTree->Branch("subrun", &_subrun_sr, "subrun/i");
+  myPOTTTree->Branch("pot", &_pot, "pot/d");
+
 
   this->reconfigure(pset);
 
@@ -411,8 +430,31 @@ bool lee::PandoraLEEAnalyzer::is_dirt(double x[3]) const
   return !(is_x && is_y && is_z);
 }
 
+
+void microboone::AnalysisTree::endSubRun(const art::SubRun& sr)
+{
+  art::InputTag fPOTModuleLabel { "generator" };
+
+  _run_sr = sr.run();
+  _subrun_sr = sr.subRun();
+
+  art::Handle< sumdata::POTSummary > potListHandle;
+  if(sr.getByLabel(fPOTModuleLabel,potListHandle))
+    _pot=potListHandle->totpot;
+  else
+    _pot=0.;
+
+  myPOTTTree->Fill();
+
+}
+
 void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
 {
+
+  _run = evt.run();
+  _subrun = evt.subRun();
+  _event = evt.id().event();
+
   std::vector<size_t> nu_candidates;
 
   bool event_passed = fElectronEventSelectionAlg.eventSelected(evt);
@@ -423,6 +465,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
         nu_candidates.push_back(inu);
       }
     }
+    std::cout << "EVENT PASSED" << std::endl;
   } else {
     return;
   }
