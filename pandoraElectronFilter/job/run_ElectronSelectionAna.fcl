@@ -15,11 +15,7 @@ services :
   TFileService:             { fileName: "ElectronSelectionAna.root" }
   TimeTracker:              {}
   RandomNumberGenerator:    {}
-  UBOpReadoutMap:           @local::microboone_opreadoutmap
-  DetectorClocksService:    @local::microboone_detectorclocks
-  DatabaseUtil:             @local::microboone_database
-  message:                  @local::standard_info
-
+  @table::microboone_services_reco
 }
 
 outputs: {

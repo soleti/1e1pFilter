@@ -155,7 +155,7 @@ lee::ElectronSelectionAna::~ElectronSelectionAna()
 
 void lee::ElectronSelectionAna::analyze(art::Event const & e)
 {
-  fillTree(e);
+  try {
 
   bool event_passed = fElectronEventSelectionAlg.eventSelected(e);
   if (event_passed){
@@ -166,6 +166,9 @@ void lee::ElectronSelectionAna::analyze(art::Event const & e)
       }
     }
   }
+
+  fillTree(e);
+  } catch(...) {std::cerr<<"Something went wrong filling root tree"<<std::endl;}
   return;
 }
 
@@ -177,7 +180,7 @@ void lee::ElectronSelectionAna::fillTree(art::Event const & e)
   run    = e.run(); 
   subrun = e.subRun();
   event  = e.event();
-
+  
   // Fill truth information
   art::InputTag truth_tag { "generator" };
   auto const& truth_handle = e.getValidHandle< std::vector< simb::MCTruth > >( truth_tag );
@@ -246,7 +249,7 @@ void lee::ElectronSelectionAna::fillTree(art::Event const & e)
     flsYwidth.push_back(flash.YWidth());
     flsZwidth.push_back(flash.ZWidth());
   }
-
+  
   fTree->Fill();
 }
 
