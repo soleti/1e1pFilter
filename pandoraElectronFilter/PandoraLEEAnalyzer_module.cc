@@ -124,15 +124,19 @@ private:
   double _vy;
   double _vz;
 
+  double _true_vx;
+  double _true_vy;
+  double _true_vz;
+
   int _run;
   int _subrun;
   int _event;
-
+  int _n_candidates;
+  int _n_true_nu;
   int _run_sr;
   int _subrun_sr;
   double _pot;
   bool _event_passed;
-  bool is_fiducial(double x[3]) const;
   double distance(double a[3], double b[3]);
   bool is_dirt(double x[3]) const;
   void measure_energy(size_t ipf, const art::Event & evt, double & energy);
@@ -180,9 +184,13 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const & pset)
   myTTree->Branch("vx",  &_vx, "vx/d");
   myTTree->Branch("vy",  &_vy, "vy/d");
   myTTree->Branch("vz",  &_vz, "vz/d");
+  myTTree->Branch("true_vx",  &_true_vx, "vx/d");
+  myTTree->Branch("true_vy",  &_true_vy, "vy/d");
+  myTTree->Branch("true_vz",  &_true_vz, "vz/d");
   myTTree->Branch("nu_E",  &_nu_energy, "nu_E/d");
   myTTree->Branch("passed",  &_event_passed, "passed/b");
-
+  myTTree->Branch("n_candidates", &_n_candidates, "n_candidates/i");
+  myTTree->Branch("n_true_nu", &_n_true_nu, "n_true_nu/i");
   myPOTTTree->Branch("run", &_run_sr, "run/i");
   myPOTTTree->Branch("subrun", &_subrun_sr, "subrun/i");
   myPOTTTree->Branch("pot", &_pot, "pot/d");
@@ -403,17 +411,6 @@ size_t lee::PandoraLEEAnalyzer::choose_candidate(std::vector<size_t> & candidate
 
 }
 
-bool lee::PandoraLEEAnalyzer::is_fiducial(double x[3]) const
-{
-  art::ServiceHandle<geo::Geometry> geo;
-  double bnd[6] = {0.,2.*geo->DetHalfWidth(),-geo->DetHalfHeight(),geo->DetHalfHeight(),0.,geo->DetLength()};
-
-  bool is_x = x[0] > (bnd[0]+m_fidvolXstart) && x[0] < (bnd[1]-m_fidvolXend);
-  bool is_y = x[1] > (bnd[2]+m_fidvolYstart) && x[1] < (bnd[3]-m_fidvolYend);
-  bool is_z = x[2] > (bnd[4]+m_fidvolZstart) && x[2] < (bnd[5]-m_fidvolZend);
-  return is_x && is_y && is_z;
-}
-
 
 bool lee::PandoraLEEAnalyzer::is_dirt(double x[3]) const
 {
@@ -452,7 +449,6 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
   _event = evt.id().event();
 
   std::vector<size_t> nu_candidates;
-
   _event_passed = fElectronEventSelectionAlg.eventSelected(evt);
   if (_event_passed){
     for (size_t inu = 0; inu < fElectronEventSelectionAlg.get_n_neutrino_candidates(); inu++){
@@ -462,6 +458,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
     }
     std::cout << "EVENT PASSED" << std::endl;
   }
+  _n_candidates = nu_candidates.size();
 
   //do the analysis
   art::InputTag pandoraNu_tag { "pandoraNu" };
@@ -475,6 +472,8 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
   double true_neutrino_vertex[3];
   std::vector<simb::MCParticle> nu_mcparticles;
 
+  _n_true_nu = generator.size();
+
   if (generator.size() > 0) {
     _nu_energy = generator[0].GetNeutrino().Nu().E();
     ccnc = generator[0].GetNeutrino().CCNC();
@@ -485,6 +484,9 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
     true_neutrino_vertex[0] = generator[0].GetNeutrino().Nu().Vx();
     true_neutrino_vertex[1] = generator[0].GetNeutrino().Nu().Vy();
     true_neutrino_vertex[2] = generator[0].GetNeutrino().Nu().Vz();
+    _true_vx = true_neutrino_vertex[0];
+    _true_vy = true_neutrino_vertex[1];
+    _true_vz = true_neutrino_vertex[2];
 
     if (is_dirt(true_neutrino_vertex)) {
       _category = k_dirt;
@@ -536,12 +538,11 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
 
   _energy = std::numeric_limits<double>::lowest();
 
-  //try {
   if (_event_passed) {
     auto const& pfparticle_handle = evt.getValidHandle< std::vector< recob::PFParticle > >( pandoraNu_tag );
 
     size_t ipf_candidate = choose_candidate(nu_candidates, evt);
-
+    _energy = 0;
     measure_energy(ipf_candidate, evt, _energy);
 
     art::FindOneP< recob::Vertex > vertex_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
@@ -576,9 +577,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
 
     std::cout << "Chosen neutrino " << ipf_candidate << std::endl;
   }
-  // } catch (...) {
-  //   std::cout << "NO RECO DATA PRODUCTS" << std::endl;
-  // }
+
 
   myTTree->Fill();
 
