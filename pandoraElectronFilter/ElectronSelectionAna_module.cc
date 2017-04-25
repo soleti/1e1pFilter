@@ -16,11 +16,12 @@
 #include "fhiclcpp/ParameterSet.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
 #include "ElectronEventSelectionAlg.h"
+
 #include "art/Framework/Services/Optional/TFileService.h"
+#include "lardataobj/RecoBase/OpFlash.h"
 #include "TTree.h"
 #include "TFile.h"
 #include "TVector3.h"
-#include "art/Framework/Services/Optional/TFileService.h"
 
 namespace lee {
   class ElectronSelectionAna;
@@ -63,9 +64,11 @@ private:
   Short_t nnuvtx;                                       ///< Number of PandoraNu neutrino candidate vertices
   std::vector<Float_t> nuvtxx;                          ///< x coordinate
   std::vector<Float_t> nuvtxy;                          ///< y coordinate
-  std::vector<Float_t> nuvtxz;                          ///< z coordinate
+  std::vector<Float_t> nuvtxz;                                 ///< z coordinate
   std::vector<Short_t> nuvtxpdg;                        ///< PDG code assigned by PandoraNu
-  std::vector<TVector3>center_of_charge;                ///< Center of deposited charge
+  std::vector<Float_t>center_of_charge_x;               ///< x Center of deposited charge
+  std::vector<Float_t>center_of_charge_y;               ///< y Center of deposited charge
+  std::vector<Float_t>center_of_charge_z;               ///< z Center of deposited charge
 
   //Optical information
   Short_t nfls;                                         ///< Number of reconstructed flashes
@@ -106,7 +109,9 @@ lee::ElectronSelectionAna::ElectronSelectionAna(fhicl::ParameterSet const & pset
   fTree->Branch("nuvtxy",     &nuvtxy,     "nuvtxy[nnuvtx]/F"     );
   fTree->Branch("nuvtxz",     &nuvtxz,     "nuvtxz[nnuvtx]/F"     );
   fTree->Branch("nuvtxpdg",   &nuvtxpdg,   "nuvtxpdg[nnuvtx]/S"   );
-  //fTree->Branch("center_of_charge",&center_of_charge              );  //std::vector<TVector3>
+  fTree->Branch("center_of_charge_x",     &center_of_charge_x,     "center_of_charge_x[nnuvtx]/F"     );
+  fTree->Branch("center_of_charge_y",     &center_of_charge_y,     "center_of_charge_y[nnuvtx]/F"     );
+  fTree->Branch("center_of_charge_z",     &center_of_charge_z,     "center_of_charge_z[nnuvtx]/F"     );
   
   //Set branches for optical information
   fTree->Branch("nfls",       &nfls,       "nfls/S"             );
@@ -144,7 +149,30 @@ void lee::ElectronSelectionAna::analyze(art::Event const & e)
 }
 void lee::ElectronSelectionAna::fillTree(art::Event const & e)
 {
+  // Fill truth information
+  //TODO
 
+  // Fill PandoraNu information
+  //TODO 
+
+  // Fill optical information
+  art::InputTag optical_tag{"simpleFlashBeam"};
+  auto const& optical_handle = e.getValidHandle<std::vector<recob::OpFlash>>(optical_tag);
+
+  std::vector<int > op_flash_indexes = fElectronEventSelectionAlg.get_op_flash_indexes();
+  nfls = op_flash_indexes.size();
+  for(int ifl=0; ifl< nfls; ++ifl)
+  {
+    recob::OpFlash const& flash = optical_handle->at(ifl);
+    flsTime.push_back(flash.Time());
+    flsPe.push_back(flash.TotalPE());
+    flsYcenter.push_back(flash.YCenter());
+    flsZcenter.push_back(flash.ZCenter());
+    flsYwidth.push_back(flash.YWidth());
+    flsZwidth.push_back(flash.ZWidth());
+  }
+
+  fTree->Fill();
 }
 
 DEFINE_ART_MODULE(lee::ElectronSelectionAna)
