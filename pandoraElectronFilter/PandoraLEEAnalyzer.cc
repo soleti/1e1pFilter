@@ -412,8 +412,6 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
 
   bool event_passed = fElectronEventSelectionAlg.eventSelected(evt);
   if (event_passed){
-    _n_tracks = fElectronEventSelectionAlg.get_n_tracks();
-    _n_showers = fElectronEventSelectionAlg.get_n_showers();
 
     for (size_t inu = 0; inu < fElectronEventSelectionAlg.get_n_neutrino_candidates(); inu++){
       if (fElectronEventSelectionAlg.get_neutrino_candidate_passed().at(inu)){
@@ -512,6 +510,9 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
 
     _track_dir_z = get_longest_track(chosen_tracks)->StartDirection().Z();
     _track_length = get_longest_track(chosen_tracks)->Length();
+    _n_tracks = fElectronEventSelectionAlg.get_n_tracks().at(ipf_candidate);
+    _n_showers = fElectronEventSelectionAlg.get_n_showers().at(ipf_candidate);
+    
     std::cout << "Chosen neutrino " << ipf_candidate << std::endl;
 
   } catch (...) {
