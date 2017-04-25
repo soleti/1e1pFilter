@@ -114,6 +114,10 @@ private:
   int _n_tracks;
   int _n_showers;
 
+  double _vx;
+  double _vy;
+  double _vz;
+
   bool is_fiducial(double x[3]) const;
   double distance(double a[3], double b[3]);
   bool is_dirt(double x[3]) const;
@@ -153,6 +157,9 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const & pset)
   myTTree->Branch("trk_len",  &_track_length, "trk_len/d");
   myTTree->Branch("n_tracks",  &_n_tracks, "n_tracks/i");
   myTTree->Branch("n_showers",  &_n_showers, "n_showers/i");
+  myTTree->Branch("vx",  &_vx, "vx/d");
+  myTTree->Branch("vy",  &_vy, "vy/d");
+  myTTree->Branch("vz",  &_vz, "vz/d");
 
   this->reconfigure(pset);
 
@@ -493,13 +500,17 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
     size_t ipf_candidate = choose_candidate(nu_candidates, evt);
 
     measure_energy(ipf_candidate, evt, _energy);
-    std::cout << "Energy: " << _energy << std::endl;
-    if (generator.size() > 0) {
-      art::FindOneP< recob::Vertex > vertex_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
-      auto const& vertex_obj = vertex_per_pfpart.at(ipf_candidate);
 
-      double reco_neutrino_vertex[3];
-      vertex_obj->XYZ(reco_neutrino_vertex);
+    art::FindOneP< recob::Vertex > vertex_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
+    auto const& vertex_obj = vertex_per_pfpart.at(ipf_candidate);
+
+    double reco_neutrino_vertex[3];
+    vertex_obj->XYZ(reco_neutrino_vertex);
+    _vx = reco_neutrino_vertex[0];
+    _vy = reco_neutrino_vertex[1];
+    _vz = reco_neutrino_vertex[2];
+
+    if (generator.size() > 0) {
       if (distance(reco_neutrino_vertex,true_neutrino_vertex) > 10) {
         _category = k_cosmic;
       }
@@ -512,7 +523,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
     _track_length = get_longest_track(chosen_tracks)->Length();
     _n_tracks = fElectronEventSelectionAlg.get_n_tracks().at(ipf_candidate);
     _n_showers = fElectronEventSelectionAlg.get_n_showers().at(ipf_candidate);
-    
+
     std::cout << "Chosen neutrino " << ipf_candidate << std::endl;
 
   } catch (...) {
