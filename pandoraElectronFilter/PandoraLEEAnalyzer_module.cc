@@ -43,6 +43,7 @@
 #include "TFile.h"
 #include "TH1F.h"
 #include "THStack.h"
+#include "TVector3.h"
 
 #include "TEfficiency.h"
 #include "art/Framework/Services/Optional/TFileService.h"
@@ -80,6 +81,7 @@ private:
 
   TFile * myTFile;
   TTree * myTTree;
+  TTree * myPOTTTree;
   TEfficiency * e_energy;
   TH1F * h_nu_e;
   TH1F * h_nu_mu;
@@ -129,7 +131,7 @@ private:
   int _run_sr;
   int _subrun_sr;
   double _pot;
-
+  bool _event_passed;
   bool is_fiducial(double x[3]) const;
   double distance(double a[3], double b[3]);
   bool is_dirt(double x[3]) const;
@@ -179,6 +181,7 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const & pset)
   myTTree->Branch("vy",  &_vy, "vy/d");
   myTTree->Branch("vz",  &_vz, "vz/d");
   myTTree->Branch("nu_E",  &_nu_energy, "nu_E/d");
+  myTTree->Branch("passed",  &_event_passed, "passed/b");
 
   myPOTTTree->Branch("run", &_run_sr, "run/i");
   myPOTTTree->Branch("subrun", &_subrun_sr, "subrun/i");
@@ -376,13 +379,6 @@ void lee::PandoraLEEAnalyzer::measure_energy(size_t ipf, const art::Event & evt,
 
 size_t lee::PandoraLEEAnalyzer::choose_candidate(std::vector<size_t> & candidates, const art::Event & evt) {
 
-  art::InputTag pandoraNu_tag { "pandoraNu" };
-
-  auto const& pfparticle_handle = evt.getValidHandle< std::vector< recob::PFParticle > >( pandoraNu_tag );
-
-  art::FindOneP< recob::Shower > shower_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
-  art::FindOneP< recob::Track > track_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
-
   size_t chosen_candidate = 0;
   double most_z = -1;
 
@@ -431,7 +427,7 @@ bool lee::PandoraLEEAnalyzer::is_dirt(double x[3]) const
 }
 
 
-void microboone::AnalysisTree::endSubRun(const art::SubRun& sr)
+void lee::PandoraLEEAnalyzer::endSubRun(const art::SubRun& sr)
 {
   art::InputTag fPOTModuleLabel { "generator" };
 
@@ -457,17 +453,14 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
 
   std::vector<size_t> nu_candidates;
 
-  bool event_passed = fElectronEventSelectionAlg.eventSelected(evt);
-  if (event_passed){
-
+  _event_passed = fElectronEventSelectionAlg.eventSelected(evt);
+  if (_event_passed){
     for (size_t inu = 0; inu < fElectronEventSelectionAlg.get_n_neutrino_candidates(); inu++){
       if (fElectronEventSelectionAlg.get_neutrino_candidate_passed().at(inu)){
         nu_candidates.push_back(inu);
       }
     }
     std::cout << "EVENT PASSED" << std::endl;
-  } else {
-    return;
   }
 
   //do the analysis
@@ -532,13 +525,10 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
     }
   }
 
-  _energy = 0;
+  _energy = std::numeric_limits<double>::lowest();
 
   try {
     auto const& pfparticle_handle = evt.getValidHandle< std::vector< recob::PFParticle > >( pandoraNu_tag );
-
-    art::FindOneP< recob::Shower > shower_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
-    art::FindOneP< recob::Track > track_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
 
     size_t ipf_candidate = choose_candidate(nu_candidates, evt);
 
@@ -553,8 +543,13 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
     _vy = reco_neutrino_vertex[1];
     _vz = reco_neutrino_vertex[2];
 
+    TVector3 v_reco_vertex(_vx,_vy,_vz);
+
     if (generator.size() > 0) {
-      if (distance(reco_neutrino_vertex,true_neutrino_vertex) > 10) {
+      TVector3 true_vertex;
+      true_vertex.SetXYZ(true_neutrino_vertex[0],true_neutrino_vertex[1],true_neutrino_vertex[2]);
+      TVector3 sce_true_vertex = fElectronEventSelectionAlg.spaceChargeTrueToReco(true_vertex);
+      if (fElectronEventSelectionAlg.distance(v_reco_vertex,sce_true_vertex) > 10) {
         _category = k_cosmic;
       }
     }
