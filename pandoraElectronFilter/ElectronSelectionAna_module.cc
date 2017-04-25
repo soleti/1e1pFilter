@@ -20,6 +20,9 @@
 #include "art/Framework/Services/Optional/TFileService.h"
 #include "lardataobj/RecoBase/OpFlash.h"
 #include "lardataobj/RecoBase/PFParticle.h"
+#include "nusimdata/SimulationBase/MCTruth.h"
+#include "nusimdata/SimulationBase/MCParticle.h"
+#include "nusimdata/SimulationBase/MCNeutrino.h"
 #include "TTree.h"
 #include "TFile.h"
 #include "TVector3.h"
@@ -58,7 +61,7 @@ private:
   Short_t    event;
 
   //Truth information
-  std::vector<Short_t>   mcevts_truth;                  ///< number of neutrino Interactions in the spill
+  Short_t   mcevts_truth;                               ///< number of neutrino Interactions in the spill
   std::vector<Short_t>   nuPDG_truth;                   ///< neutrino PDG code
   std::vector<Short_t>   ccnc_truth;                    ///< 0=CC 1=NC
   std::vector<Short_t>   mode_truth;                    ///< 0=QE/El, 1=RES, 2=DIS, 3=Coherent production
@@ -137,6 +140,8 @@ lee::ElectronSelectionAna::ElectronSelectionAna(fhicl::ParameterSet const & pset
   fTree->Branch("flsZwidth",  &flsZwidth,  "flsZwidth[nfls]/F"  );
   this->reconfigure(pset);
 }
+
+
 lee::ElectronSelectionAna::~ElectronSelectionAna()
 {
   //write output file and tree
@@ -146,10 +151,11 @@ lee::ElectronSelectionAna::~ElectronSelectionAna()
   fTFile->Close();
   std::cout << "Done!" << std::endl;
 }
+
+
 void lee::ElectronSelectionAna::analyze(art::Event const & e)
 {
-  // Implementation of required member function here.
-  fillTree(e);
+  try {
 
   bool event_passed = fElectronEventSelectionAlg.eventSelected(e);
   if (event_passed){
@@ -160,8 +166,13 @@ void lee::ElectronSelectionAna::analyze(art::Event const & e)
       }
     }
   }
+
+  fillTree(e);
+  } catch(...) {std::cerr<<"Something went wrong filling root tree"<<std::endl;}
   return;
 }
+
+
 void lee::ElectronSelectionAna::fillTree(art::Event const & e)
 {
 
@@ -169,9 +180,28 @@ void lee::ElectronSelectionAna::fillTree(art::Event const & e)
   run    = e.run(); 
   subrun = e.subRun();
   event  = e.event();
-
+  
   // Fill truth information
-  //TODO
+  art::InputTag truth_tag { "generator" };
+  auto const& truth_handle = e.getValidHandle< std::vector< simb::MCTruth > >( truth_tag );
+
+  if (truth_handle->size() > 0) {
+    for(unsigned int iList = 0; iList < truth_handle->size() ; ++iList){
+      if (truth_handle->at(iList).NeutrinoSet())
+      {
+        simb::MCNeutrino const& neutrino = truth_handle->at(iList).GetNeutrino();
+        mcevts_truth++;
+        nuPDG_truth.push_back(neutrino.Nu().PdgCode());                 
+        ccnc_truth.push_back(neutrino.CCNC());                   
+        mode_truth.push_back(neutrino.Mode());                    
+        enu_truth.push_back(neutrino.Nu().E());                   
+        nuvtxx_truth.push_back(neutrino.Nu().Vx());                  
+        nuvtxy_truth.push_back(neutrino.Nu().Vy());                  
+        nuvtxz_truth.push_back(neutrino.Nu().Vz());  
+
+      }
+    }
+  }
 
   // Fill PandoraNu information
   art::InputTag pandoraNu_tag{"pandoraNu"};
@@ -219,7 +249,7 @@ void lee::ElectronSelectionAna::fillTree(art::Event const & e)
     flsYwidth.push_back(flash.YWidth());
     flsZwidth.push_back(flash.ZWidth());
   }
-
+  
   fTree->Fill();
 }
 
