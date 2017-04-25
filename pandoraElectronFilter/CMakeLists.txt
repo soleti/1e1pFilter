@@ -82,6 +82,8 @@ art_make(
                         ${SIMULATIONBASE}
 )
 
+add_subdirectory(job)
+
 install_headers()
 install_source()
 install_fhicl()
