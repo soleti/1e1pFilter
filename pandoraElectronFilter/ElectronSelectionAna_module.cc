@@ -22,6 +22,7 @@
 #include "TTree.h"
 #include "TFile.h"
 #include "TVector3.h"
+#include "art/Framework/Services/Optional/TFileService.h"
 
 constexpr int kMaxVertices   = 10;                  ///< max number of PandoraNu neutrino candidate vertices
 constexpr int kMaxTruth      = 10;                  ///< max number of neutrino Interactions in the spill
@@ -75,7 +76,7 @@ private:
   Float_t nuvtxy[kMaxVertices];                         ///< y coordinate
   Float_t nuvtxz[kMaxVertices];                         ///< z coordinate
   Short_t nuvtxpdg[kMaxVertices];                       ///< PDG code assigned by PandoraNu
-  std::vector<TVector3> center_of_charge[kMaxVertices]  ///< Center of deposited charge
+  std::vector<TVector3> center_of_charge[kMaxVertices];  ///< Center of deposited charge
 
   //Optical information
   Short_t nfls;                                         ///< Number of reconstructed flashes
