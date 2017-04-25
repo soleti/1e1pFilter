@@ -334,17 +334,21 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
     // Get the neutrino vertex and check if it's fiducial:
     std::vector<double> neutrino_vertex;
     neutrino_vertex.resize(3);
-    auto const& neutrino_vertex_obj = vertex_per_pfpart.at(_primary_indexes[_i_primary]);
-    neutrino_vertex_obj->XYZ(&neutrino_vertex[0]); // PFParticle neutrino vertex coordinates
+    try {
+      auto const& neutrino_vertex_obj = vertex_per_pfpart.at(_primary_indexes[_i_primary]);
+      neutrino_vertex_obj->XYZ(&neutrino_vertex[0]); // PFParticle neutrino vertex coordinates
 
-    // Save it as a TVector3:
-    _neutrino_vertex.at(_i_primary).SetX(neutrino_vertex[0]);
-    _neutrino_vertex.at(_i_primary).SetY(neutrino_vertex[1]);
-    _neutrino_vertex.at(_i_primary).SetZ(neutrino_vertex[2]);
+      // Save it as a TVector3:
+      _neutrino_vertex.at(_i_primary).SetX(neutrino_vertex[0]);
+      _neutrino_vertex.at(_i_primary).SetY(neutrino_vertex[1]);
+      _neutrino_vertex.at(_i_primary).SetZ(neutrino_vertex[2]);
 
-    if (! is_fiducial(_neutrino_vertex.at(_i_primary))) {
-      _neutrino_candidate_passed[_i_primary] = false;
-      continue;
+      if (! is_fiducial(_neutrino_vertex.at(_i_primary))) {
+        _neutrino_candidate_passed[_i_primary] = false;
+        continue;
+      }
+    } catch (...) {
+      std::cout << "NO VERTEX AVAILABLE " << std::endl;
     }
 
 
@@ -358,40 +362,49 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
 
       if (pfparticle_handle->at(pfdaughter).PdgCode() == 11)
       {
-        art::FindOneP< recob::Shower > shower_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
-        auto const& shower_obj = shower_per_pfpart.at(pfdaughter);
-        bool contained_shower = false;
-        std::vector<double> start_point;
-        std::vector<double> end_point;
-        start_point.resize(3);
-        end_point.resize(3);
+        try {
+          art::FindOneP< recob::Shower > shower_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
+          auto const& shower_obj = shower_per_pfpart.at(pfdaughter);
+          bool contained_shower = false;
+          std::vector<double> start_point;
+          std::vector<double> end_point;
+          start_point.resize(3);
+          end_point.resize(3);
 
-        double shower_length = shower_obj->Length();
-        for (int ix = 0; ix < 3; ix++)
-        {
-          start_point[ix] = shower_obj->ShowerStart()[ix];
-          end_point[ix] = shower_obj->ShowerStart()[ix] + shower_length * shower_obj->Direction()[ix];
+          double shower_length = shower_obj->Length();
+          for (int ix = 0; ix < 3; ix++)
+          {
+            start_point[ix] = shower_obj->ShowerStart()[ix];
+            end_point[ix] = shower_obj->ShowerStart()[ix] + shower_length * shower_obj->Direction()[ix];
+          }
+
+          contained_shower = is_fiducial(start_point) && is_fiducial(end_point);
+          // TODO flash position check
+          if (contained_shower) {
+            _pfp_id_showers_from_primary[_i_primary].push_back(pfdaughter);
+            showers++;
+          }
+        } catch (...) {
+          std::cout << "NO SHOWERS AVAILABLE" << std::endl;
         }
-
-        contained_shower = is_fiducial(start_point) && is_fiducial(end_point);
-        // TODO flash position check
-        if (contained_shower) {
-          _pfp_id_showers_from_primary[_i_primary].push_back(pfdaughter);
-          showers++;
-        }
-
       }
+
+
 
       if (pfparticle_handle->at(pfdaughter).PdgCode() == 13)
       {
-        art::FindOneP< recob::Track > track_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
-        auto const& track_obj = track_per_pfpart.at(pfdaughter);
+        try {
 
-        if (track_obj->Length() < m_trackLength) {
-          tracks++;
-          _pfp_id_tracks_from_primary[_i_primary].push_back(pfdaughter);
+          art::FindOneP< recob::Track > track_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
+          auto const& track_obj = track_per_pfpart.at(pfdaughter);
+
+          if (track_obj->Length() < m_trackLength) {
+            tracks++;
+            _pfp_id_tracks_from_primary[_i_primary].push_back(pfdaughter);
+          }
+        } catch (...) {
+          std::cout << "NO TRACKS AVAILABLE" << std::endl;
         }
-
         // h_track_length->Fill(track_obj->Length());
       }
 
