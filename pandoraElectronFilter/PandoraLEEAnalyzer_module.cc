@@ -500,6 +500,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
     _nu_energy = std::numeric_limits<double>::lowest();
   }
 
+
   int protons = 0;
   int electrons = 0;
   int muons = 0;
@@ -525,9 +526,18 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
     }
   }
 
+  if (_category != k_cosmic && _category != k_dirt && _category != k_nc) {
+    if (protons != 0 && electrons != 0) {
+      _category = k_nu_e;
+    } else if (protons != 0 && muons != 0) {
+      _category = k_nu_mu;
+    }
+  }
+
   _energy = std::numeric_limits<double>::lowest();
 
   //try {
+  if (_event_passed) {
     auto const& pfparticle_handle = evt.getValidHandle< std::vector< recob::PFParticle > >( pandoraNu_tag );
 
     size_t ipf_candidate = choose_candidate(nu_candidates, evt);
@@ -565,18 +575,10 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
     _n_showers = fElectronEventSelectionAlg.get_n_showers().at(ipf_candidate);
 
     std::cout << "Chosen neutrino " << ipf_candidate << std::endl;
-
+  }
   // } catch (...) {
   //   std::cout << "NO RECO DATA PRODUCTS" << std::endl;
   // }
-
-  if (_category != k_cosmic && _category != k_dirt && _category != k_nc) {
-    if (protons != 0 && electrons != 0) {
-      _category = k_nu_e;
-    } else if (protons != 0 && muons != 0) {
-      _category = k_nu_mu;
-    }
-  }
 
   myTTree->Fill();
 
