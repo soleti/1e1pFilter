@@ -111,6 +111,8 @@ private:
   double _track_dir_z;
   double _track_length;
 
+  double _nu_energy;
+
   int _n_tracks;
   int _n_showers;
 
@@ -162,6 +164,7 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const & pset)
   myTTree->Branch("vx",  &_vx, "vx/d");
   myTTree->Branch("vy",  &_vy, "vy/d");
   myTTree->Branch("vz",  &_vz, "vz/d");
+  myTTree->Branch("nu_E",  &_nu_energy, "nu_E/d");
 
   this->reconfigure(pset);
 
@@ -437,6 +440,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
   std::vector<simb::MCParticle> nu_mcparticles;
 
   if (generator.size() > 0) {
+    _nu_energy = generator[0].GetNeutrino().Nu().E();
     ccnc = generator[0].GetNeutrino().CCNC();
     if (ccnc == 1) {
       _category = k_nc;
