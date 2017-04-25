@@ -106,7 +106,7 @@ lee::ElectronSelectionAna::ElectronSelectionAna(fhicl::ParameterSet const & pset
   fTree->Branch("nuvtxy",     &nuvtxy,     "nuvtxy[nnuvtx]/F"     );
   fTree->Branch("nuvtxz",     &nuvtxz,     "nuvtxz[nnuvtx]/F"     );
   fTree->Branch("nuvtxpdg",   &nuvtxpdg,   "nuvtxpdg[nnuvtx]/S"   );
-  fTree->Branch("center_of_charge",&center_of_charge              );  //std::vector<TVector3>
+  //fTree->Branch("center_of_charge",&center_of_charge              );  //std::vector<TVector3>
   
   //Set branches for optical information
   fTree->Branch("nfls",       &nfls,       "nfls/S"             );
@@ -144,5 +144,7 @@ void lee::ElectronSelectionAna::analyze(art::Event const & e)
 }
 void lee::ElectronSelectionAna::fillTree(art::Event const & e)
 {
+
 }
+
 DEFINE_ART_MODULE(lee::ElectronSelectionAna)
