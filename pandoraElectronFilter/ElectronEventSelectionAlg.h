@@ -143,6 +143,8 @@ public:
   const std::vector<TVector3> & get_neutrino_vertex() const {return _neutrino_vertex;}
   const std::vector<int> & get_n_showers() const {return _n_showers;}
   const std::vector<int> & get_n_tracks() const {return _n_tracks;}
+  const std::vector<size_t> & get_primary_indexes() const {return _primary_indexes;}
+
   const std::vector< std::vector<size_t> > &
   get_pfp_id_showers_from_primary() const {return _pfp_id_showers_from_primary;}
   const std::vector< std::vector<size_t> > &
@@ -164,6 +166,7 @@ protected:
   std::vector< std::vector < size_t > > _pfp_id_showers_from_primary;
   std::vector<int> _n_tracks;
   std::vector< std::vector < size_t > > _pfp_id_tracks_from_primary;
+  std::vector<size_t> _primary_indexes;
 
 
 protected:
