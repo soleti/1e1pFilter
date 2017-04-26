@@ -35,20 +35,22 @@ physics: {
   }
   analyzers: {
      # ParameterSets for zero or more analyzer modules
-     myana:  @local::lee_pandora_analyzer
+     robertoana:  @local::lee_pandora_analyzer
+     wouterana:   @local::electron_selection_ana
+
   }
 
   filters : {
      # ParameterSets for zero or more filter modules
   }
 
-  path0 : [  myana ]
+  path0 : [  robertoana, wouterana ]
 
   #path1 : [  comma separated list of module labels of analyzer or output modules  ]
   #path2 : [  comma separated list of module labels of analyzer or output modules  ]
   #path3 : [  comma separated list of module labels of analyzer or output modules  ]
 
-  #here, just a shorthand: could have done ana: [ myana ] then end_paths: [ ana ]
+  #here, just a shorthand: could have done ana: [ robertoana ] then end_paths: [ ana ]
   end_paths: [ path0 ]
 
 }

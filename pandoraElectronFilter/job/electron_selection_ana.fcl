@@ -1,16 +1,7 @@
 #include "electron_selection_alg.fcl"
 
-electron_selection_ana:
-{
-    module_type:                "ElectronSelectionAna"
-    ElectronSelectionAlg:       @local::lee_electron_alg
+BEGIN_PROLOG
 
-    PrintDebug:                 false
-    trackLength:                100
-    fidvolXstart:               10
-    fidvolXstart:               10
-    fidvolYstart:               20
-    fidvolYend:                 20
-    fidvolZstart:               10
-    fidvolZend:                 50
-}
+
+
+END_PROLOG
