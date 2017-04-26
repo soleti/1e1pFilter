@@ -298,15 +298,6 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
   }
 
   _n_neutrino_candidates = _primary_indexes.size();
-  // _neutrino_candidate_passed.resize(_n_neutrino_candidates);
-  // _center_of_charge.resize(_n_neutrino_candidates);
-  // _op_flash_indexes.resize(_n_neutrino_candidates);
-  // _neutrino_vertex.resize(_n_neutrino_candidates);
-  // _n_showers.resize(_n_neutrino_candidates);
-  // _n_tracks.resize(_n_neutrino_candidates);
-  // _pfp_id_showers_from_primary.resize(_n_neutrino_candidates);
-  // _pfp_id_tracks_from_primary.resize(_n_neutrino_candidates);
-
 
   // For each of the primary particles, determine if it and it's daughters pass the cuts:
 
@@ -315,6 +306,15 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
 
 
   for (auto & _i_primary : _primary_indexes ) {
+
+    _neutrino_candidate_passed[_i_primary] = false;
+    _center_of_charge[_i_primary] = TVector3(0,0,0);
+    _op_flash_indexes[_i_primary] = 0;
+    _neutrino_vertex[_i_primary] = TVector3(0,0,0);
+    _n_showers[_i_primary] = 0;
+    _pfp_id_showers_from_primary[_i_primary] = std::vector<size_t>();
+    _n_tracks[_i_primary] = 0;
+    _pfp_id_tracks_from_primary[_i_primary] = std::vector<size_t>();
 
     // First, does this event pass the optical filter?
     // Calculate the center of charge, and then pass it to the optical module:
@@ -436,6 +436,10 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
       return true;
     }
   }
+
+
+
+
   return false;
 }
 

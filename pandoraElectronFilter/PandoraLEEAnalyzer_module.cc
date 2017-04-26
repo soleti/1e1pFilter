@@ -464,9 +464,13 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
   _event = evt.id().event();
 
   std::vector<size_t> nu_candidates;
+
   _event_passed = fElectronEventSelectionAlg.eventSelected(evt);
+
+
+
   if (_event_passed) {
-    for (size_t inu = 0; inu < fElectronEventSelectionAlg.get_n_neutrino_candidates(); inu++) {
+    for (auto & inu : fElectronEventSelectionAlg.get_primary_indexes()) {
       if (fElectronEventSelectionAlg.get_neutrino_candidate_passed().at(inu)) {
         nu_candidates.push_back(inu);
       }
@@ -483,7 +487,6 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
   art::InputTag generator_tag { "generator" };
 
   int _category = 0;
-
   auto const& generator_handle = evt.getValidHandle< std::vector< simb::MCTruth > >( generator_tag );
   auto const& generator(*generator_handle);
   int ccnc = -1;
@@ -567,11 +570,11 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
     _energy = 0;
     std::cout << "Number of candidates " << nu_candidates.size() << std::endl;
     std::cout << "Candidate index " << ipf_candidate << std::endl;
-    measure_energy(fElectronEventSelectionAlg.get_primary_indexes().at(ipf_candidate), evt, _energy);
+    measure_energy(ipf_candidate, evt, _energy);
     std::cout << "Energy " << _energy << std::endl;
 
     art::FindOneP< recob::Vertex > vertex_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
-    auto const& vertex_obj = vertex_per_pfpart.at(fElectronEventSelectionAlg.get_primary_indexes().at(ipf_candidate));
+    auto const& vertex_obj = vertex_per_pfpart.at(ipf_candidate);
 
     std::cout << "After vertex" << std::endl;
 

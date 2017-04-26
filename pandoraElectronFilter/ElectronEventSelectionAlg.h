@@ -142,13 +142,13 @@ public:
    */
   
   /**
-   * @brief [brief description]
-   * @details [long description]
-   * @return [description]
+   * @brief Return a list of the selected pfparticle top level neutrino candidate indexes
    */
   const std::vector<size_t> & get_primary_indexes() const {return _primary_indexes;}
 
-
+  /**
+   * @brief Return the number of neutrino candidates
+   */
   const size_t & get_n_neutrino_candidates() const {return _n_neutrino_candidates;}
 
   /**
@@ -156,14 +156,56 @@ public:
    * @return Vector of bool, one-to-one with get_primary_indexes
    */
   const std::map<size_t, bool> & get_neutrino_candidate_passed() const {return _neutrino_candidate_passed;}
+
+  /**
+   * @brief Return the calculated center of charge, as indexed by the pfparticle id number (it's a map)
+   * @details [long description]
+   * @return [description]
+   */
   const std::map<size_t, TVector3> & get_center_of_charge() const {return _center_of_charge;}
+
+  /**
+   * @brief Return the index of the flash matched with the pfparticle
+   * @details [long description]
+   * @return [description]
+   */
   const std::map<size_t, int > & get_op_flash_indexes() const {return _op_flash_indexes;}
+
+  /**
+   * @brief Return the pandora calculated vertex indexed by pfparticle id number
+   * @details [long description]
+   * @return [description]
+   */
   const std::map<size_t, TVector3> & get_neutrino_vertex() const {return _neutrino_vertex;}
+
+  /**
+   * @brief Return number of showers for this pfparticle
+   * @details [long description]
+   * @return [description]
+   */
   const std::map<size_t, int> & get_n_showers() const {return _n_showers;}
+
+  /**
+   * @brief Return number of tracks for pfparticle index
+   * @details [long description]
+   * @return [description]
+   */
   const std::map<size_t, int> & get_n_tracks() const {return _n_tracks;}
 
+  /**
+   * @brief Return the list of pfparticle indexes that are showers that are associated with primary pfparticle indexes
+   * @details [long description]
+   * @return [description]
+   */
   const std::map<size_t,  std::vector<size_t> > &
   get_pfp_id_showers_from_primary() const {return _pfp_id_showers_from_primary;}
+
+
+   /**
+    * @brief Return the list of pfparticle indexes that are tracks that are associated with primary pfparticle indexes
+    * @details [long description]
+    * @return [description]
+    */
   const std::map<size_t,  std::vector<size_t> > &
   get_pfp_id_tracks_from_primary() const {return _pfp_id_tracks_from_primary;}
 
