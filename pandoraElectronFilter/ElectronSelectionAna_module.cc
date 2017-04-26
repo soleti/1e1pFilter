@@ -55,7 +55,7 @@ private:
   TTree*      fTree;
 
 
-  //Run Subrun Event 
+  //Run Subrun Event
   Short_t    run;
   Short_t    subrun;
   Short_t    event;
@@ -104,40 +104,40 @@ lee::ElectronSelectionAna::ElectronSelectionAna(fhicl::ParameterSet const & pset
   fTFile = new TFile("FlashOutput.root", "RECREATE");
   fTree  = tfs->make<TTree>("flashtree","FlashAnalysis Tree");
 
-  //Set branches for (Run Subrun Event) 
+  //Set branches for (Run Subrun Event)
   fTree->Branch("run",     &run,     "run/S"       );
   fTree->Branch("subrun",  &subrun,  "subrun/S"    );
   fTree->Branch("event",   &event,   "event/S"     );
 
   //Set branches for truth information
   fTree->Branch("mcevts_truth", &mcevts_truth,   "mcevts_truth/S"               );
-  fTree->Branch("nuPDG_truth",  nuPDG_truth,    "nuPDG_truth[mcevts_truth]/S"  );
-  fTree->Branch("ccnc_truth",   ccnc_truth,     "ccnc_truth[mcevts_truth]/S"   );
-  fTree->Branch("mode_truth",   mode_truth,     "mode_truth[mcevts_truth]/S"   );
-  fTree->Branch("enu_truth",    enu_truth,      "enu_truth[mcevts_truth]/F"    );
-  fTree->Branch("nuvtxx_truth", nuvtxx_truth,   "nuvtxx_truth[mcevts_truth]/F" );
-  fTree->Branch("nuvtxy_truth", nuvtxy_truth,   "nuvtxy_truth[mcevts_truth]/F" );
-  fTree->Branch("nuvtxz_truth", nuvtxz_truth,   "nuvtxz_truth[mcevts_truth]/F" );
+  // fTree->Branch("nuPDG_truth",  nuPDG_truth,    "nuPDG_truth[mcevts_truth]/S"  );
+  // fTree->Branch("ccnc_truth",   ccnc_truth,     "ccnc_truth[mcevts_truth]/S"   );
+  // fTree->Branch("mode_truth",   mode_truth,     "mode_truth[mcevts_truth]/S"   );
+  // fTree->Branch("enu_truth",    enu_truth,      "enu_truth[mcevts_truth]/F"    );
+  // fTree->Branch("nuvtxx_truth", nuvtxx_truth,   "nuvtxx_truth[mcevts_truth]/F" );
+  // fTree->Branch("nuvtxy_truth", nuvtxy_truth,   "nuvtxy_truth[mcevts_truth]/F" );
+  // fTree->Branch("nuvtxz_truth", nuvtxz_truth,   "nuvtxz_truth[mcevts_truth]/F" );
 
   //Set branches for PandoraNU information
-  fTree->Branch("passed",     &passed,     "passed/O"             );
-  fTree->Branch("nnuvtx",     &nnuvtx,     "nnuvtx/S"             );
-  fTree->Branch("nuvtxx",     nuvtxx,     "nuvtxx[nnuvtx]/F"     );
-  fTree->Branch("nuvtxy",     nuvtxy,     "nuvtxy[nnuvtx]/F"     );
-  fTree->Branch("nuvtxz",     nuvtxz,     "nuvtxz[nnuvtx]/F"     );
-  fTree->Branch("nuvtxpdg",   nuvtxpdg,   "nuvtxpdg[nnuvtx]/S"   );
-  fTree->Branch("center_of_charge_x",     center_of_charge_x,     "center_of_charge_x[nnuvtx]/F"     );
-  fTree->Branch("center_of_charge_y",     center_of_charge_y,     "center_of_charge_y[nnuvtx]/F"     );
-  fTree->Branch("center_of_charge_z",     center_of_charge_z,     "center_of_charge_z[nnuvtx]/F"     );
-  
+  // fTree->Branch("passed",     &passed,     "passed/O"             );
+  // fTree->Branch("nnuvtx",     &nnuvtx,     "nnuvtx/S"             );
+  // fTree->Branch("nuvtxx",     nuvtxx,     "nuvtxx[nnuvtx]/F"     );
+  // fTree->Branch("nuvtxy",     nuvtxy,     "nuvtxy[nnuvtx]/F"     );
+  // fTree->Branch("nuvtxz",     nuvtxz,     "nuvtxz[nnuvtx]/F"     );
+  // fTree->Branch("nuvtxpdg",   nuvtxpdg,   "nuvtxpdg[nnuvtx]/S"   );
+  // fTree->Branch("center_of_charge_x",     center_of_charge_x,     "center_of_charge_x[nnuvtx]/F"     );
+  // fTree->Branch("center_of_charge_y",     center_of_charge_y,     "center_of_charge_y[nnuvtx]/F"     );
+  // fTree->Branch("center_of_charge_z",     center_of_charge_z,     "center_of_charge_z[nnuvtx]/F"     );
+
   //Set branches for optical information
   fTree->Branch("nfls",       &nfls,       "nfls/S"             );
-  fTree->Branch("flsTime",    flsTime,    "flash_time[nfls]/F" );
-  fTree->Branch("flsPe",      flsPe,      "flsPe[nfls]/F"      );
-  fTree->Branch("flsYcenter", flsYcenter, "flsYcenter[nfls]/F" );
-  fTree->Branch("flsZcenter", flsZcenter, "flsZcenter[nfls]/F" );
-  fTree->Branch("flsYwidth",  flsYwidth,  "flsYwidth[nfls]/F"  );
-  fTree->Branch("flsZwidth",  flsZwidth,  "flsZwidth[nfls]/F"  );
+  // fTree->Branch("flsTime",    flsTime,    "flash_time[nfls]/F" );
+  // fTree->Branch("flsPe",      flsPe,      "flsPe[nfls]/F"      );
+  // fTree->Branch("flsYcenter", flsYcenter, "flsYcenter[nfls]/F" );
+  // fTree->Branch("flsZcenter", flsZcenter, "flsZcenter[nfls]/F" );
+  // fTree->Branch("flsYwidth",  flsYwidth,  "flsYwidth[nfls]/F"  );
+  // fTree->Branch("flsZwidth",  flsZwidth,  "flsZwidth[nfls]/F"  );
   this->reconfigure(pset);
 }
 
@@ -176,11 +176,11 @@ void lee::ElectronSelectionAna::analyze(art::Event const & e)
 void lee::ElectronSelectionAna::fillTree(art::Event const & e)
 {
 
-  // Fill run information 
-  run    = e.run(); 
+  // Fill run information
+  run    = e.run();
   subrun = e.subRun();
   event  = e.event();
-  
+
   // Fill truth information
   art::InputTag truth_tag { "generator" };
   auto const& truth_handle = e.getValidHandle< std::vector< simb::MCTruth > >( truth_tag );
@@ -191,13 +191,13 @@ void lee::ElectronSelectionAna::fillTree(art::Event const & e)
       {
         simb::MCNeutrino const& neutrino = truth_handle->at(iList).GetNeutrino();
         mcevts_truth++;
-        nuPDG_truth.push_back(neutrino.Nu().PdgCode());                 
-        ccnc_truth.push_back(neutrino.CCNC());                   
-        mode_truth.push_back(neutrino.Mode());                    
-        enu_truth.push_back(neutrino.Nu().E());                   
-        nuvtxx_truth.push_back(neutrino.Nu().Vx());                  
-        nuvtxy_truth.push_back(neutrino.Nu().Vy());                  
-        nuvtxz_truth.push_back(neutrino.Nu().Vz());  
+        nuPDG_truth.push_back(neutrino.Nu().PdgCode());
+        ccnc_truth.push_back(neutrino.CCNC());
+        mode_truth.push_back(neutrino.Mode());
+        enu_truth.push_back(neutrino.Nu().E());
+        nuvtxx_truth.push_back(neutrino.Nu().Vx());
+        nuvtxy_truth.push_back(neutrino.Nu().Vy());
+        nuvtxz_truth.push_back(neutrino.Nu().Vz());
 
       }
     }
@@ -250,7 +250,7 @@ void lee::ElectronSelectionAna::fillTree(art::Event const & e)
     flsYwidth.push_back(flash.YWidth());
     flsZwidth.push_back(flash.ZWidth());
   }
-  
+
   fTree->Fill();
 }
 
