@@ -175,6 +175,14 @@ void lee::ElectronSelectionAna::fillTree(art::Event const & e)
   auto const& truth_handle = e.getValidHandle< std::vector< simb::MCTruth > >( truth_tag );
 
   mcevts_truth=0;
+  nuPDG_truth.clear();
+  ccnc_truth.clear();
+  mode_truth.clear();
+  enu_truth.clear();
+  nuvtxx_truth.clear();
+  nuvtxy_truth.clear();
+  nuvtxz_truth.clear();
+
   if (truth_handle->size() > 0) {
     for(unsigned int iList = 0; iList < truth_handle->size() ; ++iList){
       if (truth_handle->at(iList).NeutrinoSet())
@@ -197,7 +205,16 @@ void lee::ElectronSelectionAna::fillTree(art::Event const & e)
   art::InputTag pandoraNu_tag{"pandoraNu"};
   auto const& pfparticle_handle = e.getValidHandle< std::vector< recob::PFParticle > >( pandoraNu_tag );
   passed = fElectronEventSelectionAlg.eventSelected(e);
+
   nnuvtx=0;
+  nuvtxx.clear();
+  nuvtxy.clear();
+  nuvtxz.clear();
+  center_of_charge_x.clear();
+  center_of_charge_y.clear();
+  center_of_charge_z.clear();
+  nuvtxpdg.clear();
+
   if(passed)
   {
     for (auto & inu : fElectronEventSelectionAlg.get_primary_indexes()) 
@@ -227,6 +244,14 @@ void lee::ElectronSelectionAna::fillTree(art::Event const & e)
   // Fill optical information
   art::InputTag optical_tag{"simpleFlashBeam"};
   auto const& optical_handle = e.getValidHandle<std::vector<recob::OpFlash>>(optical_tag);
+
+  nfls=0;
+  flsTime.clear();
+  flsPe.clear();
+  flsYcenter.clear();
+  flsZcenter.clear();
+  flsYwidth.clear();
+  flsZwidth.clear();
 
   std::map<size_t, int > op_flash_indexes = fElectronEventSelectionAlg.get_op_flash_indexes();
   nfls = op_flash_indexes.size();
