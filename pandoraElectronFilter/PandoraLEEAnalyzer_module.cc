@@ -111,7 +111,6 @@ private:
   const int k_dirt = 5;
 
   double _energy;
-  double _category;
   double _track_dir_z;
   double _track_length;
 
