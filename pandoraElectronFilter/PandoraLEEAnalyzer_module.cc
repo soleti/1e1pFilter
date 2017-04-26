@@ -113,7 +113,7 @@ private:
   double _energy;
   double _track_dir_z;
   double _track_length;
-
+  bool _true_nu_is_fiducial;
   double _nu_energy;
 
   int _n_tracks;
@@ -192,6 +192,7 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const & pset)
   myTTree->Branch("n_candidates", &_n_candidates, "n_candidates/i");
   myTTree->Branch("n_true_nu", &_n_true_nu, "n_true_nu/i");
   myTTree->Branch("distance", &_distance, "distance/d");
+  myTTree->Branch("true_nu_is_fiducial", &_true_nu_is_fiducial, "true_nu_is_fiducial/b");
 
   myPOTTTree->Branch("run", &_run_sr, "run/i");
   myPOTTTree->Branch("subrun", &_subrun_sr, "subrun/i");
@@ -384,14 +385,18 @@ void lee::PandoraLEEAnalyzer::measure_energy(size_t ipf, const art::Event & evt,
   std::vector<art::Ptr<recob::Shower>> showers = showers_per_pfparticle.at(ipf);
 
   for (size_t ish = 0; ish < showers.size(); ish++) {
-    energy += showers[ish]->Energy()[showers[ish]->best_plane()];
+    if (showers[ish]->Energy()[showers[ish]->best_plane()] > 0) {
+      energy += showers[ish]->Energy()[showers[ish]->best_plane()];
+    }
   }
 
   art::FindManyP<recob::Track > tracks_per_pfparticle ( pfparticle_handle, evt, pandoraNu_tag );
   std::vector<art::Ptr<recob::Track>> tracks = tracks_per_pfparticle.at(ipf);
 
   for (size_t itr = 0; itr < tracks.size(); itr++) {
-    energy += trackEnergy(tracks[itr], evt);
+    if (trackEnergy(tracks[itr], evt) > 0) {
+      energy += trackEnergy(tracks[itr], evt);
+    }
   }
 
   for (auto const& pfdaughter : pfparticles[ipf].Daughters()) {
@@ -494,7 +499,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
   std::vector<simb::MCParticle> nu_mcparticles;
 
   _n_true_nu = generator.size();
-
+  _true_nu_is_fiducial = false;
   if (generator.size() > 0) {
     _nu_energy = generator[0].GetNeutrino().Nu().E();
     ccnc = generator[0].GetNeutrino().CCNC();
@@ -512,6 +517,8 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
     if (is_dirt(true_neutrino_vertex)) {
       _category = k_dirt;
     }
+
+    _true_nu_is_fiducial = fElectronEventSelectionAlg.is_fiducial(true_neutrino_vertex);
 
     for (int i = 0; i < generator[0].NParticles(); i++) {
       if (generator[0].Origin() == 1) {
