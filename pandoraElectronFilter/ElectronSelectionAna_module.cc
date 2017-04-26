@@ -111,33 +111,33 @@ lee::ElectronSelectionAna::ElectronSelectionAna(fhicl::ParameterSet const & pset
 
   //Set branches for truth information
   fTree->Branch("mcevts_truth", &mcevts_truth,   "mcevts_truth/S"               );
-  fTree->Branch("nuPDG_truth",  &nuPDG_truth,    "nuPDG_truth[mcevts_truth]/S"  );
-  fTree->Branch("ccnc_truth",   &ccnc_truth,     "ccnc_truth[mcevts_truth]/S"   );
-  fTree->Branch("mode_truth",   &mode_truth,     "mode_truth[mcevts_truth]/S"   );
-  fTree->Branch("enu_truth",    &enu_truth,      "enu_truth[mcevts_truth]/F"    );
-  fTree->Branch("nuvtxx_truth", &nuvtxx_truth,   "nuvtxx_truth[mcevts_truth]/F" );
-  fTree->Branch("nuvtxy_truth", &nuvtxy_truth,   "nuvtxy_truth[mcevts_truth]/F" );
-  fTree->Branch("nuvtxz_truth", &nuvtxz_truth,   "nuvtxz_truth[mcevts_truth]/F" );
+  fTree->Branch("nuPDG_truth",  nuPDG_truth,    "nuPDG_truth[mcevts_truth]/S"  );
+  fTree->Branch("ccnc_truth",   ccnc_truth,     "ccnc_truth[mcevts_truth]/S"   );
+  fTree->Branch("mode_truth",   mode_truth,     "mode_truth[mcevts_truth]/S"   );
+  fTree->Branch("enu_truth",    enu_truth,      "enu_truth[mcevts_truth]/F"    );
+  fTree->Branch("nuvtxx_truth", nuvtxx_truth,   "nuvtxx_truth[mcevts_truth]/F" );
+  fTree->Branch("nuvtxy_truth", nuvtxy_truth,   "nuvtxy_truth[mcevts_truth]/F" );
+  fTree->Branch("nuvtxz_truth", nuvtxz_truth,   "nuvtxz_truth[mcevts_truth]/F" );
 
   //Set branches for PandoraNU information
   fTree->Branch("passed",     &passed,     "passed/O"             );
   fTree->Branch("nnuvtx",     &nnuvtx,     "nnuvtx/S"             );
-  fTree->Branch("nuvtxx",     &nuvtxx,     "nuvtxx[nnuvtx]/F"     );
-  fTree->Branch("nuvtxy",     &nuvtxy,     "nuvtxy[nnuvtx]/F"     );
-  fTree->Branch("nuvtxz",     &nuvtxz,     "nuvtxz[nnuvtx]/F"     );
-  fTree->Branch("nuvtxpdg",   &nuvtxpdg,   "nuvtxpdg[nnuvtx]/S"   );
-  fTree->Branch("center_of_charge_x",     &center_of_charge_x,     "center_of_charge_x[nnuvtx]/F"     );
-  fTree->Branch("center_of_charge_y",     &center_of_charge_y,     "center_of_charge_y[nnuvtx]/F"     );
-  fTree->Branch("center_of_charge_z",     &center_of_charge_z,     "center_of_charge_z[nnuvtx]/F"     );
+  fTree->Branch("nuvtxx",     nuvtxx,     "nuvtxx[nnuvtx]/F"     );
+  fTree->Branch("nuvtxy",     nuvtxy,     "nuvtxy[nnuvtx]/F"     );
+  fTree->Branch("nuvtxz",     nuvtxz,     "nuvtxz[nnuvtx]/F"     );
+  fTree->Branch("nuvtxpdg",   nuvtxpdg,   "nuvtxpdg[nnuvtx]/S"   );
+  fTree->Branch("center_of_charge_x",     center_of_charge_x,     "center_of_charge_x[nnuvtx]/F"     );
+  fTree->Branch("center_of_charge_y",     center_of_charge_y,     "center_of_charge_y[nnuvtx]/F"     );
+  fTree->Branch("center_of_charge_z",     center_of_charge_z,     "center_of_charge_z[nnuvtx]/F"     );
   
   //Set branches for optical information
   fTree->Branch("nfls",       &nfls,       "nfls/S"             );
-  fTree->Branch("flsTime",    &flsTime,    "flash_time[nfls]/F" );
-  fTree->Branch("flsPe",      &flsPe,      "flsPe[nfls]/F"      );
-  fTree->Branch("flsYcenter", &flsYcenter, "flsYcenter[nfls]/F" );
-  fTree->Branch("flsZcenter", &flsZcenter, "flsZcenter[nfls]/F" );
-  fTree->Branch("flsYwidth",  &flsYwidth,  "flsYwidth[nfls]/F"  );
-  fTree->Branch("flsZwidth",  &flsZwidth,  "flsZwidth[nfls]/F"  );
+  fTree->Branch("flsTime",    flsTime,    "flash_time[nfls]/F" );
+  fTree->Branch("flsPe",      flsPe,      "flsPe[nfls]/F"      );
+  fTree->Branch("flsYcenter", flsYcenter, "flsYcenter[nfls]/F" );
+  fTree->Branch("flsZcenter", flsZcenter, "flsZcenter[nfls]/F" );
+  fTree->Branch("flsYwidth",  flsYwidth,  "flsYwidth[nfls]/F"  );
+  fTree->Branch("flsZwidth",  flsZwidth,  "flsZwidth[nfls]/F"  );
   this->reconfigure(pset);
 }
 
@@ -213,16 +213,16 @@ void lee::ElectronSelectionAna::fillTree(art::Event const & e)
     for (size_t i = 0; i < fElectronEventSelectionAlg.get_n_neutrino_candidates(); i ++)
     {
       size_t pfpindex = fElectronEventSelectionAlg.get_primary_indexes().at(i);
-      if (fElectronEventSelectionAlg.get_neutrino_candidate_passed().at(pfpindex))
+      if (fElectronEventSelectionAlg.get_neutrino_candidate_passed().at(i))
       {
         nnuvtx++;
 
-        TVector3 neutrino_vertex = fElectronEventSelectionAlg.get_neutrino_vertex().at(pfpindex);
+        TVector3 neutrino_vertex = fElectronEventSelectionAlg.get_neutrino_vertex().at(i);
         nuvtxx.push_back(neutrino_vertex.X());
         nuvtxy.push_back(neutrino_vertex.Y());
         nuvtxz.push_back(neutrino_vertex.Z());
 
-        TVector3 center_of_charge = fElectronEventSelectionAlg.get_center_of_charge().at(pfpindex);
+        TVector3 center_of_charge = fElectronEventSelectionAlg.get_center_of_charge().at(i);
         center_of_charge_x.push_back(center_of_charge.X());
         center_of_charge_y.push_back(center_of_charge.Y());
         center_of_charge_z.push_back(center_of_charge.Z());
