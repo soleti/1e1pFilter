@@ -110,24 +110,24 @@ private:
   const int k_nc = 4;
   const int k_dirt = 5;
 
-  double _energy;
-  double _category;
-  double _track_dir_z;
-  double _track_length;
+  double _energy = std::numeric_limits<double>::lowest();;
+  double _category = std::numeric_limits<double>::lowest();;
+  double _track_dir_z = std::numeric_limits<double>::lowest();;
+  double _track_length = std::numeric_limits<double>::lowest();;
 
-  double _nu_energy;
+  double _nu_energy = std::numeric_limits<double>::lowest();;
 
-  int _n_tracks;
-  int _n_showers;
+  int _n_tracks = std::numeric_limits<double>::lowest();;
+  int _n_showers = std::numeric_limits<double>::lowest();;
 
-  double _vx;
-  double _vy;
-  double _vz;
+  double _vx = std::numeric_limits<double>::lowest();;
+  double _vy = std::numeric_limits<double>::lowest();;
+  double _vz = std::numeric_limits<double>::lowest();;
 
-  double _true_vx;
-  double _true_vy;
-  double _true_vz;
-
+  double _true_vx = std::numeric_limits<double>::lowest();;
+  double _true_vy = std::numeric_limits<double>::lowest();;
+  double _true_vz = std::numeric_limits<double>::lowest();;
+  int _category;
   int _run;
   int _subrun;
   int _event;
@@ -137,7 +137,7 @@ private:
   int _subrun_sr;
   double _pot;
   bool _event_passed;
-  double _distance;
+  double _distance = std::numeric_limits<double>::lowest();;
   double distance(double a[3], double b[3]);
   bool is_dirt(double x[3]) const;
   void measure_energy(size_t ipf, const art::Event & evt, double & energy);
@@ -410,8 +410,8 @@ size_t lee::PandoraLEEAnalyzer::choose_candidate(std::vector<size_t> & candidate
     double longest_track_dir = -1;
 
     std::vector<art::Ptr<recob::Track>> nu_tracks;
-
-    std::vector< size_t > pfp_tracks_id = fElectronEventSelectionAlg.get_pfp_id_tracks_from_primary().at(ic);
+    size_t pfp_id = fElectronEventSelectionAlg.get_primary_indexes().at(ic);
+    std::vector< size_t > pfp_tracks_id = fElectronEventSelectionAlg.get_pfp_id_tracks_from_primary().at(pfp_id);
     get_daughter_tracks(pfp_tracks_id, evt, nu_tracks);
     longest_track_dir = get_longest_track(nu_tracks)->StartDirection().Z();
 
@@ -486,7 +486,9 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
   art::InputTag pandoraNu_tag { "pandoraNu" };
   art::InputTag generator_tag { "generator" };
 
-  int _category = 0;
+
+  _category = 0;
+
   auto const& generator_handle = evt.getValidHandle< std::vector< simb::MCTruth > >( generator_tag );
   auto const& generator(*generator_handle);
   int ccnc = -1;
@@ -598,19 +600,19 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
     }
 
 
-
+    std::cout << "Category " << _category << std::endl;
     std::vector<art::Ptr<recob::Track>> chosen_tracks;
     // Get the index of the pf_candidate in the Alg accounting to use below:
-
-    std::vector< size_t > pfp_tracks_id = fElectronEventSelectionAlg.get_pfp_id_tracks_from_primary().at(ipf_candidate);
+    size_t pfp_id = fElectronEventSelectionAlg.get_primary_indexes().at(ipf_candidate);
+    std::vector< size_t > pfp_tracks_id = fElectronEventSelectionAlg.get_pfp_id_tracks_from_primary().at(pfp_id);
     get_daughter_tracks(pfp_tracks_id, evt, chosen_tracks);
     _track_dir_z = get_longest_track(chosen_tracks)->StartDirection().Z();
     _track_length = get_longest_track(chosen_tracks)->Length();
-    _n_tracks = fElectronEventSelectionAlg.get_n_tracks().at(ipf_candidate);
-    _n_showers = fElectronEventSelectionAlg.get_n_showers().at(ipf_candidate);
+    _n_tracks = fElectronEventSelectionAlg.get_n_tracks().at(pfp_id);
+    _n_showers = fElectronEventSelectionAlg.get_n_showers().at(pfp_id);
 
 
-    std::cout << "Chosen neutrino " << ipf_candidate  << std::endl;
+    std::cout << "Chosen neutrino " << ipf_candidate  << " " << pfp_id << std::endl;
   }
 
 
