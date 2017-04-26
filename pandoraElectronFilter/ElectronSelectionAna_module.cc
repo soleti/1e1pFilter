@@ -114,7 +114,7 @@ lee::ElectronSelectionAna::ElectronSelectionAna(fhicl::ParameterSet const & pset
   fTree->Branch("nuPDG_truth",  "std::vector<Short_t>",    &nuPDG_truth            );
   fTree->Branch("ccnc_truth",   "std::vector<Short_t>",    &ccnc_truth             );
   fTree->Branch("mode_truth",   "std::vector<Short_t>",    &mode_truth             );
-  fTree->Branch("enu_truth",    "std::vector<Short_t>",    &enu_truth              );
+  fTree->Branch("enu_truth",    "std::vector<Float_t>",    &enu_truth              );
   fTree->Branch("nuvtxx_truth", "std::vector<Float_t>",    &nuvtxx_truth           );
   fTree->Branch("nuvtxy_truth", "std::vector<Float_t>",    &nuvtxy_truth           );
   fTree->Branch("nuvtxz_truth", "std::vector<Float_t>",    &nuvtxz_truth           );
@@ -156,7 +156,7 @@ lee::ElectronSelectionAna::~ElectronSelectionAna()
 
 void lee::ElectronSelectionAna::analyze(art::Event const & e)
 {
-  //try {
+  try {
 
   bool event_passed = fElectronEventSelectionAlg.eventSelected(e);
   if (event_passed){
@@ -169,14 +169,14 @@ void lee::ElectronSelectionAna::analyze(art::Event const & e)
   }
 
   fillTree(e);
-  //} catch(...) {std::cerr<<"Something went wrong filling root tree"<<std::endl;}
+  } catch(...) {std::cerr<<"Something went wrong filling root tree"<<std::endl;}
   return;
 }
 
 
 void lee::ElectronSelectionAna::fillTree(art::Event const & e)
 {
-  std::cout<<"begin filling variables"<<std::endl;
+  //std::cout<<"begin filling variables"<<std::endl;
 
   // Fill run information
   run    = e.run();
@@ -254,7 +254,7 @@ void lee::ElectronSelectionAna::fillTree(art::Event const & e)
   }
 
 
-  std::cout<<"variables filled, fill tree"<<std::endl;
+  //std::cout<<"variables filled, fill tree"<<std::endl;
   fTree->Fill();
 }
 
