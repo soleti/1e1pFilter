@@ -409,8 +409,7 @@ size_t lee::PandoraLEEAnalyzer::choose_candidate(std::vector<size_t> & candidate
     double longest_track_dir = -1;
 
     std::vector<art::Ptr<recob::Track>> nu_tracks;
-    size_t pfp_id = fElectronEventSelectionAlg.get_primary_indexes().at(ic);
-    std::vector< size_t > pfp_tracks_id = fElectronEventSelectionAlg.get_pfp_id_tracks_from_primary().at(pfp_id);
+    std::vector< size_t > pfp_tracks_id = fElectronEventSelectionAlg.get_pfp_id_tracks_from_primary().at(ic);
     get_daughter_tracks(pfp_tracks_id, evt, nu_tracks);
     longest_track_dir = get_longest_track(nu_tracks)->StartDirection().Z();
 
