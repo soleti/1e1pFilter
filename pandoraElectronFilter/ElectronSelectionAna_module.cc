@@ -55,7 +55,7 @@ private:
   TTree*      fTree;
 
 
-  //Run Subrun Event 
+  //Run Subrun Event
   Short_t    run;
   Short_t    subrun;
   Short_t    event;
@@ -104,7 +104,7 @@ lee::ElectronSelectionAna::ElectronSelectionAna(fhicl::ParameterSet const & pset
   fTFile = new TFile("FlashOutput.root", "RECREATE");
   fTree  = tfs->make<TTree>("flashtree","FlashAnalysis Tree");
 
-  //Set branches for (Run Subrun Event) 
+  //Set branches for (Run Subrun Event)
   fTree->Branch("run",     &run,     "run/S"       );
   fTree->Branch("subrun",  &subrun,  "subrun/S"    );
   fTree->Branch("event",   &event,   "event/S"     );
@@ -177,11 +177,12 @@ void lee::ElectronSelectionAna::analyze(art::Event const & e)
 void lee::ElectronSelectionAna::fillTree(art::Event const & e)
 {
   std::cout<<"begin filling variables"<<std::endl;
-  // Fill run information 
-  run    = e.run(); 
+
+  // Fill run information
+  run    = e.run();
   subrun = e.subRun();
   event  = e.event();
-  
+
   // Fill truth information
   art::InputTag truth_tag { "generator" };
   auto const& truth_handle = e.getValidHandle< std::vector< simb::MCTruth > >( truth_tag );
@@ -192,13 +193,13 @@ void lee::ElectronSelectionAna::fillTree(art::Event const & e)
       {
         simb::MCNeutrino const& neutrino = truth_handle->at(iList).GetNeutrino();
         mcevts_truth++;
-        nuPDG_truth.push_back(neutrino.Nu().PdgCode());                 
-        ccnc_truth.push_back(neutrino.CCNC());                   
-        mode_truth.push_back(neutrino.Mode());                    
-        enu_truth.push_back(neutrino.Nu().E());                   
-        nuvtxx_truth.push_back(neutrino.Nu().Vx());                  
-        nuvtxy_truth.push_back(neutrino.Nu().Vy());                  
-        nuvtxz_truth.push_back(neutrino.Nu().Vz());  
+        nuPDG_truth.push_back(neutrino.Nu().PdgCode());
+        ccnc_truth.push_back(neutrino.CCNC());
+        mode_truth.push_back(neutrino.Mode());
+        enu_truth.push_back(neutrino.Nu().E());
+        nuvtxx_truth.push_back(neutrino.Nu().Vx());
+        nuvtxy_truth.push_back(neutrino.Nu().Vy());
+        nuvtxz_truth.push_back(neutrino.Nu().Vz());
 
       }
     }
@@ -251,6 +252,8 @@ void lee::ElectronSelectionAna::fillTree(art::Event const & e)
     flsYwidth.push_back(flash.YWidth());
     flsZwidth.push_back(flash.ZWidth());
   }
+
+
   std::cout<<"variables filled, fill tree"<<std::endl;
   fTree->Fill();
 }
