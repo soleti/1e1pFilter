@@ -33,7 +33,7 @@ namespace lee {
 class lee::ElectronSelectionAna : public art::EDAnalyzer {
 public:
   explicit ElectronSelectionAna(fhicl::ParameterSet const & pset);
-  virtual ~ElectronSelectionAna();
+  //virtual ~ElectronSelectionAna();
 
   void reconfigure(fhicl::ParameterSet const & pset);
   // Plugins should not be copied or assigned.
@@ -51,7 +51,6 @@ private:
 
   // variables
   lee::ElectronEventSelectionAlg fElectronEventSelectionAlg;
-  TFile*      fTFile;
   TTree*      fTree;
 
 
@@ -101,7 +100,6 @@ lee::ElectronSelectionAna::ElectronSelectionAna(fhicl::ParameterSet const & pset
   //initialize output tree
   std::cout << "Initializing output tree..." << std::endl;
   art::ServiceHandle<art::TFileService> tfs;
-  fTFile = new TFile("FlashOutput.root", "RECREATE");
   fTree  = tfs->make<TTree>("flashtree","FlashAnalysis Tree");
 
   //Set branches for (Run Subrun Event)
@@ -129,7 +127,7 @@ lee::ElectronSelectionAna::ElectronSelectionAna(fhicl::ParameterSet const & pset
   fTree->Branch("center_of_charge_x",       "std::vector<Float_t>",    &center_of_charge_x    );
   fTree->Branch("center_of_charge_y",       "std::vector<Float_t>",    &center_of_charge_y    );
   fTree->Branch("center_of_charge_z",       "std::vector<Float_t>",    &center_of_charge_z    );
-  
+
   //Set branches for optical information
   fTree->Branch("nfls",       &nfls,       "nfls/S"                 );
   fTree->Branch("flsTime",    "std::vector<Float_t>",   &flsTime    );
@@ -140,17 +138,6 @@ lee::ElectronSelectionAna::ElectronSelectionAna(fhicl::ParameterSet const & pset
   fTree->Branch("flsZwidth",  "std::vector<Float_t>",   &flsZwidth  );
 
   this->reconfigure(pset);
-}
-
-
-lee::ElectronSelectionAna::~ElectronSelectionAna()
-{
-  //write output file and tree
-  std::cout << "Writing output..." << std::endl;
-  fTFile->cd();
-  fTree->Write("flashtree");
-  fTFile->Close();
-  std::cout << "Done!" << std::endl;
 }
 
 
