@@ -226,7 +226,7 @@ void lee::ElectronSelectionAna::fillTree(art::Event const & e)
         center_of_charge_y.push_back(center_of_charge.Y());
         center_of_charge_z.push_back(center_of_charge.Z());
 
-        recob::PFParticle const& pfp = pfparticle_handle->at(i);
+        recob::PFParticle const& pfp = pfparticle_handle->at(fElectronEventSelectionAlg.get_primary_indexes()[i]);
         nuvtxpdg.push_back(pfp.PdgCode());
       }
     }
@@ -241,7 +241,7 @@ void lee::ElectronSelectionAna::fillTree(art::Event const & e)
   nfls = op_flash_indexes.size();
   for(int ifl=0; ifl< nfls; ++ifl)
   {
-    recob::OpFlash const& flash = optical_handle->at(ifl);
+    recob::OpFlash const& flash = optical_handle->at(op_flash_indexes[ifl]);
     flsTime.push_back(flash.Time());
     flsPe.push_back(flash.TotalPE());
     flsYcenter.push_back(flash.YCenter());
