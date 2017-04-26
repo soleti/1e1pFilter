@@ -110,34 +110,35 @@ lee::ElectronSelectionAna::ElectronSelectionAna(fhicl::ParameterSet const & pset
   fTree->Branch("event",   &event,   "event/S"     );
 
   //Set branches for truth information
-  fTree->Branch("mcevts_truth", &mcevts_truth,   "mcevts_truth/S"               );
-  // fTree->Branch("nuPDG_truth",  nuPDG_truth,    "nuPDG_truth[mcevts_truth]/S"  );
-  // fTree->Branch("ccnc_truth",   ccnc_truth,     "ccnc_truth[mcevts_truth]/S"   );
-  // fTree->Branch("mode_truth",   mode_truth,     "mode_truth[mcevts_truth]/S"   );
-  // fTree->Branch("enu_truth",    enu_truth,      "enu_truth[mcevts_truth]/F"    );
-  // fTree->Branch("nuvtxx_truth", nuvtxx_truth,   "nuvtxx_truth[mcevts_truth]/F" );
-  // fTree->Branch("nuvtxy_truth", nuvtxy_truth,   "nuvtxy_truth[mcevts_truth]/F" );
-  // fTree->Branch("nuvtxz_truth", nuvtxz_truth,   "nuvtxz_truth[mcevts_truth]/F" );
+  fTree->Branch("mcevts_truth", &mcevts_truth,             "mcevts_truth/S"        );
+  fTree->Branch("nuPDG_truth",  "std::vector<Short_t>",    &nuPDG_truth            );
+  fTree->Branch("ccnc_truth",   "std::vector<Short_t>",    &ccnc_truth             );
+  fTree->Branch("mode_truth",   "std::vector<Short_t>",    &mode_truth             );
+  fTree->Branch("enu_truth",    "std::vector<Short_t>",    &enu_truth              );
+  fTree->Branch("nuvtxx_truth", "std::vector<Float_t>",    &nuvtxx_truth           );
+  fTree->Branch("nuvtxy_truth", "std::vector<Float_t>",    &nuvtxy_truth           );
+  fTree->Branch("nuvtxz_truth", "std::vector<Float_t>",    &nuvtxz_truth           );
 
   //Set branches for PandoraNU information
-  // fTree->Branch("passed",     &passed,     "passed/O"             );
-  // fTree->Branch("nnuvtx",     &nnuvtx,     "nnuvtx/S"             );
-  // fTree->Branch("nuvtxx",     nuvtxx,     "nuvtxx[nnuvtx]/F"     );
-  // fTree->Branch("nuvtxy",     nuvtxy,     "nuvtxy[nnuvtx]/F"     );
-  // fTree->Branch("nuvtxz",     nuvtxz,     "nuvtxz[nnuvtx]/F"     );
-  // fTree->Branch("nuvtxpdg",   nuvtxpdg,   "nuvtxpdg[nnuvtx]/S"   );
-  // fTree->Branch("center_of_charge_x",     center_of_charge_x,     "center_of_charge_x[nnuvtx]/F"     );
-  // fTree->Branch("center_of_charge_y",     center_of_charge_y,     "center_of_charge_y[nnuvtx]/F"     );
-  // fTree->Branch("center_of_charge_z",     center_of_charge_z,     "center_of_charge_z[nnuvtx]/F"     );
-
+  fTree->Branch("passed",                   &passed,                   "passed/O"             );
+  fTree->Branch("nnuvtx",                   &nnuvtx,                   "nnuvtx/S"             );
+  fTree->Branch("nuvtxx",                   "std::vector<Float_t>",    &nuvtxx                );
+  fTree->Branch("nuvtxy",                   "std::vector<Float_t>",    &nuvtxy                );
+  fTree->Branch("nuvtxz",                   "std::vector<Float_t>",    &nuvtxz                );
+  fTree->Branch("nuvtxpdg",                 "std::vector<Short_t>",    &nuvtxpdg              );
+  fTree->Branch("center_of_charge_x",       "std::vector<Float_t>",    &center_of_charge_x    );
+  fTree->Branch("center_of_charge_y",       "std::vector<Float_t>",    &center_of_charge_y    );
+  fTree->Branch("center_of_charge_z",       "std::vector<Float_t>",    &center_of_charge_z    );
+  
   //Set branches for optical information
-  fTree->Branch("nfls",       &nfls,       "nfls/S"             );
-  // fTree->Branch("flsTime",    flsTime,    "flash_time[nfls]/F" );
-  // fTree->Branch("flsPe",      flsPe,      "flsPe[nfls]/F"      );
-  // fTree->Branch("flsYcenter", flsYcenter, "flsYcenter[nfls]/F" );
-  // fTree->Branch("flsZcenter", flsZcenter, "flsZcenter[nfls]/F" );
-  // fTree->Branch("flsYwidth",  flsYwidth,  "flsYwidth[nfls]/F"  );
-  // fTree->Branch("flsZwidth",  flsZwidth,  "flsZwidth[nfls]/F"  );
+  fTree->Branch("nfls",       &nfls,       "nfls/S"                 );
+  fTree->Branch("flsTime",    "std::vector<Float_t>",   &flsTime    );
+  fTree->Branch("flsPe",      "std::vector<Float_t>",   &flsPe      );
+  fTree->Branch("flsYcenter", "std::vector<Float_t>",   &flsYcenter );
+  fTree->Branch("flsZcenter", "std::vector<Float_t>",   &flsZcenter );
+  fTree->Branch("flsYwidth",  "std::vector<Float_t>",   &flsYwidth  );
+  fTree->Branch("flsZwidth",  "std::vector<Float_t>",   &flsZwidth  );
+
   this->reconfigure(pset);
 }
 
@@ -155,7 +156,7 @@ lee::ElectronSelectionAna::~ElectronSelectionAna()
 
 void lee::ElectronSelectionAna::analyze(art::Event const & e)
 {
-  try {
+  //try {
 
   bool event_passed = fElectronEventSelectionAlg.eventSelected(e);
   if (event_passed){
@@ -168,13 +169,14 @@ void lee::ElectronSelectionAna::analyze(art::Event const & e)
   }
 
   fillTree(e);
-  } catch(...) {std::cerr<<"Something went wrong filling root tree"<<std::endl;}
+  //} catch(...) {std::cerr<<"Something went wrong filling root tree"<<std::endl;}
   return;
 }
 
 
 void lee::ElectronSelectionAna::fillTree(art::Event const & e)
 {
+  std::cout<<"begin filling variables"<<std::endl;
 
   // Fill run information
   run    = e.run();
@@ -251,6 +253,8 @@ void lee::ElectronSelectionAna::fillTree(art::Event const & e)
     flsZwidth.push_back(flash.ZWidth());
   }
 
+
+  std::cout<<"variables filled, fill tree"<<std::endl;
   fTree->Fill();
 }
 
