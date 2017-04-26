@@ -137,6 +137,7 @@ private:
   int _subrun_sr;
   double _pot;
   bool _event_passed;
+  double _distance;
   double distance(double a[3], double b[3]);
   bool is_dirt(double x[3]) const;
   void measure_energy(size_t ipf, const art::Event & evt, double & energy);
@@ -191,6 +192,8 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const & pset)
   myTTree->Branch("passed",  &_event_passed, "passed/b");
   myTTree->Branch("n_candidates", &_n_candidates, "n_candidates/i");
   myTTree->Branch("n_true_nu", &_n_true_nu, "n_true_nu/i");
+  myTTree->Branch("distance", &_distance, "distance/d");
+
   myPOTTTree->Branch("run", &_run_sr, "run/i");
   myPOTTTree->Branch("subrun", &_subrun_sr, "subrun/i");
   myPOTTTree->Branch("pot", &_pot, "pot/d");
@@ -262,6 +265,7 @@ art::Ptr<recob::Shower> lee::PandoraLEEAnalyzer::get_most_energetic_shower(std::
   for (auto const& shower: showers) {
     if (shower->Energy()[shower->best_plane()] > max_energy) {
       most_energetic_shower = shower;
+      max_energy = shower->Energy()[shower->best_plane()];
     }
   }
   return most_energetic_shower;
@@ -273,13 +277,13 @@ art::Ptr<recob::Track> lee::PandoraLEEAnalyzer::get_longest_track(std::vector< a
   double max_length = std::numeric_limits<double>::lowest();
   for (auto const& track: tracks) {
     try {
-      std::cout << "Length " << track->Length() << std::endl;
+      std::cout << track << " length " << track->Length() << std::endl;
       if (track->Length() > max_length) {
         longest_track = track;
         max_length = track->Length();
       }
     } catch (...) {
-      std::cout << "Error getting longest track" << std::endl;
+      std::cout << "Error getting longest track " << track << std::endl;
     }
   }
   std::cout << "Longest track " << max_length << std::endl;
@@ -292,12 +296,10 @@ void lee::PandoraLEEAnalyzer::get_daughter_tracks( std::vector < size_t > pf_ids
   auto const& pfparticle_handle = evt.getValidHandle< std::vector< recob::PFParticle > >( pandoraNu_tag );
 
   art::FindOneP< recob::Track > track_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
-  std::cout << "pf_ids size" << pf_ids.size() << std::endl;
+
   for (auto const& pf_id: pf_ids) {
-    std::cout << "pf_id " << pf_id << std::endl;
     try {
       auto const& track_obj = track_per_pfpart.at(pf_id);
-      std::cout << track_obj << std::endl;
       tracks.push_back(track_obj);
     } catch (...) {
       std::cout << "Error getting the track" << std::endl;
@@ -410,9 +412,7 @@ size_t lee::PandoraLEEAnalyzer::choose_candidate(std::vector<size_t> & candidate
     std::vector<art::Ptr<recob::Track>> nu_tracks;
 
     std::vector< size_t > pfp_tracks_id = fElectronEventSelectionAlg.get_pfp_id_tracks_from_primary().at(ic);
-    std::cout << "pfp_tracks_id size " << pfp_tracks_id.size() << std::endl;
     get_daughter_tracks(pfp_tracks_id, evt, nu_tracks);
-    std::cout << "Got tracks" << std::endl;
     longest_track_dir = get_longest_track(nu_tracks)->StartDirection().Z();
 
     if (longest_track_dir > most_z) {
@@ -565,12 +565,13 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
 
     size_t ipf_candidate = choose_candidate(nu_candidates, evt);
     _energy = 0;
+    std::cout << "Number of candidates " << nu_candidates.size() << std::endl; 
     std::cout << "Candidate index " << ipf_candidate << std::endl;
-    measure_energy(ipf_candidate, evt, _energy);
+    measure_energy(fElectronEventSelectionAlg.get_primary_indexes().at(ipf_candidate), evt, _energy);
     std::cout << "Energy " << _energy << std::endl;
 
     art::FindOneP< recob::Vertex > vertex_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
-    auto const& vertex_obj = vertex_per_pfpart.at(ipf_candidate);
+    auto const& vertex_obj = vertex_per_pfpart.at(fElectronEventSelectionAlg.get_primary_indexes().at(ipf_candidate));
 
     std::cout << "After vertex" << std::endl;
 
@@ -582,26 +583,22 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
 
     TVector3 v_reco_vertex(_vx,_vy,_vz);
 
-    std::cout << "Before spacecharge" << std::endl;
+    TVector3 true_vertex(true_neutrino_vertex[0],true_neutrino_vertex[1],true_neutrino_vertex[2]);
+    _distance = fElectronEventSelectionAlg.distance(v_reco_vertex,true_vertex);
 
-    if (generator.size() > 0) {
-      TVector3 true_vertex(true_neutrino_vertex[0],true_neutrino_vertex[1],true_neutrino_vertex[2]);
-
-//      TVector3 sce_true_vertex = fElectronEventSelectionAlg.spaceChargeTrueToReco(true_vertex);
-      // if (fElectronEventSelectionAlg.distance(v_reco_vertex,sce_true_vertex) > 10) {
-      //   _category = k_cosmic;
-      // }
+    if (generator.size() > 0 && fElectronEventSelectionAlg.is_fiducial(true_vertex)) {
+      std::cout << true_neutrino_vertex[0] << " " << true_neutrino_vertex[1] << " " << true_neutrino_vertex[2] << std::endl;
+      //TVector3 sce_true_vertex = fElectronEventSelectionAlg.spaceChargeTrueToReco(true_vertex);
+       if (_distance > 15) {
+         _category = k_cosmic;
+      }
     }
 
-    std::cout << "After spacecharge" << std::endl;
 
 
     std::vector<art::Ptr<recob::Track>> chosen_tracks;
-    std::cout << "pfp id tracks from primary " << fElectronEventSelectionAlg.get_pfp_id_tracks_from_primary().size() << std::endl;
     std::vector< size_t > pfp_tracks_id = fElectronEventSelectionAlg.get_pfp_id_tracks_from_primary().at(ipf_candidate);
-    std::cout << "PFP tracks size " << pfp_tracks_id.size() << std::endl;
     get_daughter_tracks(pfp_tracks_id, evt, chosen_tracks);
-    std::cout << "Chosen tracks size " << chosen_tracks.size() << std::endl;
     _track_dir_z = get_longest_track(chosen_tracks)->StartDirection().Z();
     _track_length = get_longest_track(chosen_tracks)->Length();
     _n_tracks = fElectronEventSelectionAlg.get_n_tracks().at(ipf_candidate);

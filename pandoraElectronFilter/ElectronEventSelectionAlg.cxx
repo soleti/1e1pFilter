@@ -79,7 +79,7 @@ double ElectronEventSelectionAlg::distance(const TVector3 & a , const TVector3 &
 
 
 TVector3 ElectronEventSelectionAlg::spaceChargeTrueToReco(const TVector3 & xyz) {
-  auto const *  sce = lar::providerFrom<spacecharge::SpaceChargeServiceMicroBooNE>();
+  auto const* sce = lar::providerFrom<spacecharge::SpaceChargeService>();
   geo::Point_t point(xyz);
   // auto correction = sce->GetPosOffsets(point);
   TVector3 correctedPoint(xyz);
@@ -277,8 +277,8 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
     return false;
   }
 
+  _primary_indexes.clear();
   // Get the list of primary pfparticles that are also neutrinos (numu or nue)
-  std::vector<size_t> _primary_indexes;
   for (size_t _i_pfp = 0; _i_pfp < pfparticle_handle -> size(); _i_pfp ++) {
 
     if ( ( abs( pfparticle_handle->at(_i_pfp).PdgCode() ) == 12 ||
@@ -400,6 +400,7 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
 
           if (track_obj->Length() < m_trackLength) {
             tracks++;
+            std::cout << "Stored track " << track_obj << " " << track_obj->Length() << std::endl;
             _pfp_id_tracks_from_primary[_i_primary].push_back(pfdaughter);
           }
         } catch (...) {
@@ -410,7 +411,6 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
 
       _n_tracks[_i_primary] = tracks;
       _n_showers[_i_primary] = showers;
-      std::cout << showers << " " << tracks << std::endl;
 
       if (showers >= 1 && tracks >= m_nTracks)
       {
