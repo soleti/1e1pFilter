@@ -598,24 +598,14 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
 
     std::vector<art::Ptr<recob::Track>> chosen_tracks;
     // Get the index of the pf_candidate in the Alg accounting to use below:
-    int index = -1;
-    std::cout << "Candidate is " << ipf_candidate << std::endl;
-    for (size_t i = 0; i < fElectronEventSelectionAlg.get_n_neutrino_candidates(); i ++) {
-      if (fElectronEventSelectionAlg.get_primary_indexes().at(i) == ipf_candidate) {
-        std::cout << "Primary index is : " << fElectronEventSelectionAlg.get_primary_indexes().at(i) << std::endl;
-        index = i;
-        break;
-      }
-    }
-    if (index != -1) {
-      std::vector< size_t > pfp_tracks_id = fElectronEventSelectionAlg.get_pfp_id_tracks_from_primary().at(index);
-      get_daughter_tracks(pfp_tracks_id, evt, chosen_tracks);
-      _track_dir_z = get_longest_track(chosen_tracks)->StartDirection().Z();
-      _track_length = get_longest_track(chosen_tracks)->Length();
-      _n_tracks = fElectronEventSelectionAlg.get_n_tracks().at(index);
-      _n_showers = fElectronEventSelectionAlg.get_n_showers().at(index);
 
-    }
+    std::vector< size_t > pfp_tracks_id = fElectronEventSelectionAlg.get_pfp_id_tracks_from_primary().at(pf_candidate);
+    get_daughter_tracks(pfp_tracks_id, evt, chosen_tracks);
+    _track_dir_z = get_longest_track(chosen_tracks)->StartDirection().Z();
+    _track_length = get_longest_track(chosen_tracks)->Length();
+    _n_tracks = fElectronEventSelectionAlg.get_n_tracks().at(pf_candidate);
+    _n_showers = fElectronEventSelectionAlg.get_n_showers().at(pf_candidate);
+
 
     std::cout << "Chosen neutrino " << ipf_candidate  << "(index in Alg: " << index << ")." << std::endl;
   }
