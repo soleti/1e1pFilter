@@ -110,23 +110,23 @@ private:
   const int k_nc = 4;
   const int k_dirt = 5;
 
-  double _energy = std::numeric_limits<double>::lowest();;
-  double _category = std::numeric_limits<double>::lowest();;
-  double _track_dir_z = std::numeric_limits<double>::lowest();;
-  double _track_length = std::numeric_limits<double>::lowest();;
+  double _energy;
+  double _category;
+  double _track_dir_z;
+  double _track_length;
 
-  double _nu_energy = std::numeric_limits<double>::lowest();;
+  double _nu_energy;
 
-  int _n_tracks = std::numeric_limits<double>::lowest();;
-  int _n_showers = std::numeric_limits<double>::lowest();;
+  int _n_tracks;
+  int _n_showers;
 
-  double _vx = std::numeric_limits<double>::lowest();;
-  double _vy = std::numeric_limits<double>::lowest();;
-  double _vz = std::numeric_limits<double>::lowest();;
+  double _vx;
+  double _vy;
+  double _vz;
 
-  double _true_vx = std::numeric_limits<double>::lowest();;
-  double _true_vy = std::numeric_limits<double>::lowest();;
-  double _true_vz = std::numeric_limits<double>::lowest();;
+  double _true_vx;
+  double _true_vy;
+  double _true_vz;
   int _category;
   int _run;
   int _subrun;
@@ -137,7 +137,7 @@ private:
   int _subrun_sr;
   double _pot;
   bool _event_passed;
-  double _distance = std::numeric_limits<double>::lowest();;
+  double _distance;
   double distance(double a[3], double b[3]);
   bool is_dirt(double x[3]) const;
   void measure_energy(size_t ipf, const art::Event & evt, double & energy);
