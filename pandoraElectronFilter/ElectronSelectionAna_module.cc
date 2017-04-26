@@ -174,6 +174,7 @@ void lee::ElectronSelectionAna::fillTree(art::Event const & e)
   art::InputTag truth_tag { "generator" };
   auto const& truth_handle = e.getValidHandle< std::vector< simb::MCTruth > >( truth_tag );
 
+  mcevts_truth=0;
   if (truth_handle->size() > 0) {
     for(unsigned int iList = 0; iList < truth_handle->size() ; ++iList){
       if (truth_handle->at(iList).NeutrinoSet())
@@ -196,22 +197,22 @@ void lee::ElectronSelectionAna::fillTree(art::Event const & e)
   art::InputTag pandoraNu_tag{"pandoraNu"};
   auto const& pfparticle_handle = e.getValidHandle< std::vector< recob::PFParticle > >( pandoraNu_tag );
   passed = fElectronEventSelectionAlg.eventSelected(e);
+  nnuvtx=0;
   if(passed)
   {
-    // Find out how many passing neutrino candidates there are:
-    for (size_t i = 0; i < fElectronEventSelectionAlg.get_n_neutrino_candidates(); i ++)
+    for (auto & inu : fElectronEventSelectionAlg.get_primary_indexes()) 
     {
-      size_t pfpindex = fElectronEventSelectionAlg.get_primary_indexes().at(i);
-      if (fElectronEventSelectionAlg.get_neutrino_candidate_passed().at(i))
+      size_t pfpindex = fElectronEventSelectionAlg.get_primary_indexes().at(inu);
+      if (fElectronEventSelectionAlg.get_neutrino_candidate_passed().at(inu)) 
       {
         nnuvtx++;
 
-        TVector3 neutrino_vertex = fElectronEventSelectionAlg.get_neutrino_vertex().at(i);
+        TVector3 neutrino_vertex = fElectronEventSelectionAlg.get_neutrino_vertex().at(inu);
         nuvtxx.push_back(neutrino_vertex.X());
         nuvtxy.push_back(neutrino_vertex.Y());
         nuvtxz.push_back(neutrino_vertex.Z());
 
-        TVector3 center_of_charge = fElectronEventSelectionAlg.get_center_of_charge().at(i);
+        TVector3 center_of_charge = fElectronEventSelectionAlg.get_center_of_charge().at(inu);
         center_of_charge_x.push_back(center_of_charge.X());
         center_of_charge_y.push_back(center_of_charge.Y());
         center_of_charge_z.push_back(center_of_charge.Z());
