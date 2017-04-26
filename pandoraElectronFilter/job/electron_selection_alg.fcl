@@ -13,4 +13,13 @@ lee_electron_alg: {
     absoluteflashdist:          50.0
 }
 
+electron_selection_ana:
+{
+    module_type:                "ElectronSelectionAna"
+    ElectronSelectionAlg:       @local::lee_electron_alg
+
+    PrintDebug:                 false
+
+}
+
 END_PROLOG
