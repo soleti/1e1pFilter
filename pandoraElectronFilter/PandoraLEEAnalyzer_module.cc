@@ -599,8 +599,10 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
     std::vector<art::Ptr<recob::Track>> chosen_tracks;
     // Get the index of the pf_candidate in the Alg accounting to use below:
     int index = -1;
+    std::cout << "Candidate is " << ipf_candidate << std::endl;
     for (size_t i = 0; i < fElectronEventSelectionAlg.get_n_neutrino_candidates(); i ++) {
       if (fElectronEventSelectionAlg.get_primary_indexes().at(i) == ipf_candidate) {
+        std::cout << "Primary index is : " << fElectronEventSelectionAlg.get_primary_indexes().at(i) << std::endl;
         index = i;
         break;
       }

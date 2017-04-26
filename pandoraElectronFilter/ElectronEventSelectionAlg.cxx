@@ -298,14 +298,14 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
   }
 
   _n_neutrino_candidates = _primary_indexes.size();
-  _neutrino_candidate_passed.resize(_n_neutrino_candidates);
-  _center_of_charge.resize(_n_neutrino_candidates);
-  _op_flash_indexes.resize(_n_neutrino_candidates);
-  _neutrino_vertex.resize(_n_neutrino_candidates);
-  _n_showers.resize(_n_neutrino_candidates);
-  _n_tracks.resize(_n_neutrino_candidates);
-  _pfp_id_showers_from_primary.resize(_n_neutrino_candidates);
-  _pfp_id_tracks_from_primary.resize(_n_neutrino_candidates);
+  // _neutrino_candidate_passed.resize(_n_neutrino_candidates);
+  // _center_of_charge.resize(_n_neutrino_candidates);
+  // _op_flash_indexes.resize(_n_neutrino_candidates);
+  // _neutrino_vertex.resize(_n_neutrino_candidates);
+  // _n_showers.resize(_n_neutrino_candidates);
+  // _n_tracks.resize(_n_neutrino_candidates);
+  // _pfp_id_showers_from_primary.resize(_n_neutrino_candidates);
+  // _pfp_id_tracks_from_primary.resize(_n_neutrino_candidates);
 
 
   // For each of the primary particles, determine if it and it's daughters pass the cuts:
@@ -314,16 +314,16 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
   art::FindOneP< recob::Vertex > vertex_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
 
 
-  for (size_t _i_primary = 0; _i_primary < _primary_indexes.size(); _i_primary ++ ) {
+  for (auto & _i_primary : _primary_indexes ) {
 
     // First, does this event pass the optical filter?
     // Calculate the center of charge, and then pass it to the optical module:
 
     _center_of_charge[_i_primary]
-      = calculateChargeCenter(_primary_indexes.at(_i_primary), pfparticle_handle, evt);
+      = calculateChargeCenter(_i_primary, pfparticle_handle, evt);
 
     int _selected_flash = -1;
-    bool _flash_passed = opticalfilter(_primary_indexes.at(_i_primary),
+    bool _flash_passed = opticalfilter(_i_primary,
                                        * pfparticle_handle,
                                        _center_of_charge[_i_primary],
                                        _selected_flash,
@@ -340,7 +340,7 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
     std::vector<double> neutrino_vertex;
     neutrino_vertex.resize(3);
     try {
-      auto const& neutrino_vertex_obj = vertex_per_pfpart.at(_primary_indexes[_i_primary]);
+      auto const& neutrino_vertex_obj = vertex_per_pfpart.at(_i_primary);
       neutrino_vertex_obj->XYZ(&neutrino_vertex[0]); // PFParticle neutrino vertex coordinates
 
       // Save it as a TVector3:
@@ -361,7 +361,7 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
     // Loop over the neutrino daughters and check if there is a shower and a track
     int showers = 0;
     int tracks = 0;
-    for (auto const& pfdaughter : pfparticle_handle->at(_primary_indexes[_i_primary]).Daughters())
+    for (auto const& pfdaughter : pfparticle_handle->at(_i_primary).Daughters())
     {
 
 
@@ -431,7 +431,7 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
 
   // Last, determine if any primary particles passed:
   for (auto  val : _neutrino_candidate_passed) {
-    if (val) {
+    if (val.second) {
       std::cout << "EVENT SELECTED" << std::endl;
       return true;
     }

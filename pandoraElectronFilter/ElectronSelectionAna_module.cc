@@ -237,7 +237,7 @@ void lee::ElectronSelectionAna::fillTree(art::Event const & e)
   art::InputTag optical_tag{"simpleFlashBeam"};
   auto const& optical_handle = e.getValidHandle<std::vector<recob::OpFlash>>(optical_tag);
 
-  std::vector<int > op_flash_indexes = fElectronEventSelectionAlg.get_op_flash_indexes();
+  std::map<size_t, int > op_flash_indexes = fElectronEventSelectionAlg.get_op_flash_indexes();
   nfls = op_flash_indexes.size();
   for(int ifl=0; ifl< nfls; ++ifl)
   {
