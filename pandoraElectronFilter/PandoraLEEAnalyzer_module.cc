@@ -54,7 +54,7 @@ using namespace lar_pandora;
 
 
 namespace lee {
-  class PandoraLEEAnalyzer;
+class PandoraLEEAnalyzer;
 }
 
 class lee::PandoraLEEAnalyzer : public art::EDAnalyzer {
@@ -155,26 +155,26 @@ private:
 lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const & pset)
   :
   EDAnalyzer(pset)  // ,
- // More initializers here.
+// More initializers here.
 {
 
   //create output tree
   art::ServiceHandle<art::TFileService> tfs;
   myTFile = new TFile("PandoraLEEAnalyzerOutput.root", "RECREATE");
-  myTTree = tfs->make<TTree>("pandoratree","PandoraAnalysis Tree");
+  myTTree = tfs->make<TTree>("pandoratree", "PandoraAnalysis Tree");
 
-  myPOTTTree = tfs->make<TTree>("pot","POT Tree");
+  myPOTTTree = tfs->make<TTree>("pot", "POT Tree");
 
 
 
-  e_energy = tfs->make<TEfficiency>("e_energy",";#nu_{e} energy [GeV];N. Entries / 0.1 GeV",30,0,3);
-  h_cosmic = tfs->make<TH1F>("h_cosmic",";#nu_{e} energy [GeV];N. Entries / 0.1 GeV",30,0,3);
-  h_nc = tfs->make<TH1F>("h_nc",";#nu_{e} energy [GeV];N. Entries / 0.1 GeV",30,0,3);
-  h_nu_e = tfs->make<TH1F>("h_nu_e",";#nu_{e} energy [GeV];N. Entries / 0.1 GeV",30,0,3);
-  h_nu_mu = tfs->make<TH1F>("h_nu_mu",";#nu_{e} energy [GeV];N. Entries / 0.1 GeV",30,0,3);
-  h_dirt = tfs->make<TH1F>("h_dirt",";#nu_{e} energy [GeV];N. Entries / 0.1 GeV",30,0,3);
+  e_energy = tfs->make<TEfficiency>("e_energy", ";#nu_{e} energy [GeV];N. Entries / 0.1 GeV", 30, 0, 3);
+  h_cosmic = tfs->make<TH1F>("h_cosmic", ";#nu_{e} energy [GeV];N. Entries / 0.1 GeV", 30, 0, 3);
+  h_nc = tfs->make<TH1F>("h_nc", ";#nu_{e} energy [GeV];N. Entries / 0.1 GeV", 30, 0, 3);
+  h_nu_e = tfs->make<TH1F>("h_nu_e", ";#nu_{e} energy [GeV];N. Entries / 0.1 GeV", 30, 0, 3);
+  h_nu_mu = tfs->make<TH1F>("h_nu_mu", ";#nu_{e} energy [GeV];N. Entries / 0.1 GeV", 30, 0, 3);
+  h_dirt = tfs->make<TH1F>("h_dirt", ";#nu_{e} energy [GeV];N. Entries / 0.1 GeV", 30, 0, 3);
 
-  h_e_stacked = tfs->make<THStack>("h_e_stacked",";#nu_{e} energy [GeV];N. Entries / 0.1 GeV");
+  h_e_stacked = tfs->make<THStack>("h_e_stacked", ";#nu_{e} energy [GeV];N. Entries / 0.1 GeV");
 
   myTTree->Branch("category",  &_category, "category/i");
   myTTree->Branch("E",  &_energy, "E/d");
@@ -212,22 +212,22 @@ lee::PandoraLEEAnalyzer::~PandoraLEEAnalyzer()
 
   h_cosmic->SetLineColor(1);
   h_cosmic->SetLineWidth(2);
-  h_cosmic->SetFillColor(kRed-3);
+  h_cosmic->SetFillColor(kRed - 3);
   h_cosmic->Write();
 
   h_nc->SetLineColor(1);
   h_nc->SetLineWidth(2);
-  h_nc->SetFillColor(kBlue-9);
+  h_nc->SetFillColor(kBlue - 9);
   h_nc->Write();
 
   h_nu_e->SetLineColor(1);
   h_nu_e->SetLineWidth(2);
-  h_nu_e->SetFillColor(kGreen-2);
+  h_nu_e->SetFillColor(kGreen - 2);
   h_nu_e->Write();
 
   h_nu_mu->SetLineColor(1);
   h_nu_mu->SetLineWidth(2);
-  h_nu_mu->SetFillColor(kBlue-5);
+  h_nu_mu->SetFillColor(kBlue - 5);
   h_nu_mu->Write();
 
   h_dirt->SetLineColor(1);
@@ -252,7 +252,7 @@ double lee::PandoraLEEAnalyzer::distance(double a[3], double b[3]) {
   double d = 0;
 
   for (int i = 0; i < 3; i++) {
-    d += pow((a[i]-b[i]),2);
+    d += pow((a[i] - b[i]), 2);
   }
 
   return sqrt(d);
@@ -262,7 +262,7 @@ art::Ptr<recob::Shower> lee::PandoraLEEAnalyzer::get_most_energetic_shower(std::
   art::Ptr<recob::Shower> most_energetic_shower;
 
   double max_energy = std::numeric_limits<double>::lowest();
-  for (auto const& shower: showers) {
+  for (auto const& shower : showers) {
     if (shower->Energy()[shower->best_plane()] > max_energy) {
       most_energetic_shower = shower;
       max_energy = shower->Energy()[shower->best_plane()];
@@ -275,7 +275,7 @@ art::Ptr<recob::Track> lee::PandoraLEEAnalyzer::get_longest_track(std::vector< a
   art::Ptr<recob::Track> longest_track;
 
   double max_length = std::numeric_limits<double>::lowest();
-  for (auto const& track: tracks) {
+  for (auto const& track : tracks) {
     try {
       std::cout << track << " length " << track->Length() << std::endl;
       if (track->Length() > max_length) {
@@ -297,7 +297,7 @@ void lee::PandoraLEEAnalyzer::get_daughter_tracks( std::vector < size_t > pf_ids
 
   art::FindOneP< recob::Track > track_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
 
-  for (auto const& pf_id: pf_ids) {
+  for (auto const& pf_id : pf_ids) {
     try {
       auto const& track_obj = track_per_pfpart.at(pf_id);
       tracks.push_back(track_obj);
@@ -314,7 +314,7 @@ void lee::PandoraLEEAnalyzer::get_daughter_showers(std::vector < size_t > pf_ids
 
   art::FindOneP< recob::Shower > shower_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
 
-  for (auto const& pf_id: pf_ids) {
+  for (auto const& pf_id : pf_ids) {
     auto const& shower_obj = shower_per_pfpart.at(pf_id);
     showers.push_back(shower_obj);
   }
@@ -323,54 +323,54 @@ void lee::PandoraLEEAnalyzer::get_daughter_showers(std::vector < size_t > pf_ids
 
 double lee::PandoraLEEAnalyzer::trackEnergy(const art::Ptr<recob::Track>& track, const art::Event & evt)
 {
-    art::InputTag pandoraNu_tag { "pandoraNu" };
-    auto const& track_handle = evt.getValidHandle< std::vector< recob::Track > >( pandoraNu_tag );
-    art::FindManyP<anab::Calorimetry> calo_track_ass(track_handle, evt, "pandoraNucalo");
-    const std::vector<art::Ptr<anab::Calorimetry>> calos = calo_track_ass.at(track->ID());
-    double E = 0;
-    double Eapprox =0;
+  art::InputTag pandoraNu_tag { "pandoraNu" };
+  auto const& track_handle = evt.getValidHandle< std::vector< recob::Track > >( pandoraNu_tag );
+  art::FindManyP<anab::Calorimetry> calo_track_ass(track_handle, evt, "pandoraNucalo");
+  const std::vector<art::Ptr<anab::Calorimetry>> calos = calo_track_ass.at(track->ID());
+  double E = 0;
+  double Eapprox = 0;
 
-    for (size_t ical = 0; ical<calos.size(); ++ical)
+  for (size_t ical = 0; ical < calos.size(); ++ical)
+  {
+    if (E != 0) continue;
+    if (!calos[ical]) continue;
+    if (!calos[ical]->PlaneID().isValid) continue;
+    int planenum = calos[ical]->PlaneID().Plane;
+    if (planenum < 0 || planenum > 2) continue;
+    if (planenum != 2) continue;                           // Use informartion from collection plane only
+
+    // Understand if the calo module flipped the track
+    //double dqdx_start = (calos[ical]->dQdx())[0] + (calos[ical]->dQdx())[1] + (calos[ical]->dQdx())[2];
+    //double dqdx_end   = (calos[ical]->dQdx())[calos[ical]->dQdx().size()-1] + (calos[ical]->dQdx())[calos[ical]->dQdx().size()-2] + (calos[ical]->dQdx())[calos[ical]->dQdx().size()-3];
+    //bool caloFlippedTrack = dqdx_start < dqdx_end;
+
+    double mean = 0;
+    double dedx = 0;
+    double prevresrange = 0;
+
+    if (calos[ical]->ResidualRange()[0] > track->Length() / 2)
     {
-        if (E!=0) continue;
-        if (!calos[ical]) continue;
-        if (!calos[ical]->PlaneID().isValid) continue;
-        int planenum = calos[ical]->PlaneID().Plane;
-        if (planenum<0||planenum>2) continue;
-        if (planenum != 2) continue;                           // Use informartion from collection plane only
-
-        // Understand if the calo module flipped the track
-        //double dqdx_start = (calos[ical]->dQdx())[0] + (calos[ical]->dQdx())[1] + (calos[ical]->dQdx())[2];
-        //double dqdx_end   = (calos[ical]->dQdx())[calos[ical]->dQdx().size()-1] + (calos[ical]->dQdx())[calos[ical]->dQdx().size()-2] + (calos[ical]->dQdx())[calos[ical]->dQdx().size()-3];
-        //bool caloFlippedTrack = dqdx_start < dqdx_end;
-
-        double mean=0;
-        double dedx=0;
-        double prevresrange=0;
-
-        if(calos[ical]->ResidualRange()[0] > track->Length()/2)
-        {
-            prevresrange=track->Length();
-        }
-
-        double currentresrange=0;
-
-        for(size_t iTrkHit = 0; iTrkHit < calos[ical]->dEdx().size(); ++iTrkHit)
-        {
-            dedx = calos[ical]->dEdx()[iTrkHit];
-            currentresrange = calos[ical]->ResidualRange()[iTrkHit];
-            if(dedx>0 && dedx<10)
-            {
-                //std::cout << dedx << "\t" << currentresrange << "\t"<< prevresrange<<std::endl;
-                mean+=dedx;
-                E+=dedx*abs(prevresrange-currentresrange);
-                prevresrange=currentresrange;
-            }
-        }
-        //std::cout << "Length: " << track->Length() << "and Energy approximation is " << mean/calos[ical]->dEdx().size()*track->Length()<< "MeV"<<std::endl;
-        Eapprox = mean/calos[ical]->dEdx().size()*track->Length();
+      prevresrange = track->Length();
     }
-    return Eapprox/1000; // convert to GeV
+
+    double currentresrange = 0;
+
+    for (size_t iTrkHit = 0; iTrkHit < calos[ical]->dEdx().size(); ++iTrkHit)
+    {
+      dedx = calos[ical]->dEdx()[iTrkHit];
+      currentresrange = calos[ical]->ResidualRange()[iTrkHit];
+      if (dedx > 0 && dedx < 10)
+      {
+        //std::cout << dedx << "\t" << currentresrange << "\t"<< prevresrange<<std::endl;
+        mean += dedx;
+        E += dedx * abs(prevresrange - currentresrange);
+        prevresrange = currentresrange;
+      }
+    }
+    //std::cout << "Length: " << track->Length() << "and Energy approximation is " << mean/calos[ical]->dEdx().size()*track->Length()<< "MeV"<<std::endl;
+    Eapprox = mean / calos[ical]->dEdx().size() * track->Length();
+  }
+  return Eapprox / 1000; // convert to GeV
 }
 
 
@@ -384,18 +384,18 @@ void lee::PandoraLEEAnalyzer::measure_energy(size_t ipf, const art::Event & evt,
   art::FindManyP<recob::Shower > showers_per_pfparticle ( pfparticle_handle, evt, pandoraNu_tag );
   std::vector<art::Ptr<recob::Shower>> showers = showers_per_pfparticle.at(ipf);
 
-  for(size_t ish = 0; ish < showers.size(); ish++) {
+  for (size_t ish = 0; ish < showers.size(); ish++) {
     energy += showers[ish]->Energy()[showers[ish]->best_plane()];
   }
 
   art::FindManyP<recob::Track > tracks_per_pfparticle ( pfparticle_handle, evt, pandoraNu_tag );
   std::vector<art::Ptr<recob::Track>> tracks = tracks_per_pfparticle.at(ipf);
 
-  for(size_t itr = 0; itr < tracks.size(); itr++) {
+  for (size_t itr = 0; itr < tracks.size(); itr++) {
     energy += trackEnergy(tracks[itr], evt);
   }
 
-  for (auto const& pfdaughter: pfparticles[ipf].Daughters()) {
+  for (auto const& pfdaughter : pfparticles[ipf].Daughters()) {
     measure_energy(pfdaughter, evt, energy);
   }
 }
@@ -405,7 +405,7 @@ size_t lee::PandoraLEEAnalyzer::choose_candidate(std::vector<size_t> & candidate
   size_t chosen_candidate = 0;
   double most_z = -1;
 
-  for (auto const& ic: candidates) {
+  for (auto const& ic : candidates) {
 
     double longest_track_dir = -1;
 
@@ -430,7 +430,7 @@ size_t lee::PandoraLEEAnalyzer::choose_candidate(std::vector<size_t> & candidate
 bool lee::PandoraLEEAnalyzer::is_dirt(double x[3]) const
 {
   art::ServiceHandle<geo::Geometry> geo;
-  double bnd[6] = {0.,2.*geo->DetHalfWidth(),-geo->DetHalfHeight(),geo->DetHalfHeight(),0.,geo->DetLength()};
+  double bnd[6] = {0., 2.*geo->DetHalfWidth(), -geo->DetHalfHeight(), geo->DetHalfHeight(), 0., geo->DetLength()};
 
   bool is_x = x[0] > bnd[0] && x[0] < bnd[1];
   bool is_y = x[1] > bnd[2] && x[1] < bnd[3];
@@ -447,10 +447,10 @@ void lee::PandoraLEEAnalyzer::endSubRun(const art::SubRun& sr)
   _subrun_sr = sr.subRun();
 
   art::Handle< sumdata::POTSummary > potListHandle;
-  if(sr.getByLabel(fPOTModuleLabel,potListHandle))
-    _pot=potListHandle->totpot;
+  if (sr.getByLabel(fPOTModuleLabel, potListHandle))
+    _pot = potListHandle->totpot;
   else
-    _pot=0.;
+    _pot = 0.;
 
   myPOTTTree->Fill();
 
@@ -465,9 +465,9 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
 
   std::vector<size_t> nu_candidates;
   _event_passed = fElectronEventSelectionAlg.eventSelected(evt);
-  if (_event_passed){
-    for (size_t inu = 0; inu < fElectronEventSelectionAlg.get_n_neutrino_candidates(); inu++){
-      if (fElectronEventSelectionAlg.get_neutrino_candidate_passed().at(inu)){
+  if (_event_passed) {
+    for (size_t inu = 0; inu < fElectronEventSelectionAlg.get_n_neutrino_candidates(); inu++) {
+      if (fElectronEventSelectionAlg.get_neutrino_candidate_passed().at(inu)) {
         nu_candidates.push_back(inu);
       }
     }
@@ -528,20 +528,20 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
   int electrons = 0;
   int muons = 0;
 
-  for (auto& mcparticle: nu_mcparticles) {
+  for (auto& mcparticle : nu_mcparticles) {
     if (mcparticle.Process() == "primary" and mcparticle.T() != 0 and mcparticle.StatusCode() == 1) {
 
-      switch(mcparticle.PdgCode())
+      switch (mcparticle.PdgCode())
       {
-        case (abs(2212)):
+      case (abs(2212)):
         protons++;
         break;
 
-        case (abs(11)):
+      case (abs(11)):
         electrons++;
         break;
 
-        case (abs(13)):
+      case (abs(13)):
         muons++;
         break;
       }
@@ -565,7 +565,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
 
     size_t ipf_candidate = choose_candidate(nu_candidates, evt);
     _energy = 0;
-    std::cout << "Number of candidates " << nu_candidates.size() << std::endl; 
+    std::cout << "Number of candidates " << nu_candidates.size() << std::endl;
     std::cout << "Candidate index " << ipf_candidate << std::endl;
     measure_energy(fElectronEventSelectionAlg.get_primary_indexes().at(ipf_candidate), evt, _energy);
     std::cout << "Energy " << _energy << std::endl;
@@ -581,30 +581,41 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
     _vy = reco_neutrino_vertex[1];
     _vz = reco_neutrino_vertex[2];
 
-    TVector3 v_reco_vertex(_vx,_vy,_vz);
+    TVector3 v_reco_vertex(_vx, _vy, _vz);
 
-    TVector3 true_vertex(true_neutrino_vertex[0],true_neutrino_vertex[1],true_neutrino_vertex[2]);
-    _distance = fElectronEventSelectionAlg.distance(v_reco_vertex,true_vertex);
+    TVector3 true_vertex(true_neutrino_vertex[0], true_neutrino_vertex[1], true_neutrino_vertex[2]);
+    _distance = fElectronEventSelectionAlg.distance(v_reco_vertex, true_vertex);
 
     if (generator.size() > 0 && fElectronEventSelectionAlg.is_fiducial(true_vertex)) {
       std::cout << true_neutrino_vertex[0] << " " << true_neutrino_vertex[1] << " " << true_neutrino_vertex[2] << std::endl;
       //TVector3 sce_true_vertex = fElectronEventSelectionAlg.spaceChargeTrueToReco(true_vertex);
-       if (_distance > 15) {
-         _category = k_cosmic;
+      if (_distance > 15) {
+        _category = k_cosmic;
       }
     }
 
 
 
     std::vector<art::Ptr<recob::Track>> chosen_tracks;
-    std::vector< size_t > pfp_tracks_id = fElectronEventSelectionAlg.get_pfp_id_tracks_from_primary().at(ipf_candidate);
-    get_daughter_tracks(pfp_tracks_id, evt, chosen_tracks);
-    _track_dir_z = get_longest_track(chosen_tracks)->StartDirection().Z();
-    _track_length = get_longest_track(chosen_tracks)->Length();
-    _n_tracks = fElectronEventSelectionAlg.get_n_tracks().at(ipf_candidate);
-    _n_showers = fElectronEventSelectionAlg.get_n_showers().at(ipf_candidate);
+    // Get the index of the pf_candidate in the Alg accounting to use below:
+    int index = -1;
+    for (size_t i = 0; i < fElectronEventSelectionAlg.get_n_neutrino_candidates(); i ++) {
+      if (fElectronEventSelectionAlg.get_primary_indexes().at(i) == ipf_candidate) {
+        index = i;
+        break;
+      }
+    }
+    if (index != -1) {
+      std::vector< size_t > pfp_tracks_id = fElectronEventSelectionAlg.get_pfp_id_tracks_from_primary().at(index);
+      get_daughter_tracks(pfp_tracks_id, evt, chosen_tracks);
+      _track_dir_z = get_longest_track(chosen_tracks)->StartDirection().Z();
+      _track_length = get_longest_track(chosen_tracks)->Length();
+      _n_tracks = fElectronEventSelectionAlg.get_n_tracks().at(index);
+      _n_showers = fElectronEventSelectionAlg.get_n_showers().at(index);
 
-    std::cout << "Chosen neutrino " << ipf_candidate << std::endl;
+    }
+
+    std::cout << "Chosen neutrino " << ipf_candidate  << "(index in Alg: " << index << ")." << std::endl;
   }
 
 
@@ -624,17 +635,17 @@ void lee::PandoraLEEAnalyzer::reconfigure(fhicl::ParameterSet const & pset)
   //  m_particleLabel = pset.get<std::string>("PFParticleModule","pandoraNu");
   fElectronEventSelectionAlg.reconfigure(pset.get<fhicl::ParameterSet>("ElectronSelectionAlg"));
 
-  m_printDebug = pset.get<bool>("PrintDebug",false);
-  m_trackLength = pset.get<int>("trackLength",100);
+  m_printDebug = pset.get<bool>("PrintDebug", false);
+  m_trackLength = pset.get<int>("trackLength", 100);
 
-  m_fidvolXstart = pset.get<double>("fidvolXstart",10);
-  m_fidvolXend = pset.get<double>("fidvolXstart",10);
+  m_fidvolXstart = pset.get<double>("fidvolXstart", 10);
+  m_fidvolXend = pset.get<double>("fidvolXstart", 10);
 
-  m_fidvolYstart = pset.get<double>("fidvolYstart",20);
-  m_fidvolYend = pset.get<double>("fidvolYend",20);
+  m_fidvolYstart = pset.get<double>("fidvolYstart", 20);
+  m_fidvolYend = pset.get<double>("fidvolYend", 20);
 
-  m_fidvolZstart = pset.get<double>("fidvolZstart",10);
-  m_fidvolZend = pset.get<double>("fidvolZend",50);
+  m_fidvolZstart = pset.get<double>("fidvolZstart", 10);
+  m_fidvolZend = pset.get<double>("fidvolZend", 50);
 }
 
 //---------------------------------------------------------------------------------------------------------------------------

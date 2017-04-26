@@ -136,14 +136,31 @@ public:
 
   // Access functions for the saved data:
 
+  /**
+   * @brief Returns the number of neutrino candidates from pandora, regardless of whether the passed
+   * @return Number of candidates
+   */
+  
+  /**
+   * @brief [brief description]
+   * @details [long description]
+   * @return [description]
+   */
+  const std::vector<size_t> & get_primary_indexes() const {return _primary_indexes;}
+
+
   const size_t & get_n_neutrino_candidates() const {return _n_neutrino_candidates;}
+
+  /**
+   * @brief Informs whether a particular candidate passed or failed the algorithm
+   * @return Vector of bool, one-to-one with get_primary_indexes
+   */
   const std::vector<bool> & get_neutrino_candidate_passed() const {return _neutrino_candidate_passed;}
   const std::vector<TVector3> & get_center_of_charge() const {return _center_of_charge;}
   const std::vector<int > & get_op_flash_indexes() const {return _op_flash_indexes;}
   const std::vector<TVector3> & get_neutrino_vertex() const {return _neutrino_vertex;}
   const std::vector<int> & get_n_showers() const {return _n_showers;}
   const std::vector<int> & get_n_tracks() const {return _n_tracks;}
-  const std::vector<size_t> & get_primary_indexes() const {return _primary_indexes;}
 
   const std::vector< std::vector<size_t> > &
   get_pfp_id_showers_from_primary() const {return _pfp_id_showers_from_primary;}

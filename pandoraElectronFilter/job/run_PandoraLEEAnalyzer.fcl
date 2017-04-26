@@ -22,6 +22,7 @@ outputs: {
   optionalout: { 
     module_type: RootOutput
     fileName: "output_file.root"
+    dataTier: "reconstructed"
     fastCloning: false 
   }
 }

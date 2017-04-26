@@ -9,6 +9,7 @@ namespace lee {
 
 void ElectronEventSelectionAlg::clear() {
   _n_neutrino_candidates = 0.0;
+  _primary_indexes.clear();
   _neutrino_candidate_passed.clear();
   _center_of_charge.clear();
   _op_flash_indexes.clear();
@@ -255,6 +256,7 @@ bool ElectronEventSelectionAlg::opticalfilter(
 
   if (pass_index != -1) {
     _selected_flash = pass_index;
+
   }
 
   return pass;
@@ -268,6 +270,8 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
 
   art::InputTag pandoraNu_tag { "pandoraNu" };
 
+  clear();
+
   // Get the list of pfparticles:
   auto const& pfparticle_handle = evt.getValidHandle< std::vector< recob::PFParticle > >( pandoraNu_tag );
 
@@ -277,7 +281,6 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
     return false;
   }
 
-  _primary_indexes.clear();
   // Get the list of primary pfparticles that are also neutrinos (numu or nue)
   for (size_t _i_pfp = 0; _i_pfp < pfparticle_handle -> size(); _i_pfp ++) {
 
@@ -330,6 +333,8 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
       _neutrino_candidate_passed[_i_primary] = false;
       continue;
     }
+
+    _op_flash_indexes[_i_primary] = _selected_flash;
 
     // Get the neutrino vertex and check if it's fiducial:
     std::vector<double> neutrino_vertex;

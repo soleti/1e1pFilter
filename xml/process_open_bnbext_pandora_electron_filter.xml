@@ -18,7 +18,7 @@
     
     <!--  Project stages  -->
     <stage name="filter">
-        <fcl>run_electron_filter_pandora.fcl</fcl>
+        <fcl>run_PandoraLEEAnalyzer.fcl</fcl>
         <outdir>/pnfs/uboone/scratch/users/cadams/v06_30_00/filter/data_bnbext_pandora_electron_filter</outdir>
         <logdir>/pnfs/uboone/scratch/users/cadams/v06_30_00/filter/data_bnbext_pandora_electron_filter</logdir>
         <workdir>/pnfs/uboone/scratch/users/cadams/work/v06_30_00/filter/data_bnbext_pandora_electron_filter</workdir>
@@ -27,11 +27,12 @@
             <!-- bnb_nu_cosmic_pandora_electron_filter${PROCESS}_%tc_gen.root -->
         <!-- </output> -->
         <numjobs>300</numjobs>
-	<maxfilesperjob>1</maxfilesperjob>
+        <disk>50GB</disk>
+        <maxfilesperjob>1</maxfilesperjob>
         <datatier>filtered</datatier>
         <!-- <defname>prodgenie_bnb_intrinsic_nue_uboone_mcc8_detsim</defname> -->
-        <memory>4000</memory>
-        <jobsub>--expected-lifetime=16h</jobsub>
+        <memory>2000</memory>
+        <jobsub>--expected-lifetime=8h</jobsub>
     </stage>
     <!--  file type  -->
     <!-- <filetype>mc</filetype> -->
