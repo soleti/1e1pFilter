@@ -33,7 +33,7 @@ namespace lee {
 class lee::ElectronSelectionAna : public art::EDAnalyzer {
 public:
   explicit ElectronSelectionAna(fhicl::ParameterSet const & pset);
-  virtual ~ElectronSelectionAna();
+  //virtual ~ElectronSelectionAna();
 
   void reconfigure(fhicl::ParameterSet const & pset);
   // Plugins should not be copied or assigned.
@@ -51,7 +51,6 @@ private:
 
   // variables
   lee::ElectronEventSelectionAlg fElectronEventSelectionAlg;
-  TFile*      fTFile;
   TTree*      fTree;
 
 
@@ -71,7 +70,7 @@ private:
   std::vector<Float_t>   nuvtxz_truth;                  ///< neutrino vertex z
 
   //PandoraNu information
-  Bool_t               passed;                          ///< Return true if there is at least one neutrino vertex that passed
+  Short_t              passed;                          ///< Return true if there is at least one neutrino vertex that passed
   Short_t              nnuvtx;                          ///< Number of PandoraNu neutrino candidate vertices
   std::vector<Float_t> nuvtxx;                          ///< x coordinate
   std::vector<Float_t> nuvtxy;                          ///< y coordinate
@@ -101,7 +100,6 @@ lee::ElectronSelectionAna::ElectronSelectionAna(fhicl::ParameterSet const & pset
   //initialize output tree
   std::cout << "Initializing output tree..." << std::endl;
   art::ServiceHandle<art::TFileService> tfs;
-  fTFile = new TFile("FlashOutput.root", "RECREATE");
   fTree  = tfs->make<TTree>("flashtree","FlashAnalysis Tree");
 
   //Set branches for (Run Subrun Event)
@@ -120,7 +118,7 @@ lee::ElectronSelectionAna::ElectronSelectionAna(fhicl::ParameterSet const & pset
   fTree->Branch("nuvtxz_truth", "std::vector<Float_t>",    &nuvtxz_truth           );
 
   //Set branches for PandoraNU information
-  fTree->Branch("passed",                   &passed,                   "passed/O"             );
+  fTree->Branch("passed",                   &passed,                   "passed/S"             );
   fTree->Branch("nnuvtx",                   &nnuvtx,                   "nnuvtx/S"             );
   fTree->Branch("nuvtxx",                   "std::vector<Float_t>",    &nuvtxx                );
   fTree->Branch("nuvtxy",                   "std::vector<Float_t>",    &nuvtxy                );
@@ -129,7 +127,7 @@ lee::ElectronSelectionAna::ElectronSelectionAna(fhicl::ParameterSet const & pset
   fTree->Branch("center_of_charge_x",       "std::vector<Float_t>",    &center_of_charge_x    );
   fTree->Branch("center_of_charge_y",       "std::vector<Float_t>",    &center_of_charge_y    );
   fTree->Branch("center_of_charge_z",       "std::vector<Float_t>",    &center_of_charge_z    );
-  
+
   //Set branches for optical information
   fTree->Branch("nfls",       &nfls,       "nfls/S"                 );
   fTree->Branch("flsTime",    "std::vector<Float_t>",   &flsTime    );
@@ -143,31 +141,9 @@ lee::ElectronSelectionAna::ElectronSelectionAna(fhicl::ParameterSet const & pset
 }
 
 
-lee::ElectronSelectionAna::~ElectronSelectionAna()
-{
-  //write output file and tree
-  std::cout << "Writing output..." << std::endl;
-  fTFile->cd();
-  fTree->Write("flashtree");
-  fTFile->Close();
-  std::cout << "Done!" << std::endl;
-}
-
-
 void lee::ElectronSelectionAna::analyze(art::Event const & e)
 {
   try {
-
-  bool event_passed = fElectronEventSelectionAlg.eventSelected(e);
-  if (event_passed){
-    // Find out how many passing neutrino candidates there are:
-    for (size_t i = 0; i < fElectronEventSelectionAlg.get_n_neutrino_candidates(); i ++){
-      if (fElectronEventSelectionAlg.get_neutrino_candidate_passed().at(i)){
-        std::cout << "Candidate " << i << " passed." << std::endl;
-      }
-    }
-  }
-
   fillTree(e);
   } catch(...) {std::cerr<<"Something went wrong filling root tree"<<std::endl;}
   return;
@@ -187,19 +163,28 @@ void lee::ElectronSelectionAna::fillTree(art::Event const & e)
   art::InputTag truth_tag { "generator" };
   auto const& truth_handle = e.getValidHandle< std::vector< simb::MCTruth > >( truth_tag );
 
+  mcevts_truth=0;
+  nuPDG_truth.clear();
+  ccnc_truth.clear();
+  mode_truth.clear();
+  enu_truth.clear();
+  nuvtxx_truth.clear();
+  nuvtxy_truth.clear();
+  nuvtxz_truth.clear();
+
   if (truth_handle->size() > 0) {
     for(unsigned int iList = 0; iList < truth_handle->size() ; ++iList){
       if (truth_handle->at(iList).NeutrinoSet())
       {
         simb::MCNeutrino const& neutrino = truth_handle->at(iList).GetNeutrino();
         mcevts_truth++;
-        nuPDG_truth.push_back(neutrino.Nu().PdgCode());
-        ccnc_truth.push_back(neutrino.CCNC());
-        mode_truth.push_back(neutrino.Mode());
-        enu_truth.push_back(neutrino.Nu().E());
-        nuvtxx_truth.push_back(neutrino.Nu().Vx());
-        nuvtxy_truth.push_back(neutrino.Nu().Vy());
-        nuvtxz_truth.push_back(neutrino.Nu().Vz());
+        nuPDG_truth.emplace_back(neutrino.Nu().PdgCode());
+        ccnc_truth.emplace_back(neutrino.CCNC());
+        mode_truth.emplace_back(neutrino.Mode());
+        enu_truth.emplace_back(neutrino.Nu().E());
+        nuvtxx_truth.emplace_back(neutrino.Nu().Vx());
+        nuvtxy_truth.emplace_back(neutrino.Nu().Vy());
+        nuvtxz_truth.emplace_back(neutrino.Nu().Vz());
 
       }
     }
@@ -209,48 +194,65 @@ void lee::ElectronSelectionAna::fillTree(art::Event const & e)
   art::InputTag pandoraNu_tag{"pandoraNu"};
   auto const& pfparticle_handle = e.getValidHandle< std::vector< recob::PFParticle > >( pandoraNu_tag );
   passed = fElectronEventSelectionAlg.eventSelected(e);
+
+  nnuvtx=0;
+  nuvtxx.clear();
+  nuvtxy.clear();
+  nuvtxz.clear();
+  center_of_charge_x.clear();
+  center_of_charge_y.clear();
+  center_of_charge_z.clear();
+  nuvtxpdg.clear();
+
   if(passed)
   {
-    // Find out how many passing neutrino candidates there are:
-    for (size_t i = 0; i < fElectronEventSelectionAlg.get_n_neutrino_candidates(); i ++)
+    for (auto & inu : fElectronEventSelectionAlg.get_primary_indexes()) 
     {
-      size_t pfpindex = fElectronEventSelectionAlg.get_primary_indexes().at(i);
-      if (fElectronEventSelectionAlg.get_neutrino_candidate_passed().at(i))
+      size_t pfpindex = fElectronEventSelectionAlg.get_primary_indexes().at(inu);
+      if (fElectronEventSelectionAlg.get_neutrino_candidate_passed().at(pfpindex)) 
       {
         nnuvtx++;
 
-        TVector3 neutrino_vertex = fElectronEventSelectionAlg.get_neutrino_vertex().at(i);
-        nuvtxx.push_back(neutrino_vertex.X());
-        nuvtxy.push_back(neutrino_vertex.Y());
-        nuvtxz.push_back(neutrino_vertex.Z());
+        TVector3 neutrino_vertex = fElectronEventSelectionAlg.get_neutrino_vertex().at(pfpindex);
+        nuvtxx.emplace_back(neutrino_vertex.X());
+        nuvtxy.emplace_back(neutrino_vertex.Y());
+        nuvtxz.emplace_back(neutrino_vertex.Z());
 
-        TVector3 center_of_charge = fElectronEventSelectionAlg.get_center_of_charge().at(i);
-        center_of_charge_x.push_back(center_of_charge.X());
-        center_of_charge_y.push_back(center_of_charge.Y());
-        center_of_charge_z.push_back(center_of_charge.Z());
+        TVector3 center_of_charge = fElectronEventSelectionAlg.get_center_of_charge().at(pfpindex);
+        center_of_charge_x.emplace_back(center_of_charge.X());
+        center_of_charge_y.emplace_back(center_of_charge.Y());
+        center_of_charge_z.emplace_back(center_of_charge.Z());
 
         recob::PFParticle const& pfp = pfparticle_handle->at(pfpindex);
-        nuvtxpdg.push_back(pfp.PdgCode());
+        nuvtxpdg.emplace_back(pfp.PdgCode());
       }
     }
   }
-
+  
 
   // Fill optical information
   art::InputTag optical_tag{"simpleFlashBeam"};
   auto const& optical_handle = e.getValidHandle<std::vector<recob::OpFlash>>(optical_tag);
+
+  nfls=0;
+  flsTime.clear();
+  flsPe.clear();
+  flsYcenter.clear();
+  flsZcenter.clear();
+  flsYwidth.clear();
+  flsZwidth.clear();
 
   std::map<size_t, int > op_flash_indexes = fElectronEventSelectionAlg.get_op_flash_indexes();
   nfls = op_flash_indexes.size();
   for(int ifl=0; ifl< nfls; ++ifl)
   {
     recob::OpFlash const& flash = optical_handle->at(op_flash_indexes[ifl]);
-    flsTime.push_back(flash.Time());
-    flsPe.push_back(flash.TotalPE());
-    flsYcenter.push_back(flash.YCenter());
-    flsZcenter.push_back(flash.ZCenter());
-    flsYwidth.push_back(flash.YWidth());
-    flsZwidth.push_back(flash.ZWidth());
+    flsTime.emplace_back(flash.Time());
+    flsPe.emplace_back(flash.TotalPE());
+    flsYcenter.emplace_back(flash.YCenter());
+    flsZcenter.emplace_back(flash.ZCenter());
+    flsYwidth.emplace_back(flash.YWidth());
+    flsZwidth.emplace_back(flash.ZWidth());
   }
 
 

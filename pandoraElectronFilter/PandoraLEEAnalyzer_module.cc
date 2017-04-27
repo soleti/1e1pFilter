@@ -113,7 +113,7 @@ private:
   double _energy;
   double _track_dir_z;
   double _track_length;
-  bool _true_nu_is_fiducial;
+  int _true_nu_is_fiducial;
   double _nu_energy;
 
   int _n_tracks;
@@ -135,7 +135,7 @@ private:
   int _run_sr;
   int _subrun_sr;
   double _pot;
-  bool _event_passed;
+  int _event_passed;
   double _distance;
   double distance(double a[3], double b[3]);
   bool is_dirt(double x[3]) const;
@@ -188,11 +188,11 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const & pset)
   myTTree->Branch("true_vy",  &_true_vy, "vy/d");
   myTTree->Branch("true_vz",  &_true_vz, "vz/d");
   myTTree->Branch("nu_E",  &_nu_energy, "nu_E/d");
-  myTTree->Branch("passed",  &_event_passed, "passed/b");
+  myTTree->Branch("passed",  &_event_passed, "passed/I");
   myTTree->Branch("n_candidates", &_n_candidates, "n_candidates/i");
   myTTree->Branch("n_true_nu", &_n_true_nu, "n_true_nu/i");
   myTTree->Branch("distance", &_distance, "distance/d");
-  myTTree->Branch("true_nu_is_fiducial", &_true_nu_is_fiducial, "true_nu_is_fiducial/b");
+  myTTree->Branch("true_nu_is_fiducial", &_true_nu_is_fiducial, "true_nu_is_fiducial/I");
 
   myPOTTTree->Branch("run", &_run_sr, "run/i");
   myPOTTTree->Branch("subrun", &_subrun_sr, "subrun/i");
@@ -468,7 +468,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
 
   std::vector<size_t> nu_candidates;
 
-  _event_passed = fElectronEventSelectionAlg.eventSelected(evt);
+  _event_passed = int(fElectronEventSelectionAlg.eventSelected(evt));
 
 
 
@@ -497,6 +497,14 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
   try {
     auto const& generator_handle = evt.getValidHandle< std::vector< simb::MCTruth > >( generator_tag );
     auto const& generator(*generator_handle);
+  _n_true_nu = generator.size();
+  _true_nu_is_fiducial = 0;
+  if (generator.size() > 0) {
+    _nu_energy = generator[0].GetNeutrino().Nu().E();
+    ccnc = generator[0].GetNeutrino().CCNC();
+    if (ccnc == 1) {
+      _category = k_nc;
+    }
 
     int ccnc = -1;
 
@@ -515,6 +523,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
       _true_vx = true_neutrino_vertex[0];
       _true_vy = true_neutrino_vertex[1];
       _true_vz = true_neutrino_vertex[2];
+    _true_nu_is_fiducial = int(fElectronEventSelectionAlg.is_fiducial(true_neutrino_vertex));
 
       if (is_dirt(true_neutrino_vertex)) {
         _category = k_dirt;
