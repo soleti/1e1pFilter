@@ -109,7 +109,7 @@ private:
   const int k_nu_mu = 3;
   const int k_nc = 4;
   const int k_dirt = 5;
-
+  const int k_data = 6;
   double _energy;
   double _track_dir_z;
   double _track_length;
@@ -491,43 +491,48 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
 
 
   _category = 0;
-
-  auto const& generator_handle = evt.getValidHandle< std::vector< simb::MCTruth > >( generator_tag );
-  auto const& generator(*generator_handle);
-  int ccnc = -1;
   double true_neutrino_vertex[3];
   std::vector<simb::MCParticle> nu_mcparticles;
 
-  _n_true_nu = generator.size();
-  _true_nu_is_fiducial = false;
-  if (generator.size() > 0) {
-    _nu_energy = generator[0].GetNeutrino().Nu().E();
-    ccnc = generator[0].GetNeutrino().CCNC();
-    if (ccnc == 1) {
-      _category = k_nc;
-    }
+  try {
+    auto const& generator_handle = evt.getValidHandle< std::vector< simb::MCTruth > >( generator_tag );
+    auto const& generator(*generator_handle);
 
-    true_neutrino_vertex[0] = generator[0].GetNeutrino().Nu().Vx();
-    true_neutrino_vertex[1] = generator[0].GetNeutrino().Nu().Vy();
-    true_neutrino_vertex[2] = generator[0].GetNeutrino().Nu().Vz();
-    _true_vx = true_neutrino_vertex[0];
-    _true_vy = true_neutrino_vertex[1];
-    _true_vz = true_neutrino_vertex[2];
+    int ccnc = -1;
 
-    if (is_dirt(true_neutrino_vertex)) {
-      _category = k_dirt;
-    }
-
-    _true_nu_is_fiducial = fElectronEventSelectionAlg.is_fiducial(true_neutrino_vertex);
-
-    for (int i = 0; i < generator[0].NParticles(); i++) {
-      if (generator[0].Origin() == 1) {
-        nu_mcparticles.push_back(generator[0].GetParticle(i));
+    _n_true_nu = generator.size();
+    _true_nu_is_fiducial = false;
+    if (generator.size() > 0) {
+      _nu_energy = generator[0].GetNeutrino().Nu().E();
+      ccnc = generator[0].GetNeutrino().CCNC();
+      if (ccnc == 1) {
+        _category = k_nc;
       }
+
+      true_neutrino_vertex[0] = generator[0].GetNeutrino().Nu().Vx();
+      true_neutrino_vertex[1] = generator[0].GetNeutrino().Nu().Vy();
+      true_neutrino_vertex[2] = generator[0].GetNeutrino().Nu().Vz();
+      _true_vx = true_neutrino_vertex[0];
+      _true_vy = true_neutrino_vertex[1];
+      _true_vz = true_neutrino_vertex[2];
+
+      if (is_dirt(true_neutrino_vertex)) {
+        _category = k_dirt;
+      }
+
+      _true_nu_is_fiducial = fElectronEventSelectionAlg.is_fiducial(true_neutrino_vertex);
+
+      for (int i = 0; i < generator[0].NParticles(); i++) {
+        if (generator[0].Origin() == 1) {
+          nu_mcparticles.push_back(generator[0].GetParticle(i));
+        }
+      }
+    } else {
+       _category = k_cosmic;
+      _nu_energy = std::numeric_limits<double>::lowest();
     }
-  } else {
-    _category = k_cosmic;
-    _nu_energy = std::numeric_limits<double>::lowest();
+  } catch (...) {
+    _category = k_data;
   }
 
   std::cout << "True neutrinos " << _n_true_nu << std::endl;
@@ -591,16 +596,19 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
     _vy = reco_neutrino_vertex[1];
     _vz = reco_neutrino_vertex[2];
 
-    TVector3 v_reco_vertex(_vx, _vy, _vz);
 
-    TVector3 true_vertex(true_neutrino_vertex[0], true_neutrino_vertex[1], true_neutrino_vertex[2]);
-    _distance = fElectronEventSelectionAlg.distance(v_reco_vertex, true_vertex);
+    if (_category != k_data) {
+      TVector3 true_vertex(true_neutrino_vertex[0], true_neutrino_vertex[1], true_neutrino_vertex[2]);
+      TVector3 v_reco_vertex(_vx, _vy, _vz);
 
-    if (generator.size() > 0 && fElectronEventSelectionAlg.is_fiducial(true_vertex)) {
-      std::cout << true_neutrino_vertex[0] << " " << true_neutrino_vertex[1] << " " << true_neutrino_vertex[2] << std::endl;
-      //TVector3 sce_true_vertex = fElectronEventSelectionAlg.spaceChargeTrueToReco(true_vertex);
-      if (_distance > 15) {
-        _category = k_cosmic;
+      if (fElectronEventSelectionAlg.is_fiducial(true_vertex)) {
+        _distance = fElectronEventSelectionAlg.distance(v_reco_vertex, true_vertex);
+
+        std::cout << true_neutrino_vertex[0] << " " << true_neutrino_vertex[1] << " " << true_neutrino_vertex[2] << std::endl;
+        //TVector3 sce_true_vertex = fElectronEventSelectionAlg.spaceChargeTrueToReco(true_vertex);
+        if (_distance > 15) {
+          _category = k_cosmic;
+        }
       }
     }
 
