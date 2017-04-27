@@ -6,6 +6,7 @@
 // Generated at Mon Apr 24 16:33:33 2017 by Corey Adams using cetskelgen
 // from cetlib version v2_03_00.
 ////////////////////////////////////////////////////////////////////////
+
 #include "art/Framework/Core/EDAnalyzer.h"
 #include "art/Framework/Core/ModuleMacros.h"
 #include "art/Framework/Principal/Event.h"
@@ -57,7 +58,7 @@ private:
   //Run Subrun Event
   Short_t    run;
   Short_t    subrun;
-  Short_t    event;
+  Int_t    event;
 
   //Truth information
   Short_t   mcevts_truth;                               ///< number of neutrino Interactions in the spill
@@ -105,7 +106,7 @@ lee::ElectronSelectionAna::ElectronSelectionAna(fhicl::ParameterSet const & pset
   //Set branches for (Run Subrun Event)
   fTree->Branch("run",     &run,     "run/S"       );
   fTree->Branch("subrun",  &subrun,  "subrun/S"    );
-  fTree->Branch("event",   &event,   "event/S"     );
+  fTree->Branch("event",   &event,   "event/I"     );
 
   //Set branches for truth information
   fTree->Branch("mcevts_truth", &mcevts_truth,             "mcevts_truth/S"        );
@@ -152,45 +153,51 @@ void lee::ElectronSelectionAna::analyze(art::Event const & e)
 
 void lee::ElectronSelectionAna::fillTree(art::Event const & e)
 {
-  //std::cout<<"begin filling variables"<<std::endl;
 
   // Fill run information
   run    = e.run();
   subrun = e.subRun();
   event  = e.event();
 
+  std::cout<<"begin filling variables of (run,subrun,event) \t ("<< run <<"," <<subrun <<"," <<event<< ")"<< std::endl;
+
   // Fill truth information
-  art::InputTag truth_tag { "generator" };
-  auto const& truth_handle = e.getValidHandle< std::vector< simb::MCTruth > >( truth_tag );
+  if(! e.isRealData())
+  {
+    std::cout << "Filling truth information " << std::endl;
+    art::InputTag truth_tag { "generator" };
+    auto const& truth_handle = e.getValidHandle< std::vector< simb::MCTruth > >( truth_tag );
 
-  mcevts_truth=0;
-  nuPDG_truth.clear();
-  ccnc_truth.clear();
-  mode_truth.clear();
-  enu_truth.clear();
-  nuvtxx_truth.clear();
-  nuvtxy_truth.clear();
-  nuvtxz_truth.clear();
+    mcevts_truth=0;
+    nuPDG_truth.clear();
+    ccnc_truth.clear();
+    mode_truth.clear();
+    enu_truth.clear();
+    nuvtxx_truth.clear();
+    nuvtxy_truth.clear();
+    nuvtxz_truth.clear();
 
-  if (truth_handle->size() > 0) {
-    for(unsigned int iList = 0; iList < truth_handle->size() ; ++iList){
-      if (truth_handle->at(iList).NeutrinoSet())
-      {
-        simb::MCNeutrino const& neutrino = truth_handle->at(iList).GetNeutrino();
-        mcevts_truth++;
-        nuPDG_truth.emplace_back(neutrino.Nu().PdgCode());
-        ccnc_truth.emplace_back(neutrino.CCNC());
-        mode_truth.emplace_back(neutrino.Mode());
-        enu_truth.emplace_back(neutrino.Nu().E());
-        nuvtxx_truth.emplace_back(neutrino.Nu().Vx());
-        nuvtxy_truth.emplace_back(neutrino.Nu().Vy());
-        nuvtxz_truth.emplace_back(neutrino.Nu().Vz());
+    if (truth_handle->size() > 0) {
+      for(unsigned int iList = 0; iList < truth_handle->size() ; ++iList){
+        if (truth_handle->at(iList).NeutrinoSet())
+        {
+          simb::MCNeutrino const& neutrino = truth_handle->at(iList).GetNeutrino();
+          mcevts_truth++;
+          nuPDG_truth.emplace_back(neutrino.Nu().PdgCode());
+          ccnc_truth.emplace_back(neutrino.CCNC());
+          mode_truth.emplace_back(neutrino.Mode());
+          enu_truth.emplace_back(neutrino.Nu().E());
+          nuvtxx_truth.emplace_back(neutrino.Nu().Vx());
+          nuvtxy_truth.emplace_back(neutrino.Nu().Vy());
+          nuvtxz_truth.emplace_back(neutrino.Nu().Vz());
 
+        }
       }
     }
   }
 
   // Fill PandoraNu information
+  std::cout << "Filling PandoraNu information " << std::endl;
   art::InputTag pandoraNu_tag{"pandoraNu"};
   auto const& pfparticle_handle = e.getValidHandle< std::vector< recob::PFParticle > >( pandoraNu_tag );
   passed = fElectronEventSelectionAlg.eventSelected(e);
@@ -206,13 +213,11 @@ void lee::ElectronSelectionAna::fillTree(art::Event const & e)
 
   if(passed)
   {
-    for (auto & inu : fElectronEventSelectionAlg.get_primary_indexes()) 
+    for (auto const& pfpindex : fElectronEventSelectionAlg.get_primary_indexes()) 
     {
-      size_t pfpindex = fElectronEventSelectionAlg.get_primary_indexes().at(inu);
       if (fElectronEventSelectionAlg.get_neutrino_candidate_passed().at(pfpindex)) 
       {
         nnuvtx++;
-
         TVector3 neutrino_vertex = fElectronEventSelectionAlg.get_neutrino_vertex().at(pfpindex);
         nuvtxx.emplace_back(neutrino_vertex.X());
         nuvtxy.emplace_back(neutrino_vertex.Y());
@@ -231,32 +236,34 @@ void lee::ElectronSelectionAna::fillTree(art::Event const & e)
   
 
   // Fill optical information
+  std::cout << "Filling optical information " << std::endl;
   art::InputTag optical_tag{"simpleFlashBeam"};
   auto const& optical_handle = e.getValidHandle<std::vector<recob::OpFlash>>(optical_tag);
-
-  nfls=0;
-  flsTime.clear();
-  flsPe.clear();
-  flsYcenter.clear();
-  flsZcenter.clear();
-  flsYwidth.clear();
-  flsZwidth.clear();
-
-  std::map<size_t, int > op_flash_indexes = fElectronEventSelectionAlg.get_op_flash_indexes();
-  nfls = op_flash_indexes.size();
-  for(int ifl=0; ifl< nfls; ++ifl)
+  if(optical_handle->size())
   {
-    recob::OpFlash const& flash = optical_handle->at(op_flash_indexes[ifl]);
-    flsTime.emplace_back(flash.Time());
-    flsPe.emplace_back(flash.TotalPE());
-    flsYcenter.emplace_back(flash.YCenter());
-    flsZcenter.emplace_back(flash.ZCenter());
-    flsYwidth.emplace_back(flash.YWidth());
-    flsZwidth.emplace_back(flash.ZWidth());
+    nfls=0;
+    flsTime.clear();
+    flsPe.clear();
+    flsYcenter.clear();
+    flsZcenter.clear();
+    flsYwidth.clear();
+    flsZwidth.clear();
+
+    std::map<size_t, int > op_flash_indexes = fElectronEventSelectionAlg.get_op_flash_indexes();
+    nfls = op_flash_indexes.size();
+    for(int ifl=0; ifl< nfls; ++ifl)
+    {
+      recob::OpFlash const& flash = optical_handle->at(op_flash_indexes[ifl]);
+      flsTime.emplace_back(flash.Time());
+      flsPe.emplace_back(flash.TotalPE());
+      flsYcenter.emplace_back(flash.YCenter());
+      flsZcenter.emplace_back(flash.ZCenter());
+      flsYwidth.emplace_back(flash.YWidth());
+      flsZwidth.emplace_back(flash.ZWidth());
+    }
   }
 
-
-  //std::cout<<"variables filled, fill tree"<<std::endl;
+  std::cout<<"variables filled, fill tree"<<std::endl;
   fTree->Fill();
 }
 
