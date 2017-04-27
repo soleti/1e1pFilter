@@ -109,7 +109,7 @@ private:
   const int k_nu_mu = 3;
   const int k_nc = 4;
   const int k_dirt = 5;
-
+  const int k_data = 6;
   double _energy;
   double _track_dir_z;
   double _track_length;
@@ -159,7 +159,7 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const & pset)
 
   //create output tree
   art::ServiceHandle<art::TFileService> tfs;
-  myTFile = new TFile("PandoraLEEAnalyzerOutput.root", "RECREATE");
+  // myTFile = new TFile("PandoraLEEAnalyzerOutput.root", "RECREATE");
   myTTree = tfs->make<TTree>("pandoratree", "PandoraAnalysis Tree");
 
   myPOTTTree = tfs->make<TTree>("pot", "POT Tree");
@@ -198,6 +198,37 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const & pset)
   myPOTTTree->Branch("subrun", &_subrun_sr, "subrun/i");
   myPOTTTree->Branch("pot", &_pot, "pot/d");
 
+  h_cosmic->SetLineColor(1);
+  h_cosmic->SetLineWidth(2);
+  h_cosmic->SetFillColor(kRed - 3);
+  // h_cosmic->Write();
+
+  h_nc->SetLineColor(1);
+  h_nc->SetLineWidth(2);
+  h_nc->SetFillColor(kBlue - 9);
+  // h_nc->Write();
+
+  h_nu_e->SetLineColor(1);
+  h_nu_e->SetLineWidth(2);
+  h_nu_e->SetFillColor(kGreen - 2);
+  // h_nu_e->Write();
+
+  h_nu_mu->SetLineColor(1);
+  h_nu_mu->SetLineWidth(2);
+  h_nu_mu->SetFillColor(kBlue - 5);
+  // h_nu_mu->Write();
+
+  h_dirt->SetLineColor(1);
+  h_dirt->SetLineWidth(2);
+  h_dirt->SetFillColor(kGray);
+  // h_dirt->Write();
+
+  h_e_stacked->Add(h_cosmic);
+  h_e_stacked->Add(h_nc);
+  h_e_stacked->Add(h_nu_e);
+  h_e_stacked->Add(h_nu_mu);
+  h_e_stacked->Add(h_dirt);
+  // h_e_stacked->Write();
 
   this->reconfigure(pset);
 
@@ -207,42 +238,12 @@ lee::PandoraLEEAnalyzer::~PandoraLEEAnalyzer()
 {
 
   //store output tree
-  myTFile->cd();
-  myTTree->Write("pandoratree");
+  // myTFile->cd();
+  // myTTree->Write("pandoratree");
 
-  h_cosmic->SetLineColor(1);
-  h_cosmic->SetLineWidth(2);
-  h_cosmic->SetFillColor(kRed - 3);
-  h_cosmic->Write();
 
-  h_nc->SetLineColor(1);
-  h_nc->SetLineWidth(2);
-  h_nc->SetFillColor(kBlue - 9);
-  h_nc->Write();
 
-  h_nu_e->SetLineColor(1);
-  h_nu_e->SetLineWidth(2);
-  h_nu_e->SetFillColor(kGreen - 2);
-  h_nu_e->Write();
-
-  h_nu_mu->SetLineColor(1);
-  h_nu_mu->SetLineWidth(2);
-  h_nu_mu->SetFillColor(kBlue - 5);
-  h_nu_mu->Write();
-
-  h_dirt->SetLineColor(1);
-  h_dirt->SetLineWidth(2);
-  h_dirt->SetFillColor(kGray);
-  h_dirt->Write();
-
-  h_e_stacked->Add(h_cosmic);
-  h_e_stacked->Add(h_nc);
-  h_e_stacked->Add(h_nu_e);
-  h_e_stacked->Add(h_nu_mu);
-  h_e_stacked->Add(h_dirt);
-  h_e_stacked->Write();
-
-  myTFile->Close();
+  // myTFile->Close();
 
 
   std::cout << "End!" << std::endl;
@@ -491,81 +492,83 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
 
 
   _category = 0;
-
-  auto const& generator_handle = evt.getValidHandle< std::vector< simb::MCTruth > >( generator_tag );
-  auto const& generator(*generator_handle);
-  int ccnc = -1;
   double true_neutrino_vertex[3];
-  std::vector<simb::MCParticle> nu_mcparticles;
 
-  _n_true_nu = generator.size();
-  _true_nu_is_fiducial = 0;
-  if (generator.size() > 0) {
-    _nu_energy = generator[0].GetNeutrino().Nu().E();
-    ccnc = generator[0].GetNeutrino().CCNC();
-    if (ccnc == 1) {
-      _category = k_nc;
+  try {
+    auto const& generator_handle = evt.getValidHandle< std::vector< simb::MCTruth > >( generator_tag );
+    auto const& generator(*generator_handle);
+    _n_true_nu = generator.size();
+    _true_nu_is_fiducial = 0;
+    std::vector<simb::MCParticle> nu_mcparticles;
+
+    if (generator.size() > 0) {
+      _nu_energy = generator[0].GetNeutrino().Nu().E();
+      int ccnc = generator[0].GetNeutrino().CCNC();
+      if (ccnc == 1) {
+        _category = k_nc;
+      }
+
+      true_neutrino_vertex[0] = generator[0].GetNeutrino().Nu().Vx();
+      true_neutrino_vertex[1] = generator[0].GetNeutrino().Nu().Vy();
+      true_neutrino_vertex[2] = generator[0].GetNeutrino().Nu().Vz();
+      _true_vx = true_neutrino_vertex[0];
+      _true_vy = true_neutrino_vertex[1];
+      _true_vz = true_neutrino_vertex[2];
+      _true_nu_is_fiducial = int(fElectronEventSelectionAlg.is_fiducial(true_neutrino_vertex));
+
+      if (is_dirt(true_neutrino_vertex)) {
+        _category = k_dirt;
+      }
+
+
+      for (int i = 0; i < generator[0].NParticles(); i++) {
+        if (generator[0].Origin() == 1) {
+          nu_mcparticles.push_back(generator[0].GetParticle(i));
+        }
+      }
+    } else {
+       _category = k_cosmic;
+      _nu_energy = std::numeric_limits<double>::lowest();
     }
 
-    true_neutrino_vertex[0] = generator[0].GetNeutrino().Nu().Vx();
-    true_neutrino_vertex[1] = generator[0].GetNeutrino().Nu().Vy();
-    true_neutrino_vertex[2] = generator[0].GetNeutrino().Nu().Vz();
-    _true_vx = true_neutrino_vertex[0];
-    _true_vy = true_neutrino_vertex[1];
-    _true_vz = true_neutrino_vertex[2];
+    int protons = 0;
+    int electrons = 0;
+    int muons = 0;
 
-    if (is_dirt(true_neutrino_vertex)) {
-      _category = k_dirt;
-    }
+    for (auto& mcparticle : nu_mcparticles) {
+      if (mcparticle.Process() == "primary" and mcparticle.T() != 0 and mcparticle.StatusCode() == 1) {
 
-    _true_nu_is_fiducial = int(fElectronEventSelectionAlg.is_fiducial(true_neutrino_vertex));
+        switch (mcparticle.PdgCode())
+        {
+        case (abs(2212)):
+          protons++;
+          break;
 
-    for (int i = 0; i < generator[0].NParticles(); i++) {
-      if (generator[0].Origin() == 1) {
-        nu_mcparticles.push_back(generator[0].GetParticle(i));
+        case (abs(11)):
+          electrons++;
+          break;
+
+        case (abs(13)):
+          muons++;
+          break;
+        }
+
       }
     }
-  } else {
-    _category = k_cosmic;
-    _nu_energy = std::numeric_limits<double>::lowest();
+
+    if (_category != k_cosmic && _category != k_dirt && _category != k_nc) {
+      if (protons != 0 && electrons != 0) {
+        _category = k_nu_e;
+      } else if (protons != 0 && muons != 0) {
+        _category = k_nu_mu;
+      }
+    }
+  } catch (...) {
+    _category = k_data;
   }
 
   std::cout << "True neutrinos " << _n_true_nu << std::endl;
   std::cout << "Nu energy " << _nu_energy << std::endl;
-
-
-  int protons = 0;
-  int electrons = 0;
-  int muons = 0;
-
-  for (auto& mcparticle : nu_mcparticles) {
-    if (mcparticle.Process() == "primary" and mcparticle.T() != 0 and mcparticle.StatusCode() == 1) {
-
-      switch (mcparticle.PdgCode())
-      {
-      case (abs(2212)):
-        protons++;
-        break;
-
-      case (abs(11)):
-        electrons++;
-        break;
-
-      case (abs(13)):
-        muons++;
-        break;
-      }
-
-    }
-  }
-
-  if (_category != k_cosmic && _category != k_dirt && _category != k_nc) {
-    if (protons != 0 && electrons != 0) {
-      _category = k_nu_e;
-    } else if (protons != 0 && muons != 0) {
-      _category = k_nu_mu;
-    }
-  }
 
   _energy = std::numeric_limits<double>::lowest();
 
@@ -591,16 +594,19 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
     _vy = reco_neutrino_vertex[1];
     _vz = reco_neutrino_vertex[2];
 
-    TVector3 v_reco_vertex(_vx, _vy, _vz);
 
-    TVector3 true_vertex(true_neutrino_vertex[0], true_neutrino_vertex[1], true_neutrino_vertex[2]);
-    _distance = fElectronEventSelectionAlg.distance(v_reco_vertex, true_vertex);
+    if (_category != k_data) {
+      TVector3 true_vertex(true_neutrino_vertex[0], true_neutrino_vertex[1], true_neutrino_vertex[2]);
+      TVector3 v_reco_vertex(_vx, _vy, _vz);
 
-    if (generator.size() > 0 && fElectronEventSelectionAlg.is_fiducial(true_vertex)) {
-      std::cout << true_neutrino_vertex[0] << " " << true_neutrino_vertex[1] << " " << true_neutrino_vertex[2] << std::endl;
-      //TVector3 sce_true_vertex = fElectronEventSelectionAlg.spaceChargeTrueToReco(true_vertex);
-      if (_distance > 15) {
-        _category = k_cosmic;
+      if (fElectronEventSelectionAlg.is_fiducial(true_vertex)) {
+        _distance = fElectronEventSelectionAlg.distance(v_reco_vertex, true_vertex);
+
+        std::cout << true_neutrino_vertex[0] << " " << true_neutrino_vertex[1] << " " << true_neutrino_vertex[2] << std::endl;
+        //TVector3 sce_true_vertex = fElectronEventSelectionAlg.spaceChargeTrueToReco(true_vertex);
+        if (_distance > 15) {
+          _category = k_cosmic;
+        }
       }
     }
 
