@@ -19,11 +19,17 @@
 #include "ElectronEventSelectionAlg.h"
 
 #include "art/Framework/Services/Optional/TFileService.h"
+#include "uboone/SpaceChargeServices/SpaceChargeServiceMicroBooNE.h"
+#include "larcore/Geometry/Geometry.h"
+
 #include "lardataobj/RecoBase/OpFlash.h"
 #include "lardataobj/RecoBase/PFParticle.h"
+#include "lardataobj/RecoBase/Shower.h"
+
 #include "nusimdata/SimulationBase/MCTruth.h"
 #include "nusimdata/SimulationBase/MCParticle.h"
 #include "nusimdata/SimulationBase/MCNeutrino.h"
+
 #include "TTree.h"
 #include "TFile.h"
 #include "TVector3.h"
@@ -52,6 +58,7 @@ private:
 
   // variables
   lee::ElectronEventSelectionAlg fElectronEventSelectionAlg;
+  art::ServiceHandle<spacecharge::SpaceChargeServiceMicroBooNE> SCE;
   TTree*      fTree;
 
 
@@ -80,6 +87,7 @@ private:
   std::vector<Float_t> center_of_charge_x;              ///< x Center of deposited charge
   std::vector<Float_t> center_of_charge_y;              ///< y Center of deposited charge
   std::vector<Float_t> center_of_charge_z;              ///< z Center of deposited charge
+  std::vector<std::vector< TVector3 >> shwr_dir;      ///< The direction of shower for every shower connected to the passed pandoraNu candidates
 
   //Optical information
   Short_t nfls;                                         ///< Number of reconstructed flashes
@@ -128,6 +136,7 @@ lee::ElectronSelectionAna::ElectronSelectionAna(fhicl::ParameterSet const & pset
   fTree->Branch("center_of_charge_x",       "std::vector<Float_t>",    &center_of_charge_x    );
   fTree->Branch("center_of_charge_y",       "std::vector<Float_t>",    &center_of_charge_y    );
   fTree->Branch("center_of_charge_z",       "std::vector<Float_t>",    &center_of_charge_z    );
+  fTree->Branch("shwr_dir",   "std::vector<std::vector<TVector3>>",    &shwr_dir              );  
 
   //Set branches for optical information
   fTree->Branch("nfls",       &nfls,       "nfls/S"                 );
@@ -187,10 +196,22 @@ void lee::ElectronSelectionAna::fillTree(art::Event const & e)
           ccnc_truth.emplace_back(neutrino.CCNC());
           mode_truth.emplace_back(neutrino.Mode());
           enu_truth.emplace_back(neutrino.Nu().E());
+
+
           nuvtxx_truth.emplace_back(neutrino.Nu().Vx());
           nuvtxy_truth.emplace_back(neutrino.Nu().Vy());
           nuvtxz_truth.emplace_back(neutrino.Nu().Vz());
 
+          geo::Point_t point;
+          point.SetXYZ(neutrino.Nu().Vx(), neutrino.Nu().Vy(), neutrino.Nu().Vz());
+
+          std::cout << "True vertex \t (" << point.X() <<"," <<point.Y() <<"," <<point.Z()<< ")"<< std::endl;
+
+          auto const* sc = SCE->provider();
+          geo::Vector_t SCcortrue = sc->GetPosOffsets(point);
+
+          std::cout << "True vertex \t (" << neutrino.Nu().Vx() <<"," <<neutrino.Nu().Vy() <<"," <<neutrino.Nu().Vz()<< ")"<< std::endl;
+          std::cout << "SCcor vertex \t (" << SCcortrue.X() <<"," <<SCcortrue.Y() <<"," <<SCcortrue.Z()<< ")"<< std::endl;
         }
       }
     }
@@ -198,8 +219,6 @@ void lee::ElectronSelectionAna::fillTree(art::Event const & e)
 
   // Fill PandoraNu information
   std::cout << "Filling PandoraNu information " << std::endl;
-  art::InputTag pandoraNu_tag{"pandoraNu"};
-  auto const& pfparticle_handle = e.getValidHandle< std::vector< recob::PFParticle > >( pandoraNu_tag );
   passed = fElectronEventSelectionAlg.eventSelected(e);
 
   nnuvtx=0;
@@ -210,9 +229,15 @@ void lee::ElectronSelectionAna::fillTree(art::Event const & e)
   center_of_charge_y.clear();
   center_of_charge_z.clear();
   nuvtxpdg.clear();
+  shwr_dir.clear();
 
   if(passed)
   {
+    art::InputTag pandoraNu_tag { "pandoraNu" };
+    auto const& pfparticle_handle = e.getValidHandle< std::vector< recob::PFParticle > >( pandoraNu_tag );
+    art::FindOneP< recob::Shower > shower_per_pfpart(pfparticle_handle, e, pandoraNu_tag);
+    const std::map<size_t,  std::vector<size_t> > & map_primpfp_shwrpfp = fElectronEventSelectionAlg.get_pfp_id_showers_from_primary();
+
     for (auto const& pfpindex : fElectronEventSelectionAlg.get_primary_indexes()) 
     {
       if (fElectronEventSelectionAlg.get_neutrino_candidate_passed().at(pfpindex)) 
@@ -230,6 +255,14 @@ void lee::ElectronSelectionAna::fillTree(art::Event const & e)
 
         recob::PFParticle const& pfp = pfparticle_handle->at(pfpindex);
         nuvtxpdg.emplace_back(pfp.PdgCode());
+
+        std::vector<size_t> pf_ids = map_primpfp_shwrpfp.at(pfpindex);
+        std::vector<TVector3> shwr_dir_primary(pf_ids.size());
+
+        for (size_t i =0; i< pf_ids.size(); ++i) {
+          auto const& shower_obj = shower_per_pfpart.at(pf_ids[i]);
+          shwr_dir_primary[i]=shower_obj->Direction();
+        }
       }
     }
   }
