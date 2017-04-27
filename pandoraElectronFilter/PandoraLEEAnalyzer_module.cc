@@ -497,22 +497,12 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
   try {
     auto const& generator_handle = evt.getValidHandle< std::vector< simb::MCTruth > >( generator_tag );
     auto const& generator(*generator_handle);
-  _n_true_nu = generator.size();
-  _true_nu_is_fiducial = 0;
-  if (generator.size() > 0) {
-    _nu_energy = generator[0].GetNeutrino().Nu().E();
-    ccnc = generator[0].GetNeutrino().CCNC();
-    if (ccnc == 1) {
-      _category = k_nc;
-    }
-
-    int ccnc = -1;
-
     _n_true_nu = generator.size();
-    _true_nu_is_fiducial = false;
+    _true_nu_is_fiducial = 0;
+
     if (generator.size() > 0) {
       _nu_energy = generator[0].GetNeutrino().Nu().E();
-      ccnc = generator[0].GetNeutrino().CCNC();
+      int ccnc = generator[0].GetNeutrino().CCNC();
       if (ccnc == 1) {
         _category = k_nc;
       }
@@ -523,13 +513,12 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
       _true_vx = true_neutrino_vertex[0];
       _true_vy = true_neutrino_vertex[1];
       _true_vz = true_neutrino_vertex[2];
-    _true_nu_is_fiducial = int(fElectronEventSelectionAlg.is_fiducial(true_neutrino_vertex));
+      _true_nu_is_fiducial = int(fElectronEventSelectionAlg.is_fiducial(true_neutrino_vertex));
 
       if (is_dirt(true_neutrino_vertex)) {
         _category = k_dirt;
       }
 
-      _true_nu_is_fiducial = fElectronEventSelectionAlg.is_fiducial(true_neutrino_vertex);
 
       for (int i = 0; i < generator[0].NParticles(); i++) {
         if (generator[0].Origin() == 1) {
