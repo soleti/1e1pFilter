@@ -492,13 +492,13 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
 
   _category = 0;
   double true_neutrino_vertex[3];
-  std::vector<simb::MCParticle> nu_mcparticles;
 
   try {
     auto const& generator_handle = evt.getValidHandle< std::vector< simb::MCTruth > >( generator_tag );
     auto const& generator(*generator_handle);
     _n_true_nu = generator.size();
     _true_nu_is_fiducial = 0;
+    std::vector<simb::MCParticle> nu_mcparticles;
 
     if (generator.size() > 0) {
       _nu_energy = generator[0].GetNeutrino().Nu().E();
@@ -529,46 +529,45 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
        _category = k_cosmic;
       _nu_energy = std::numeric_limits<double>::lowest();
     }
+
+    int protons = 0;
+    int electrons = 0;
+    int muons = 0;
+
+    for (auto& mcparticle : nu_mcparticles) {
+      if (mcparticle.Process() == "primary" and mcparticle.T() != 0 and mcparticle.StatusCode() == 1) {
+
+        switch (mcparticle.PdgCode())
+        {
+        case (abs(2212)):
+          protons++;
+          break;
+
+        case (abs(11)):
+          electrons++;
+          break;
+
+        case (abs(13)):
+          muons++;
+          break;
+        }
+
+      }
+    }
+
+    if (_category != k_cosmic && _category != k_dirt && _category != k_nc) {
+      if (protons != 0 && electrons != 0) {
+        _category = k_nu_e;
+      } else if (protons != 0 && muons != 0) {
+        _category = k_nu_mu;
+      }
+    }
   } catch (...) {
     _category = k_data;
   }
 
   std::cout << "True neutrinos " << _n_true_nu << std::endl;
   std::cout << "Nu energy " << _nu_energy << std::endl;
-
-
-  int protons = 0;
-  int electrons = 0;
-  int muons = 0;
-
-  for (auto& mcparticle : nu_mcparticles) {
-    if (mcparticle.Process() == "primary" and mcparticle.T() != 0 and mcparticle.StatusCode() == 1) {
-
-      switch (mcparticle.PdgCode())
-      {
-      case (abs(2212)):
-        protons++;
-        break;
-
-      case (abs(11)):
-        electrons++;
-        break;
-
-      case (abs(13)):
-        muons++;
-        break;
-      }
-
-    }
-  }
-
-  if (_category != k_cosmic && _category != k_dirt && _category != k_nc) {
-    if (protons != 0 && electrons != 0) {
-      _category = k_nu_e;
-    } else if (protons != 0 && muons != 0) {
-      _category = k_nu_mu;
-    }
-  }
 
   _energy = std::numeric_limits<double>::lowest();
 
