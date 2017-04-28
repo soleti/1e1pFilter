@@ -30,9 +30,12 @@
 #include "nusimdata/SimulationBase/MCParticle.h"
 #include "nusimdata/SimulationBase/MCNeutrino.h"
 
+#include "lardataobj/AnalysisBase/Calorimetry.h"
+
 #include "TTree.h"
-#include "TFile.h"
 #include "TVector3.h"
+
+#include <algorithm>
 
 namespace lee {
   class ElectronSelectionAna;
@@ -54,13 +57,21 @@ private:
 
   // functions
   void fillTree(art::Event const & e);
+  void fillTruthTree(art::Event const & e);
+  void fillPandoraTree(art::Event const & e);
+  void fillOticalTree(art::Event const & e);
+
+  Float_t trackEnergy(const art::Ptr<recob::Track>& track, const art::Event & e);
 
 
   // variables
   lee::ElectronEventSelectionAlg fElectronEventSelectionAlg;
-  art::ServiceHandle<spacecharge::SpaceChargeServiceMicroBooNE> SCE;
+  //art::ServiceHandle<spacecharge::SpaceChargeServiceMicroBooNE> SCE;
   TTree*      fTree;
 
+  bool bool_truth   = false;
+  bool bool_pandora = true;
+  bool bool_optical = false;
 
   //Run Subrun Event
   Short_t    run;
@@ -87,7 +98,15 @@ private:
   std::vector<Float_t> center_of_charge_x;              ///< x Center of deposited charge
   std::vector<Float_t> center_of_charge_y;              ///< y Center of deposited charge
   std::vector<Float_t> center_of_charge_z;              ///< z Center of deposited charge
-  std::vector<std::vector< TVector3 >> shwr_dir;      ///< The direction of shower for every shower connected to the passed pandoraNu candidates
+
+  std::vector<std::vector< TVector3 >> shwr_dir;        ///< The direction of shower for every shower connected to the passed pandoraNu candidates
+  std::vector<std::vector< Float_t >> shwr_en;          ///< Shower energy
+  std::vector<std::vector< Float_t >> shwr_angle;       ///< Shower opening angle
+
+  std::vector<std::vector< TVector3 >> trck_dir;        ///< The start direction of track for every track connected to the passed pandoraNu candidates
+  std::vector<std::vector< Float_t >> trck_len;         ///< Length of the track
+  std::vector<std::vector< Float_t >> trck_dedxavg;     ///< Average dedx of the track
+
 
   //Optical information
   Short_t nfls;                                         ///< Number of reconstructed flashes
@@ -136,7 +155,15 @@ lee::ElectronSelectionAna::ElectronSelectionAna(fhicl::ParameterSet const & pset
   fTree->Branch("center_of_charge_x",       "std::vector<Float_t>",    &center_of_charge_x    );
   fTree->Branch("center_of_charge_y",       "std::vector<Float_t>",    &center_of_charge_y    );
   fTree->Branch("center_of_charge_z",       "std::vector<Float_t>",    &center_of_charge_z    );
+
   fTree->Branch("shwr_dir",   "std::vector<std::vector<TVector3>>",    &shwr_dir              );  
+  fTree->Branch("shwr_en",    "std::vector<std::vector<Float_t>>",     &shwr_en               );  
+  fTree->Branch("shwr_angle", "std::vector<std::vector<Float_t>>",     &shwr_angle            );  
+
+  fTree->Branch("trck_dir",   "std::vector<std::vector<TVector3>>",    &trck_dir              ); 
+  fTree->Branch("trck_len",   "std::vector<std::vector<Float_t>>",     &shwr_en               );  
+  fTree->Branch("trck_dedxavg","std::vector<std::vector<Float_t>>",    &shwr_angle            );  
+
 
   //Set branches for optical information
   fTree->Branch("nfls",       &nfls,       "nfls/S"                 );
@@ -162,62 +189,101 @@ void lee::ElectronSelectionAna::analyze(art::Event const & e)
 
 void lee::ElectronSelectionAna::fillTree(art::Event const & e)
 {
-
   // Fill run information
   run    = e.run();
   subrun = e.subRun();
   event  = e.event();
 
-  std::cout<<"begin filling variables of (run,subrun,event) \t ("<< run <<"," <<subrun <<"," <<event<< ")"<< std::endl;
-
+  std::cout<<"\n Begin filling variables of (run,subrun,event) \t ("<< run <<"," <<subrun <<"," <<event<< ")"<< std::endl;
   // Fill truth information
-  if(! e.isRealData())
+  if(!e.isRealData() && bool_truth){fillTruthTree(e);}
+  // Fill PandoraNu information
+  if(bool_pandora){fillPandoraTree(e);}
+  // Fill optical information
+  if(bool_optical){fillOticalTree(e);}
+
+  std::cout<<"variables filled, fill tree"<<std::endl;
+  fTree->Fill();
+}
+
+Float_t lee::ElectronSelectionAna::trackEnergy(const art::Ptr<recob::Track>& track, const art::Event & evt)
+{
+  art::InputTag pandoraNu_tag { "pandoraNu" };
+  auto const& track_handle = evt.getValidHandle< std::vector< recob::Track > >( pandoraNu_tag );
+  art::FindManyP<anab::Calorimetry> calo_track_ass(track_handle, evt, "pandoraNucalo");
+  const std::vector<art::Ptr<anab::Calorimetry>> calos = calo_track_ass.at(track.key());
+
+  for (size_t ical = 0; ical < calos.size(); ++ical)
   {
-    std::cout << "Filling truth information " << std::endl;
-    art::InputTag truth_tag { "generator" };
-    auto const& truth_handle = e.getValidHandle< std::vector< simb::MCTruth > >( truth_tag );
+    if (!calos[ical]) continue;
+    if (!calos[ical]->PlaneID().isValid) continue;
+    int planenum = calos[ical]->PlaneID().Plane;
+    if (planenum < 0 || planenum > 2) continue;
+    if (planenum != 2) continue;                           // Use informartion from collection plane only
 
-    mcevts_truth=0;
-    nuPDG_truth.clear();
-    ccnc_truth.clear();
-    mode_truth.clear();
-    enu_truth.clear();
-    nuvtxx_truth.clear();
-    nuvtxy_truth.clear();
-    nuvtxz_truth.clear();
-
-    if (truth_handle->size() > 0) {
-      for(unsigned int iList = 0; iList < truth_handle->size() ; ++iList){
-        if (truth_handle->at(iList).NeutrinoSet())
-        {
-          simb::MCNeutrino const& neutrino = truth_handle->at(iList).GetNeutrino();
-          mcevts_truth++;
-          nuPDG_truth.emplace_back(neutrino.Nu().PdgCode());
-          ccnc_truth.emplace_back(neutrino.CCNC());
-          mode_truth.emplace_back(neutrino.Mode());
-          enu_truth.emplace_back(neutrino.Nu().E());
+    Float_t dedxsum=0;
+    Float_t dedx=0;
+    Float_t counter=0;
+    for (size_t iTrkHit = 0; iTrkHit < calos[ical]->dEdx().size(); ++iTrkHit)
+    {
+      dedx = calos[ical]->dEdx()[iTrkHit];
+      if (dedx > 0 && dedx < 10)
+      {
+        dedxsum+=dedx;
+        counter++;
+      }
+    }
+    return dedxsum/counter;
+  }
+  return 0.0;
+}
 
 
-          nuvtxx_truth.emplace_back(neutrino.Nu().Vx());
-          nuvtxy_truth.emplace_back(neutrino.Nu().Vy());
-          nuvtxz_truth.emplace_back(neutrino.Nu().Vz());
+void lee::ElectronSelectionAna::fillTruthTree(art::Event const & e)
+{
+  std::cout << "Filling truth information " << std::endl;
+  art::InputTag truth_tag { "generator" };
+  auto const& truth_handle = e.getValidHandle< std::vector< simb::MCTruth > >( truth_tag );
 
-          geo::Point_t point;
-          point.SetXYZ(neutrino.Nu().Vx(), neutrino.Nu().Vy(), neutrino.Nu().Vz());
+  mcevts_truth=0;
+  nuPDG_truth.clear();
+  ccnc_truth.clear();
+  mode_truth.clear();
+  enu_truth.clear();
+  nuvtxx_truth.clear();
+  nuvtxy_truth.clear();
+  nuvtxz_truth.clear();
 
-          std::cout << "True vertex \t (" << point.X() <<"," <<point.Y() <<"," <<point.Z()<< ")"<< std::endl;
+  if (truth_handle->size() > 0) {
+    for(unsigned int iList = 0; iList < truth_handle->size() ; ++iList){
+      if (truth_handle->at(iList).NeutrinoSet())
+      {
+        simb::MCNeutrino const& neutrino = truth_handle->at(iList).GetNeutrino();
+        mcevts_truth++;
+        nuPDG_truth.emplace_back(neutrino.Nu().PdgCode());
+        ccnc_truth.emplace_back(neutrino.CCNC());
+        mode_truth.emplace_back(neutrino.Mode());
+        enu_truth.emplace_back(neutrino.Nu().E());
 
-          auto const* sc = SCE->provider();
-          geo::Vector_t SCcortrue = sc->GetPosOffsets(point);
+        nuvtxx_truth.emplace_back(neutrino.Nu().Vx());
+        nuvtxy_truth.emplace_back(neutrino.Nu().Vy());
+        nuvtxz_truth.emplace_back(neutrino.Nu().Vz());
 
-          std::cout << "True vertex \t (" << neutrino.Nu().Vx() <<"," <<neutrino.Nu().Vy() <<"," <<neutrino.Nu().Vz()<< ")"<< std::endl;
-          std::cout << "SCcor vertex \t (" << SCcortrue.X() <<"," <<SCcortrue.Y() <<"," <<SCcortrue.Z()<< ")"<< std::endl;
-        }
+        geo::Point_t point;
+        point.SetXYZ(neutrino.Nu().Vx(), neutrino.Nu().Vy(), neutrino.Nu().Vz());
+
+        std::cout << "True vertex \t (" << point.X() <<"," <<point.Y() <<"," <<point.Z()<< ")"<< std::endl;
+
+        //auto const* sc = SCE->provider();
+        //geo::Vector_t SCcortrue = sc->GetPosOffsets(point);
+        //std::cout << "SCcor vertex \t (" << SCcortrue.X() <<"," <<SCcortrue.Y() <<"," <<SCcortrue.Z()<< ")"<< std::endl;
       }
     }
   }
+}
 
-  // Fill PandoraNu information
+void lee::ElectronSelectionAna::fillPandoraTree(art::Event const & e)
+{
   std::cout << "Filling PandoraNu information " << std::endl;
   passed = fElectronEventSelectionAlg.eventSelected(e);
 
@@ -229,14 +295,23 @@ void lee::ElectronSelectionAna::fillTree(art::Event const & e)
   center_of_charge_y.clear();
   center_of_charge_z.clear();
   nuvtxpdg.clear();
+
   shwr_dir.clear();
+  shwr_en.clear();
+  shwr_angle.clear();
+
+  trck_dir.clear();
+  trck_dedxavg.clear();
+  trck_len.clear();
 
   if(passed)
   {
     art::InputTag pandoraNu_tag { "pandoraNu" };
     auto const& pfparticle_handle = e.getValidHandle< std::vector< recob::PFParticle > >( pandoraNu_tag );
     art::FindOneP< recob::Shower > shower_per_pfpart(pfparticle_handle, e, pandoraNu_tag);
+    art::FindOneP< recob::Track > track_per_pfpart(pfparticle_handle, e, pandoraNu_tag);
     const std::map<size_t,  std::vector<size_t> > & map_primpfp_shwrpfp = fElectronEventSelectionAlg.get_pfp_id_showers_from_primary();
+    const std::map<size_t,  std::vector<size_t> > & map_primpfp_trckpfp = fElectronEventSelectionAlg.get_pfp_id_tracks_from_primary();
 
     for (auto const& pfpindex : fElectronEventSelectionAlg.get_primary_indexes()) 
     {
@@ -258,17 +333,40 @@ void lee::ElectronSelectionAna::fillTree(art::Event const & e)
 
         std::vector<size_t> pf_ids = map_primpfp_shwrpfp.at(pfpindex);
         std::vector<TVector3> shwr_dir_primary(pf_ids.size());
+        std::vector<Float_t> shwr_angle_primary(pf_ids.size());
+        std::vector<Float_t> shwr_en_primary(pf_ids.size());
 
         for (size_t i =0; i< pf_ids.size(); ++i) {
           auto const& shower_obj = shower_per_pfpart.at(pf_ids[i]);
           shwr_dir_primary[i]=shower_obj->Direction();
+          shwr_en_primary[i]=*std::max_element(shower_obj->Energy().begin(),shower_obj->Energy().end()); 
+          shwr_angle_primary[i]=shower_obj->OpenAngle();
         }
+        shwr_dir.emplace_back(shwr_dir_primary);
+        shwr_en.emplace_back(shwr_en_primary);
+        shwr_angle.emplace_back(shwr_angle_primary);
+
+
+        std::vector<size_t> pf_idt = map_primpfp_trckpfp.at(pfpindex);
+        std::vector<TVector3> trck_dir_primary(pf_idt.size());
+        std::vector<Float_t> trck_dedxavg_primary(pf_ids.size());
+        std::vector<Float_t> trck_len_primary(pf_ids.size());
+
+        for (size_t i =0; i< pf_idt.size(); ++i) {
+          auto const& track_obj   = track_per_pfpart.at(pf_idt[i]);
+          trck_dir_primary[i]     = TVector3 (track_obj->Direction().second.x(),track_obj->Direction().second.y(),track_obj->Direction().second.z());
+          trck_len_primary[i]     = track_obj->Length();
+          trck_dedxavg_primary[i] = trackEnergy(track_obj, e); 
+        }
+        trck_dir.emplace_back(trck_dir_primary);
+        trck_len.emplace_back(trck_len_primary);
+        trck_dedxavg.emplace_back(trck_dedxavg_primary);
       }
     }
   }
-  
+}
 
-  // Fill optical information
+void lee::ElectronSelectionAna::fillOticalTree(art::Event const & e){
   std::cout << "Filling optical information " << std::endl;
   art::InputTag optical_tag{"simpleFlashBeam"};
   auto const& optical_handle = e.getValidHandle<std::vector<recob::OpFlash>>(optical_tag);
@@ -295,9 +393,6 @@ void lee::ElectronSelectionAna::fillTree(art::Event const & e)
       flsZwidth.emplace_back(flash.ZWidth());
     }
   }
-
-  std::cout<<"variables filled, fill tree"<<std::endl;
-  fTree->Fill();
 }
 
 DEFINE_ART_MODULE(lee::ElectronSelectionAna)
