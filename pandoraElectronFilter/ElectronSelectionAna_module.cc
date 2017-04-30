@@ -70,6 +70,7 @@ private:
   //art::ServiceHandle<spacecharge::SpaceChargeServiceMicroBooNE> SCE;
   SpaceChargeMicroBooNE SCE = SpaceChargeMicroBooNE("SCEoffsets_MicroBooNE_E273.root");
   TTree*      fTree;
+  const int nrPMT = 32;
 
   bool bool_truth   = true;
   bool bool_pandora = true;
@@ -117,6 +118,7 @@ private:
   Short_t nfls;                                         ///< Number of reconstructed flashes
   std::vector<Float_t> flsTime;                         ///< Flash time (us)
   std::vector<Float_t> flsPe;                           ///< Flash total PE
+  std::vector<Float_t> flsPePMT;                        ///< Flash PE per PMT
   std::vector<Float_t> flsYcenter;                      ///< Flash Y center (cm)
   std::vector<Float_t> flsZcenter;                      ///< Flash Z center (cm)
   std::vector<Float_t> flsYwidth;                       ///< Flash Y width (cm)
@@ -177,6 +179,7 @@ lee::ElectronSelectionAna::ElectronSelectionAna(fhicl::ParameterSet const & pset
   fTree->Branch("nfls",       &nfls,       "nfls/S"                 );
   fTree->Branch("flsTime",    "std::vector<Float_t>",   &flsTime    );
   fTree->Branch("flsPe",      "std::vector<Float_t>",   &flsPe      );
+  fTree->Branch("flsPePMT",   "std::vector<Float_t>",   &flsPePMT   );
   fTree->Branch("flsYcenter", "std::vector<Float_t>",   &flsYcenter );
   fTree->Branch("flsZcenter", "std::vector<Float_t>",   &flsZcenter );
   fTree->Branch("flsYwidth",  "std::vector<Float_t>",   &flsYwidth  );
@@ -213,6 +216,7 @@ void lee::ElectronSelectionAna::fillTree(art::Event const & e)
   std::cout<<"variables filled, fill tree"<<std::endl;
   fTree->Fill();
 }
+
 
 Float_t lee::ElectronSelectionAna::trackEnergy(const art::Ptr<recob::Track>& track, const art::Event & evt)
 {
@@ -299,6 +303,7 @@ void lee::ElectronSelectionAna::fillTruthTree(art::Event const & e)
   }
 }
 
+
 void lee::ElectronSelectionAna::fillPandoraTree(art::Event const & e)
 {
   std::cout << "Filling PandoraNu information " << std::endl;
@@ -383,6 +388,7 @@ void lee::ElectronSelectionAna::fillPandoraTree(art::Event const & e)
   }
 }
 
+
 void lee::ElectronSelectionAna::fillOticalTree(art::Event const & e){
   std::cout << "Filling optical information " << std::endl;
   art::InputTag optical_tag{"simpleFlashBeam"};
@@ -396,6 +402,7 @@ void lee::ElectronSelectionAna::fillOticalTree(art::Event const & e){
     flsZcenter.clear();
     flsYwidth.clear();
     flsZwidth.clear();
+    flsPePMT.clear();
 
     //std::map<size_t, int > op_flash_indexes = fElectronEventSelectionAlg.get_op_flash_indexes();
     nfls = optical_handle->size();
@@ -408,6 +415,10 @@ void lee::ElectronSelectionAna::fillOticalTree(art::Event const & e){
       flsZcenter.emplace_back(flash.ZCenter());
       flsYwidth.emplace_back(flash.YWidth());
       flsZwidth.emplace_back(flash.ZWidth());
+      for(int ipmt=0; ipmt < nrPMT ; ++ipmt)
+      {
+      	flsPePMT.emplace_back(flash.PE(ipmt));
+      }
     }
   }
 }
