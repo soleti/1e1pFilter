@@ -19,7 +19,8 @@
 #include "ElectronEventSelectionAlg.h"
 
 #include "art/Framework/Services/Optional/TFileService.h"
-#include "uboone/SpaceChargeServices/SpaceChargeServiceMicroBooNE.h"
+//#include "uboone/SpaceChargeServices/SpaceChargeServiceMicroBooNE.h"
+#include "SpaceChargeMicroBooNE.h"
 #include "larcore/Geometry/Geometry.h"
 
 #include "lardataobj/RecoBase/OpFlash.h"
@@ -67,11 +68,12 @@ private:
   // variables
   lee::ElectronEventSelectionAlg fElectronEventSelectionAlg;
   //art::ServiceHandle<spacecharge::SpaceChargeServiceMicroBooNE> SCE;
+  SpaceChargeMicroBooNE SCE = SpaceChargeMicroBooNE("SCEoffsets_MicroBooNE_E273.root");
   TTree*      fTree;
 
-  bool bool_truth   = false;
+  bool bool_truth   = true;
   bool bool_pandora = true;
-  bool bool_optical = false;
+  bool bool_optical = true;
 
   //Run Subrun Event
   Short_t    run;
@@ -87,6 +89,9 @@ private:
   std::vector<Float_t>   nuvtxx_truth;                  ///< neutrino vertex x
   std::vector<Float_t>   nuvtxy_truth;                  ///< neutrino vertex y
   std::vector<Float_t>   nuvtxz_truth;                  ///< neutrino vertex z
+  std::vector<Float_t>   nuvtxx_sc;                     ///< neutrino vertex x
+  std::vector<Float_t>   nuvtxy_sc;                     ///< neutrino vertex y
+  std::vector<Float_t>   nuvtxz_sc;                     ///< neutrino vertex z
 
   //PandoraNu information
   Short_t              passed;                          ///< Return true if there is at least one neutrino vertex that passed
@@ -144,6 +149,9 @@ lee::ElectronSelectionAna::ElectronSelectionAna(fhicl::ParameterSet const & pset
   fTree->Branch("nuvtxx_truth", "std::vector<Float_t>",    &nuvtxx_truth           );
   fTree->Branch("nuvtxy_truth", "std::vector<Float_t>",    &nuvtxy_truth           );
   fTree->Branch("nuvtxz_truth", "std::vector<Float_t>",    &nuvtxz_truth           );
+  fTree->Branch("nuvtxx_sc",    "std::vector<Float_t>",    &nuvtxx_sc              );
+  fTree->Branch("nuvtxy_sc",    "std::vector<Float_t>",    &nuvtxy_sc              );
+  fTree->Branch("nuvtxz_sc",    "std::vector<Float_t>",    &nuvtxz_sc              );
 
   //Set branches for PandoraNU information
   fTree->Branch("passed",                   &passed,                   "passed/S"             );
@@ -156,13 +164,13 @@ lee::ElectronSelectionAna::ElectronSelectionAna(fhicl::ParameterSet const & pset
   fTree->Branch("center_of_charge_y",       "std::vector<Float_t>",    &center_of_charge_y    );
   fTree->Branch("center_of_charge_z",       "std::vector<Float_t>",    &center_of_charge_z    );
 
-  fTree->Branch("shwr_dir",   "std::vector<std::vector<TVector3>>",    &shwr_dir              );  
-  fTree->Branch("shwr_en",    "std::vector<std::vector<Float_t>>",     &shwr_en               );  
-  fTree->Branch("shwr_angle", "std::vector<std::vector<Float_t>>",     &shwr_angle            );  
+  fTree->Branch("shwr_dir",   "std::vector<std::vector<TVector3>>",    &shwr_dir              );
+  fTree->Branch("shwr_en",    "std::vector<std::vector<Float_t>>",     &shwr_en               );
+  fTree->Branch("shwr_angle", "std::vector<std::vector<Float_t>>",     &shwr_angle            );
 
-  fTree->Branch("trck_dir",   "std::vector<std::vector<TVector3>>",    &trck_dir              ); 
-  fTree->Branch("trck_len",   "std::vector<std::vector<Float_t>>",     &shwr_en               );  
-  fTree->Branch("trck_dedxavg","std::vector<std::vector<Float_t>>",    &shwr_angle            );  
+  fTree->Branch("trck_dir",   "std::vector<std::vector<TVector3>>",    &trck_dir              );
+  fTree->Branch("trck_len",   "std::vector<std::vector<Float_t>>",     &shwr_en               );
+  fTree->Branch("trck_dedxavg","std::vector<std::vector<Float_t>>",    &shwr_angle            );
 
 
   //Set branches for optical information
@@ -253,6 +261,9 @@ void lee::ElectronSelectionAna::fillTruthTree(art::Event const & e)
   nuvtxx_truth.clear();
   nuvtxy_truth.clear();
   nuvtxz_truth.clear();
+  nuvtxx_sc.clear();
+  nuvtxy_sc.clear();
+  nuvtxz_sc.clear();
 
   if (truth_handle->size() > 0) {
     for(unsigned int iList = 0; iList < truth_handle->size() ; ++iList){
@@ -265,18 +276,24 @@ void lee::ElectronSelectionAna::fillTruthTree(art::Event const & e)
         mode_truth.emplace_back(neutrino.Mode());
         enu_truth.emplace_back(neutrino.Nu().E());
 
-        nuvtxx_truth.emplace_back(neutrino.Nu().Vx());
-        nuvtxy_truth.emplace_back(neutrino.Nu().Vy());
-        nuvtxz_truth.emplace_back(neutrino.Nu().Vz());
+        Float_t vx = neutrino.Nu().Vx();
+        Float_t vy = neutrino.Nu().Vy();
+        Float_t vz = neutrino.Nu().Vz();
 
-        geo::Point_t point;
-        point.SetXYZ(neutrino.Nu().Vx(), neutrino.Nu().Vy(), neutrino.Nu().Vz());
+        nuvtxx_truth.emplace_back(vx);
+        nuvtxy_truth.emplace_back(vy);
+        nuvtxz_truth.emplace_back(vz);
 
-        std::cout << "True vertex \t (" << point.X() <<"," <<point.Y() <<"," <<point.Z()<< ")"<< std::endl;
+        nuvtxx_sc.emplace_back(vx-SCE.GetPosOffsets(vx, vy, vz)[0]+0.7);
+        nuvtxy_sc.emplace_back(vy+SCE.GetPosOffsets(vx, vy, vz)[1]);
+        nuvtxz_sc.emplace_back(vz+SCE.GetPosOffsets(vx, vy, vz)[2]);
 
+        //geo::Point_t point;
+        //point.SetXYZ(neutrino.Nu().Vx(), neutrino.Nu().Vy(), neutrino.Nu().Vz());
+        //std::cout << "True vertex \t (" << point.X() <<"," <<point.Y() <<"," <<point.Z()<< ")"<< std::endl;
         //auto const* sc = SCE->provider();
         //geo::Vector_t SCcortrue = sc->GetPosOffsets(point);
-        //std::cout << "SCcor vertex \t (" << SCcortrue.X() <<"," <<SCcortrue.Y() <<"," <<SCcortrue.Z()<< ")"<< std::endl;
+        //std::cout << "SCcor vertex \t (" << vx-SCE.GetPosOffsets(vx, vy, vz)[0]+0.7 <<"," << vy+SCE.GetPosOffsets(vx, vy, vz)[1] <<"," << vz+SCE.GetPosOffsets(vx, vy, vz)[2] << ")"<< std::endl;
       }
     }
   }
@@ -313,9 +330,9 @@ void lee::ElectronSelectionAna::fillPandoraTree(art::Event const & e)
     const std::map<size_t,  std::vector<size_t> > & map_primpfp_shwrpfp = fElectronEventSelectionAlg.get_pfp_id_showers_from_primary();
     const std::map<size_t,  std::vector<size_t> > & map_primpfp_trckpfp = fElectronEventSelectionAlg.get_pfp_id_tracks_from_primary();
 
-    for (auto const& pfpindex : fElectronEventSelectionAlg.get_primary_indexes()) 
+    for (auto const& pfpindex : fElectronEventSelectionAlg.get_primary_indexes())
     {
-      if (fElectronEventSelectionAlg.get_neutrino_candidate_passed().at(pfpindex)) 
+      if (fElectronEventSelectionAlg.get_neutrino_candidate_passed().at(pfpindex))
       {
         nnuvtx++;
         TVector3 neutrino_vertex = fElectronEventSelectionAlg.get_neutrino_vertex().at(pfpindex);
@@ -339,7 +356,7 @@ void lee::ElectronSelectionAna::fillPandoraTree(art::Event const & e)
         for (size_t i =0; i< pf_ids.size(); ++i) {
           auto const& shower_obj = shower_per_pfpart.at(pf_ids[i]);
           shwr_dir_primary[i]=shower_obj->Direction();
-          shwr_en_primary[i]=*std::max_element(shower_obj->Energy().begin(),shower_obj->Energy().end()); 
+          shwr_en_primary[i]=*std::max_element(shower_obj->Energy().begin(),shower_obj->Energy().end());
           shwr_angle_primary[i]=shower_obj->OpenAngle();
         }
         shwr_dir.emplace_back(shwr_dir_primary);
@@ -356,7 +373,7 @@ void lee::ElectronSelectionAna::fillPandoraTree(art::Event const & e)
           auto const& track_obj   = track_per_pfpart.at(pf_idt[i]);
           trck_dir_primary[i]     = TVector3 (track_obj->Direction().second.x(),track_obj->Direction().second.y(),track_obj->Direction().second.z());
           trck_len_primary[i]     = track_obj->Length();
-          trck_dedxavg_primary[i] = trackEnergy(track_obj, e); 
+          trck_dedxavg_primary[i] = trackEnergy(track_obj, e);
         }
         trck_dir.emplace_back(trck_dir_primary);
         trck_len.emplace_back(trck_len_primary);
@@ -380,11 +397,11 @@ void lee::ElectronSelectionAna::fillOticalTree(art::Event const & e){
     flsYwidth.clear();
     flsZwidth.clear();
 
-    std::map<size_t, int > op_flash_indexes = fElectronEventSelectionAlg.get_op_flash_indexes();
-    nfls = op_flash_indexes.size();
+    //std::map<size_t, int > op_flash_indexes = fElectronEventSelectionAlg.get_op_flash_indexes();
+    nfls = optical_handle->size();
     for(int ifl=0; ifl< nfls; ++ifl)
     {
-      recob::OpFlash const& flash = optical_handle->at(op_flash_indexes[ifl]);
+      recob::OpFlash const& flash = optical_handle->at(ifl);
       flsTime.emplace_back(flash.Time());
       flsPe.emplace_back(flash.TotalPE());
       flsYcenter.emplace_back(flash.YCenter());
