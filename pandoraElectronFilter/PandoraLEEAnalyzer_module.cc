@@ -331,8 +331,13 @@ void lee::PandoraLEEAnalyzer::get_daughter_showers(std::vector < size_t > pf_ids
   art::FindOneP< recob::Shower > shower_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
 
   for (auto const& pf_id : pf_ids) {
-    auto const& shower_obj = shower_per_pfpart.at(pf_id);
-    showers.push_back(shower_obj);
+    try {
+
+      auto const& shower_obj = shower_per_pfpart.at(pf_id);
+      showers.push_back(shower_obj);
+    } catch (...) {
+      std::cout << "Error getting the shower" << std::endl;
+    }
   }
 
 }
@@ -634,13 +639,18 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
 
 
     std::cout << "Category " << _category << std::endl;
+
     std::vector<art::Ptr<recob::Track>> chosen_tracks;
-    // Get the index of the pf_candidate in the Alg accounting to use below:
     std::vector< size_t > pfp_tracks_id = fElectronEventSelectionAlg.get_pfp_id_tracks_from_primary().at(ipf_candidate);
     get_daughter_tracks(pfp_tracks_id, evt, chosen_tracks);
     _track_dir_z = get_longest_track(chosen_tracks)->StartDirection().Z();
     _track_length = get_longest_track(chosen_tracks)->Length();
     _n_tracks = fElectronEventSelectionAlg.get_n_tracks().at(ipf_candidate);
+
+
+    std::vector<art::Ptr<recob::Shower>> chosen_showers;
+    std::vector< size_t > pfp_showers_id = fElectronEventSelectionAlg.get_pfp_id_showers_from_primary().at(ipf_candidate);
+    get_daughter_showers(pfp_tracks_id, evt, chosen_showers);
     _n_showers = fElectronEventSelectionAlg.get_n_showers().at(ipf_candidate);
 
 
