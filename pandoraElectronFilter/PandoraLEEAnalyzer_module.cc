@@ -488,50 +488,15 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
   std::string _pfp_producer = "pandoraNu";
   std::string _spacepointLabel = "pandoraNu";
 
-if (_event_passed) {
-  // --- Collect hits
-  lar_pandora::HitVector hitVector;
-  lar_pandora::LArPandoraHelper::CollectHits(evt, _hitfinderLabel, hitVector);
-
-  // --- Collect tracks
-  lar_pandora::TrackVector            allPfParticleTracks;
-  lar_pandora::PFParticlesToTracks    pfParticleToTrackMap;
-  lar_pandora::LArPandoraHelper::CollectTracks(evt, _pfp_producer, allPfParticleTracks, pfParticleToTrackMap);
-
-  // --- Collect PFParticles and match Reco Particles to Hits
-  lar_pandora::PFParticleVector  recoParticleVector;
-  lar_pandora::PFParticleVector  recoNeutrinoVector;
-  lar_pandora::PFParticlesToHits recoParticlesToHits;
-  lar_pandora::HitsToPFParticles recoHitsToParticles;
-
-  lar_pandora::LArPandoraHelper::CollectPFParticles(evt, _pfp_producer, recoParticleVector);
-  lar_pandora::LArPandoraHelper::SelectNeutrinoPFParticles(recoParticleVector, recoNeutrinoVector);
-  lar_pandora::LArPandoraHelper::BuildPFParticleHitMaps(evt, _pfp_producer, _spacepointLabel, recoParticlesToHits, recoHitsToParticles, lar_pandora::LArPandoraHelper::kAddDaughters);
-
-  // --- Collect MCParticles and match True Particles to Hits
-  lar_pandora::MCParticleVector     trueParticleVector;
-  lar_pandora::MCTruthToMCParticles truthToParticles;
-  lar_pandora::MCParticlesToMCTruth particlesToTruth;
-  lar_pandora::MCParticlesToHits    trueParticlesToHits;
-  lar_pandora::HitsToMCParticles    trueHitsToParticles;
-
-  if (!evt.isRealData()) {
-    lar_pandora::LArPandoraHelper::CollectMCParticles(evt, _geantModuleLabel, trueParticleVector);
-    lar_pandora::LArPandoraHelper::CollectMCParticles(evt, _geantModuleLabel, truthToParticles, particlesToTruth);
-    lar_pandora::LArPandoraHelper::BuildMCParticleHitMaps(evt, _geantModuleLabel, hitVector, trueParticlesToHits, trueHitsToParticles, lar_pandora::LArPandoraHelper::kAddDaughters);
-  }
-
-  lar_pandora::MCParticlesToPFParticles matchedParticles;    // This is a map: MCParticle to matched PFParticle
-  lar_pandora::MCParticlesToHits        matchedParticleHits;
-
-  // --- Do the matching
-  fElectronEventSelectionAlg.GetRecoToTrueMatches(recoParticlesToHits,
-    trueHitsToParticles,
-    matchedParticles,
-    matchedParticleHits);
-  }
 
   if (_event_passed) {
+    lar_pandora::MCParticlesToPFParticles matchedParticles;    // This is a map: MCParticle to matched PFParticle
+    lar_pandora::MCParticlesToHits        matchedParticleHits;
+
+    // --- Do the matching
+    fElectronEventSelectionAlg.GetRecoToTrueMatches(evt, _pfp_producer, _spacepointLabel, _geantModuleLabel, _hitfinderLabel, matchedParticles, matchedParticleHits);
+
+
     for (auto & inu : fElectronEventSelectionAlg.get_primary_indexes()) {
       if (fElectronEventSelectionAlg.get_neutrino_candidate_passed().at(inu)) {
         nu_candidates.push_back(inu);
