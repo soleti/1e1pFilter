@@ -665,10 +665,10 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
       art::Ptr<recob::PFParticle> pf_par = iter1->second;  // The matched PFParticle
 
       const art::Ptr<simb::MCTruth> mc_truth = bt->TrackIDToMCTruth(mc_par->TrackId());
-      
+
       if (mc_truth->Origin() == simb::kBeamNeutrino) {
         std::cout << "Matched neutrino" << std::endl;
-        std::cout << pf_par->PdgCode() << std::endl;
+        std::cout << "Pf PDG: " << pf_par->PdgCode() << "MC PDG: " << mc_par->PdgCode() << std::endl;
       }
     }
   }

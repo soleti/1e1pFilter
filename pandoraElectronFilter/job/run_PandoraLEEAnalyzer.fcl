@@ -16,6 +16,8 @@ services :
   TimeTracker:              {}
   RandomNumberGenerator:    {}
   @table::microboone_services_reco
+  BackTracker:             @local::microboone_backtracker
+
 }
 
 outputs: {
