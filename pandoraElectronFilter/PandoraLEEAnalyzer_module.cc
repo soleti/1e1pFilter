@@ -50,6 +50,9 @@
 
 #include "ElectronEventSelectionAlg.h"
 
+#include "SpaceChargeMicroBooNE.h"
+
+
 using namespace lar_pandora;
 
 
@@ -126,6 +129,11 @@ private:
   double _true_vx;
   double _true_vy;
   double _true_vz;
+
+  double _true_vx_sce;
+  double _true_vy_sce;
+  double _true_vz_sce;
+
   int _category;
   int _run;
   int _subrun;
@@ -184,9 +192,15 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const & pset)
   myTTree->Branch("vx",  &_vx, "vx/d");
   myTTree->Branch("vy",  &_vy, "vy/d");
   myTTree->Branch("vz",  &_vz, "vz/d");
-  myTTree->Branch("true_vx",  &_true_vx, "vx/d");
-  myTTree->Branch("true_vy",  &_true_vy, "vy/d");
-  myTTree->Branch("true_vz",  &_true_vz, "vz/d");
+
+  myTTree->Branch("true_vx",  &_true_vx, "true_vx/d");
+  myTTree->Branch("true_vy",  &_true_vy, "true_vy/d");
+  myTTree->Branch("true_vz",  &_true_vz, "true_vz/d");
+
+  myTTree->Branch("true_vx_sce",  &_true_vx_sce, "true_vx_sce/d");
+  myTTree->Branch("true_vy_sce",  &_true_vy_sce, "true_vx_sce/d");
+  myTTree->Branch("true_vz_sce",  &_true_vz_sce, "true_vx_sce/d");
+
   myTTree->Branch("nu_E",  &_nu_energy, "nu_E/d");
   myTTree->Branch("passed",  &_event_passed, "passed/I");
   myTTree->Branch("n_candidates", &_n_candidates, "n_candidates/i");
@@ -409,11 +423,9 @@ size_t lee::PandoraLEEAnalyzer::choose_candidate(std::vector<size_t> & candidate
 
   size_t chosen_candidate = 0;
   double most_z = -1;
+  double longest_track_dir;
 
   for (auto const& ic : candidates) {
-
-    double longest_track_dir = -1;
-
     std::vector<art::Ptr<recob::Track>> nu_tracks;
     std::vector< size_t > pfp_tracks_id = fElectronEventSelectionAlg.get_pfp_id_tracks_from_primary().at(ic);
     get_daughter_tracks(pfp_tracks_id, evt, nu_tracks);
@@ -516,6 +528,11 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
       _true_vz = true_neutrino_vertex[2];
       _true_nu_is_fiducial = int(fElectronEventSelectionAlg.is_fiducial(true_neutrino_vertex));
 
+      SpaceChargeMicroBooNE SCE = SpaceChargeMicroBooNE("SCEoffsets_MicroBooNE_E273.root");
+      _true_vx_sce = _true_vx-SCE.GetPosOffsets(_true_vx, _true_vy, _true_vz)[0]+0.7;
+      _true_vy_sce = _true_vy+SCE.GetPosOffsets(_true_vx, _true_vy, _true_vz)[1];
+      _true_vz_sce = _true_vz+SCE.GetPosOffsets(_true_vx, _true_vy, _true_vz)[2];
+
       if (is_dirt(true_neutrino_vertex)) {
         _category = k_dirt;
       }
@@ -596,18 +613,12 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
 
 
     if (_category != k_data) {
-      TVector3 true_vertex(true_neutrino_vertex[0], true_neutrino_vertex[1], true_neutrino_vertex[2]);
       TVector3 v_reco_vertex(_vx, _vy, _vz);
+      TVector3 sce_true_vertex(_true_vx_sce, _true_vy_sce, _true_vz_sce);
 
-      if (fElectronEventSelectionAlg.is_fiducial(true_vertex)) {
-        _distance = fElectronEventSelectionAlg.distance(v_reco_vertex, true_vertex);
+      _distance = fElectronEventSelectionAlg.distance(v_reco_vertex, sce_true_vertex);
+      if (_distance > 5) _category = k_cosmic;
 
-        std::cout << true_neutrino_vertex[0] << " " << true_neutrino_vertex[1] << " " << true_neutrino_vertex[2] << std::endl;
-        //TVector3 sce_true_vertex = fElectronEventSelectionAlg.spaceChargeTrueToReco(true_vertex);
-        if (_distance > 15) {
-          _category = k_cosmic;
-        }
-      }
     }
 
 

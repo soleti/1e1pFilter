@@ -361,6 +361,7 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
     // Loop over the neutrino daughters and check if there is a shower and a track
     int showers = 0;
     int tracks = 0;
+    int longer_tracks = 0;
     for (auto const& pfdaughter : pfparticle_handle->at(_i_primary).Daughters())
     {
 
@@ -407,7 +408,10 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
             tracks++;
             std::cout << "Stored track " << track_obj << " " << track_obj->Length() << std::endl;
             _pfp_id_tracks_from_primary[_i_primary].push_back(pfdaughter);
+          } else {
+            longer_tracks++;
           }
+
         } catch (...) {
           std::cout << "NO TRACKS AVAILABLE" << std::endl;
         }
@@ -417,7 +421,7 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
       _n_tracks[_i_primary] = tracks;
       _n_showers[_i_primary] = showers;
 
-      if (showers >= 1 && tracks >= m_nTracks)
+      if (showers >= 1 && tracks >= m_nTracks && longer_tracks == 0)
       {
         //closest_distance = std::min(distance(neutrino_vertex,true_neutrino_vertex),closest_distance);
         _neutrino_candidate_passed[_i_primary] = true;
