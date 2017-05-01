@@ -49,6 +49,7 @@
 #include "art/Framework/Services/Optional/TFileService.h"
 
 #include "ElectronEventSelectionAlg.h"
+#include "larpandora/LArPandoraInterface/LArPandoraHelper.h"
 
 #include "SpaceChargeMicroBooNE.h"
 
@@ -482,8 +483,53 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
   std::vector<size_t> nu_candidates;
 
   _event_passed = int(fElectronEventSelectionAlg.eventSelected(evt));
+  std::string _hitfinderLabel = "pandoraCosmicHitRemoval";
+  std::string _geantModuleLabel = "largeant";
+  std::string _pfp_producer = "pandoraNu";
+  std::string _spacepointLabel = "pandoraNu";
 
+if (_event_passed) {
+  // --- Collect hits
+  lar_pandora::HitVector hitVector;
+  lar_pandora::LArPandoraHelper::CollectHits(evt, _hitfinderLabel, hitVector);
 
+  // --- Collect tracks
+  lar_pandora::TrackVector            allPfParticleTracks;
+  lar_pandora::PFParticlesToTracks    pfParticleToTrackMap;
+  lar_pandora::LArPandoraHelper::CollectTracks(evt, _pfp_producer, allPfParticleTracks, pfParticleToTrackMap);
+
+  // --- Collect PFParticles and match Reco Particles to Hits
+  lar_pandora::PFParticleVector  recoParticleVector;
+  lar_pandora::PFParticleVector  recoNeutrinoVector;
+  lar_pandora::PFParticlesToHits recoParticlesToHits;
+  lar_pandora::HitsToPFParticles recoHitsToParticles;
+
+  lar_pandora::LArPandoraHelper::CollectPFParticles(evt, _pfp_producer, recoParticleVector);
+  lar_pandora::LArPandoraHelper::SelectNeutrinoPFParticles(recoParticleVector, recoNeutrinoVector);
+  lar_pandora::LArPandoraHelper::BuildPFParticleHitMaps(evt, _pfp_producer, _spacepointLabel, recoParticlesToHits, recoHitsToParticles, lar_pandora::LArPandoraHelper::kAddDaughters);
+
+  // --- Collect MCParticles and match True Particles to Hits
+  lar_pandora::MCParticleVector     trueParticleVector;
+  lar_pandora::MCTruthToMCParticles truthToParticles;
+  lar_pandora::MCParticlesToMCTruth particlesToTruth;
+  lar_pandora::MCParticlesToHits    trueParticlesToHits;
+  lar_pandora::HitsToMCParticles    trueHitsToParticles;
+
+  if (!evt.isRealData()) {
+    lar_pandora::LArPandoraHelper::CollectMCParticles(evt, _geantModuleLabel, trueParticleVector);
+    lar_pandora::LArPandoraHelper::CollectMCParticles(evt, _geantModuleLabel, truthToParticles, particlesToTruth);
+    lar_pandora::LArPandoraHelper::BuildMCParticleHitMaps(evt, _geantModuleLabel, hitVector, trueParticlesToHits, trueHitsToParticles, lar_pandora::LArPandoraHelper::kAddDaughters);
+  }
+
+  lar_pandora::MCParticlesToPFParticles matchedParticles;    // This is a map: MCParticle to matched PFParticle
+  lar_pandora::MCParticlesToHits        matchedParticleHits;
+
+  // --- Do the matching
+  fElectronEventSelectionAlg.GetRecoToTrueMatches(recoParticlesToHits,
+    trueHitsToParticles,
+    matchedParticles,
+    matchedParticleHits);
+  }
 
   if (_event_passed) {
     for (auto & inu : fElectronEventSelectionAlg.get_primary_indexes()) {
@@ -506,7 +552,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
   _category = 0;
   double true_neutrino_vertex[3];
 
-  try {
+  if (!evt.isRealData()) {
     auto const& generator_handle = evt.getValidHandle< std::vector< simb::MCTruth > >( generator_tag );
     auto const& generator(*generator_handle);
     _n_true_nu = generator.size();
@@ -580,7 +626,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
         _category = k_nu_mu;
       }
     }
-  } catch (...) {
+  } else {
     _category = k_data;
   }
 
