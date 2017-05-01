@@ -42,10 +42,12 @@ art_make(
                         ${ROOT_GDML}
                         ${ROOT_BASIC_LIB_LIST}
                         ${SIMULATIONBASE}
+                   	larsim_MCCheater_BackTracker_service
 
           MODULE_LIBRARIES
                         ElectronFilter
                         larpandora_LArPandoraInterface
+			larsim_MCCheater_BackTracker_service
                         lardataobj_RecoBase
                         nusimdata_SimulationBase
                         larcore_Geometry

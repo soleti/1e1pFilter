@@ -18,6 +18,7 @@
 #include "art/Framework/Principal/SubRun.h"
 #include "fhiclcpp/ParameterSet.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
+#include "larsim/MCCheater/BackTracker.h"
 
 
 //uncomment the lines below as you use these objects
@@ -493,10 +494,10 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
   std::string _pfp_producer = "pandoraNu";
   std::string _spacepointLabel = "pandoraNu";
 
-
+  lar_pandora::MCParticlesToPFParticles matchedParticles;    // This is a map: MCParticle to matched PFParticle
+  lar_pandora::MCParticlesToHits        matchedParticleHits;
   if (_event_passed) {
-    lar_pandora::MCParticlesToPFParticles matchedParticles;    // This is a map: MCParticle to matched PFParticle
-    lar_pandora::MCParticlesToHits        matchedParticleHits;
+
 
     // --- Do the matching
     fElectronEventSelectionAlg.GetRecoToTrueMatches(evt, _pfp_producer, _spacepointLabel, _geantModuleLabel, _hitfinderLabel, matchedParticles, matchedParticleHits);
@@ -655,6 +656,21 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
 
 
     std::cout << "Chosen neutrino " << ipf_candidate << std::endl;
+    art::ServiceHandle<cheat::BackTracker> bt;
+
+    for (lar_pandora::MCParticlesToPFParticles::const_iterator iter1 = matchedParticles.begin(), iterEnd1 = matchedParticles.end();
+    iter1 != iterEnd1; ++iter1) {
+
+      art::Ptr<simb::MCParticle>  mc_par = iter1->first;   // The MCParticle
+      art::Ptr<recob::PFParticle> pf_par = iter1->second;  // The matched PFParticle
+
+      const art::Ptr<simb::MCTruth> mc_truth = bt->TrackIDToMCTruth(mc_par->TrackId());
+      
+      if (mc_truth->Origin() == simb::kBeamNeutrino) {
+        std::cout << "Matched neutrino" << std::endl;
+        std::cout << pf_par->PdgCode() << std::endl;
+      }
+    }
   }
 
 
