@@ -127,6 +127,9 @@ private:
   double _true_vy_sce;
   double _true_vz_sce;
 
+  int _nu_matched_tracks;
+  int _nu_matched_showers;
+
   int _category;
   int _run;
   int _subrun;
@@ -135,6 +138,7 @@ private:
   int _n_true_nu;
   int _run_sr;
   int _subrun_sr;
+  int _n_matched;
   double _pot;
   int _event_passed;
   double _distance;
@@ -189,6 +193,11 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const & pset)
   myTTree->Branch("n_true_nu", &_n_true_nu, "n_true_nu/i");
   myTTree->Branch("distance", &_distance, "distance/d");
   myTTree->Branch("true_nu_is_fiducial", &_true_nu_is_fiducial, "true_nu_is_fiducial/I");
+
+  myTTree->Branch("n_matched", &_n_matched, "n_matched/i");
+  myTTree->Branch("nu_matched_tracks", &_nu_matched_tracks, "nu_matched_tracks/i");
+  myTTree->Branch("nu_matched_showers", &_nu_matched_showers, "nu_matched_showers/i");
+
 
   myPOTTTree->Branch("run", &_run_sr, "run/i");
   myPOTTTree->Branch("subrun", &_subrun_sr, "subrun/i");
@@ -629,10 +638,15 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
       if (mc_truth->Origin() == simb::kCosmicRay) {
         cosmic_pf.push_back(pf_par);
       }
+
     }
 
+    _n_matched = neutrino_pf.size();
+
+    _nu_matched_showers = 0;
+    _nu_matched_tracks = 0;
+
     for (size_t ish = 0; ish < pfp_showers_id.size(); ish++) {
-      bool nu_found = false;
       bool cr_found = false;
 
       for (size_t ipf = 0; ipf < cosmic_pf.size(); ipf++ ) {
@@ -640,35 +654,40 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
       }
 
       for (size_t ipf = 0; ipf < neutrino_pf.size(); ipf++ ) {
-        if (pfp_showers_id[ish] == neutrino_pf[ipf].key()) nu_found = true;
+        if (pfp_showers_id[ish] == neutrino_pf[ipf].key()) {
+          _nu_matched_showers++;
+        }
       }
 
       std::cout << "Shower PFP " << pfp_showers_id[ish] << std::endl;
-      std::cout << "Neutrino? " << nu_found << std::endl;
+      std::cout << "Neutrino? " << _nu_matched_showers << std::endl;
       std::cout << "Cosmic? " << cr_found << std::endl;
 
     }
 
     for (size_t itr = 0; itr < pfp_tracks_id.size(); itr++) {
-      bool nu_found = false;
       bool cr_found = false;
 
       for (size_t ipf = 0; ipf < cosmic_pf.size(); ipf++ ) {
-        if (pfp_showers_id[itr] == cosmic_pf[ipf].key()) cr_found = true;
+        if (pfp_tracks_id[itr] == cosmic_pf[ipf].key()) cr_found = true;
       }
 
       for (size_t ipf = 0; ipf < neutrino_pf.size(); ipf++ ) {
-        if (pfp_showers_id[itr] == neutrino_pf[ipf].key()) nu_found = true;
+        if (pfp_tracks_id[itr] == neutrino_pf[ipf].key()) {
+          _nu_matched_tracks++;
+        }
       }
 
+
       std::cout << "Track PFP " << pfp_tracks_id[itr] << std::endl;
-      std::cout << "Neutrino? " << nu_found << std::endl;
+      std::cout << "Neutrino? " << _nu_matched_tracks << std::endl;
       std::cout << "Cosmic? " << cr_found << std::endl;
 
     }
 
-
-
+    std::cout << "Matched particles " << neutrino_pf.size() << " Selected particles " << _nu_matched_showers+_nu_matched_tracks << std::endl;
+    bool perfect_event = (_n_matched == _nu_matched_showers+_nu_matched_tracks) && _nu_matched_tracks == _n_tracks && _nu_matched_showers == _n_showers;
+    std::cout << "Is perfect " << perfect_event << std::endl;
   }
 
 
