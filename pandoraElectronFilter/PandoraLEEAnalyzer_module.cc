@@ -149,7 +149,7 @@ private:
   void get_daughter_tracks( std::vector < size_t > pf_ids, const art::Event & evt, std::vector< art::Ptr<recob::Track> > &tracks);
   void get_daughter_showers( std::vector < size_t > pf_ids, const art::Event & evt, std::vector< art::Ptr<recob::Shower> > &showers);
   double trackEnergy(const art::Ptr<recob::Track>& track, const art::Event & evt);
-
+  void clear();
   art::Ptr<recob::Track> get_longest_track(std::vector< art::Ptr<recob::Track> > &tracks);
   art::Ptr<recob::Shower> get_most_energetic_shower(std::vector< art::Ptr<recob::Shower> > &showers);
 
@@ -436,10 +436,48 @@ void lee::PandoraLEEAnalyzer::endSubRun(const art::SubRun& sr)
   myPOTTTree->Fill();
 
 }
+void lee::PandoraLEEAnalyzer::clear() {
+  _energy = std::numeric_limits<double>::lowest();
+  _track_dir_z = std::numeric_limits<double>::lowest();
+  _track_length = std::numeric_limits<double>::lowest();
+  _true_nu_is_fiducial = std::numeric_limits<int>::lowest();
+  _nu_energy = std::numeric_limits<double>::lowest();
+
+  _n_tracks = std::numeric_limits<int>::lowest();
+  _n_showers = std::numeric_limits<int>::lowest();
+
+  _vx = std::numeric_limits<double>::lowest();
+  _vy = std::numeric_limits<double>::lowest();
+  _vz = std::numeric_limits<double>::lowest();
+
+  _true_vx = std::numeric_limits<double>::lowest();
+  _true_vy = std::numeric_limits<double>::lowest();
+  _true_vz = std::numeric_limits<double>::lowest();
+
+  _true_vx_sce = std::numeric_limits<double>::lowest();
+  _true_vy_sce = std::numeric_limits<double>::lowest();
+  _true_vz_sce = std::numeric_limits<double>::lowest();
+
+  _nu_matched_tracks = std::numeric_limits<int>::lowest();
+  _nu_matched_showers = std::numeric_limits<int>::lowest();
+
+  _category = std::numeric_limits<int>::lowest();
+  _run = std::numeric_limits<int>::lowest();
+  _subrun = std::numeric_limits<int>::lowest();
+  _event = std::numeric_limits<int>::lowest();
+  _n_candidates = std::numeric_limits<int>::lowest();
+  _n_true_nu = std::numeric_limits<int>::lowest();
+  _run_sr = std::numeric_limits<int>::lowest();
+  _subrun_sr = std::numeric_limits<int>::lowest();
+  _n_matched = std::numeric_limits<int>::lowest();
+  _pot = std::numeric_limits<double>::lowest();
+  _event_passed = std::numeric_limits<int>::lowest();
+  _distance = std::numeric_limits<double>::lowest();
+}
 
 void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
 {
-
+  clear();
   _run = evt.run();
   _subrun = evt.subRun();
   _event = evt.id().event();
