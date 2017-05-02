@@ -87,15 +87,6 @@ private:
   TFile * myTFile;
   TTree * myTTree;
   TTree * myPOTTTree;
-  TEfficiency * e_energy;
-  TH1F * h_nu_e;
-  TH1F * h_nu_mu;
-  TH1F * h_dirt;
-  TH1F * h_cosmic;
-  TH1F * h_nc;
-
-  THStack * h_e_stacked;
-
 
   bool m_printDebug;
   double m_fidvolXstart;
@@ -174,17 +165,6 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const & pset)
 
   myPOTTTree = tfs->make<TTree>("pot", "POT Tree");
 
-
-
-  e_energy = tfs->make<TEfficiency>("e_energy", ";#nu_{e} energy [GeV];N. Entries / 0.1 GeV", 30, 0, 3);
-  h_cosmic = tfs->make<TH1F>("h_cosmic", ";#nu_{e} energy [GeV];N. Entries / 0.1 GeV", 30, 0, 3);
-  h_nc = tfs->make<TH1F>("h_nc", ";#nu_{e} energy [GeV];N. Entries / 0.1 GeV", 30, 0, 3);
-  h_nu_e = tfs->make<TH1F>("h_nu_e", ";#nu_{e} energy [GeV];N. Entries / 0.1 GeV", 30, 0, 3);
-  h_nu_mu = tfs->make<TH1F>("h_nu_mu", ";#nu_{e} energy [GeV];N. Entries / 0.1 GeV", 30, 0, 3);
-  h_dirt = tfs->make<TH1F>("h_dirt", ";#nu_{e} energy [GeV];N. Entries / 0.1 GeV", 30, 0, 3);
-
-  h_e_stacked = tfs->make<THStack>("h_e_stacked", ";#nu_{e} energy [GeV];N. Entries / 0.1 GeV");
-
   myTTree->Branch("category",  &_category, "category/i");
   myTTree->Branch("E",  &_energy, "E/d");
   myTTree->Branch("trk_dir_z",  &_track_dir_z, "trk_dir_z/d");
@@ -214,37 +194,6 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const & pset)
   myPOTTTree->Branch("subrun", &_subrun_sr, "subrun/i");
   myPOTTTree->Branch("pot", &_pot, "pot/d");
 
-  h_cosmic->SetLineColor(1);
-  h_cosmic->SetLineWidth(2);
-  h_cosmic->SetFillColor(kRed - 3);
-  // h_cosmic->Write();
-
-  h_nc->SetLineColor(1);
-  h_nc->SetLineWidth(2);
-  h_nc->SetFillColor(kBlue - 9);
-  // h_nc->Write();
-
-  h_nu_e->SetLineColor(1);
-  h_nu_e->SetLineWidth(2);
-  h_nu_e->SetFillColor(kGreen - 2);
-  // h_nu_e->Write();
-
-  h_nu_mu->SetLineColor(1);
-  h_nu_mu->SetLineWidth(2);
-  h_nu_mu->SetFillColor(kBlue - 5);
-  // h_nu_mu->Write();
-
-  h_dirt->SetLineColor(1);
-  h_dirt->SetLineWidth(2);
-  h_dirt->SetFillColor(kGray);
-  // h_dirt->Write();
-
-  h_e_stacked->Add(h_cosmic);
-  h_e_stacked->Add(h_nc);
-  h_e_stacked->Add(h_nu_e);
-  h_e_stacked->Add(h_nu_mu);
-  h_e_stacked->Add(h_dirt);
-  // h_e_stacked->Write();
 
   this->reconfigure(pset);
 
@@ -608,6 +557,8 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
 
   if (_event_passed) {
     auto const& pfparticle_handle = evt.getValidHandle< std::vector< recob::PFParticle > >( pandoraNu_tag );
+    //auto const& pfparticles(*pfparticle_handle);
+
     std::cout << "Before choose_candidate index " << std::endl;
 
     size_t ipf_candidate = choose_candidate(nu_candidates, evt);
@@ -658,6 +609,9 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
     std::cout << "Chosen neutrino " << ipf_candidate << std::endl;
     art::ServiceHandle<cheat::BackTracker> bt;
 
+    std::vector< art::Ptr<recob::PFParticle> > neutrino_pf;
+    std::vector< art::Ptr<recob::PFParticle> > cosmic_pf;
+
     for (lar_pandora::MCParticlesToPFParticles::const_iterator iter1 = matchedParticles.begin(), iterEnd1 = matchedParticles.end();
     iter1 != iterEnd1; ++iter1) {
 
@@ -668,9 +622,53 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
 
       if (mc_truth->Origin() == simb::kBeamNeutrino) {
         std::cout << "Matched neutrino" << std::endl;
-        std::cout << "Pf PDG: " << pf_par->PdgCode() << "MC PDG: " << mc_par->PdgCode() << std::endl;
+        std::cout << "Pf PDG: " << pf_par->PdgCode() << " MC PDG: " << mc_par->PdgCode() << std::endl;
+        neutrino_pf.push_back(pf_par);
+      }
+
+      if (mc_truth->Origin() == simb::kCosmicRay) {
+        cosmic_pf.push_back(pf_par);
       }
     }
+
+    for (size_t ish = 0; ish < pfp_showers_id.size(); ish++) {
+      bool nu_found = false;
+      bool cr_found = false;
+
+      for (size_t ipf = 0; ipf < cosmic_pf.size(); ipf++ ) {
+        if (pfp_showers_id[ish] == cosmic_pf[ipf].key()) cr_found = true;
+      }
+
+      for (size_t ipf = 0; ipf < neutrino_pf.size(); ipf++ ) {
+        if (pfp_showers_id[ish] == neutrino_pf[ipf].key()) nu_found = true;
+      }
+
+      std::cout << "Shower PFP " << pfp_showers_id[ish] << std::endl;
+      std::cout << "Neutrino? " << nu_found << std::endl;
+      std::cout << "Cosmic? " << cr_found << std::endl;
+
+    }
+
+    for (size_t itr = 0; itr < pfp_tracks_id.size(); itr++) {
+      bool nu_found = false;
+      bool cr_found = false;
+
+      for (size_t ipf = 0; ipf < cosmic_pf.size(); ipf++ ) {
+        if (pfp_showers_id[itr] == cosmic_pf[ipf].key()) cr_found = true;
+      }
+
+      for (size_t ipf = 0; ipf < neutrino_pf.size(); ipf++ ) {
+        if (pfp_showers_id[itr] == neutrino_pf[ipf].key()) nu_found = true;
+      }
+
+      std::cout << "Track PFP " << pfp_tracks_id[itr] << std::endl;
+      std::cout << "Neutrino? " << nu_found << std::endl;
+      std::cout << "Cosmic? " << cr_found << std::endl;
+
+    }
+
+
+
   }
 
 
