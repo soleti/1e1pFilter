@@ -205,6 +205,11 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const & pset)
   myTTree->Branch("nu_daughters_pdg",  "std::vector< int >", &_nu_daughters_pdg);
   myTTree->Branch("nu_daughters_E",  "std::vector< double >", &_nu_daughters_E);
 
+  myTTree->Branch("event", &_event, "event/i");
+  myTTree->Branch("run", &_run, "run/i");
+  myTTree->Branch("subrun", &_subrun, "subrun/i");
+
+
   myPOTTTree->Branch("run", &_run_sr, "run/i");
   myPOTTTree->Branch("subrun", &_subrun_sr, "subrun/i");
   myPOTTTree->Branch("pot", &_pot, "pot/d");
