@@ -68,7 +68,6 @@ private:
   // variables
   lee::ElectronEventSelectionAlg fElectronEventSelectionAlg;
   //art::ServiceHandle<spacecharge::SpaceChargeServiceMicroBooNE> SCE;
-  SpaceChargeMicroBooNE SCE = SpaceChargeMicroBooNE("SCEoffsets_MicroBooNE_E273.root");
   TTree*      fTree;
   const int nrPMT = 32;
 
@@ -287,10 +286,15 @@ void lee::ElectronSelectionAna::fillTruthTree(art::Event const & e)
         nuvtxx_truth.emplace_back(vx);
         nuvtxy_truth.emplace_back(vy);
         nuvtxz_truth.emplace_back(vz);
+        // Get an environment variable to help find the spacecharge file:
+        std::string _env = std::getenv("MRB_INSTALL");
+        _env = _env + "/pandoraElectronFilter/v00_01_00/slf6.x86_64.e10.prof/lib/";
 
-        nuvtxx_sc.emplace_back(vx-SCE.GetPosOffsets(vx, vy, vz)[0]+0.7);
-        nuvtxy_sc.emplace_back(vy+SCE.GetPosOffsets(vx, vy, vz)[1]);
-        nuvtxz_sc.emplace_back(vz+SCE.GetPosOffsets(vx, vy, vz)[2]);
+        SpaceChargeMicroBooNE SCE =
+            SpaceChargeMicroBooNE(_env + "SCEoffsets_MicroBooNE_E273.root");
+        nuvtxx_sc.emplace_back(vx - SCE.GetPosOffsets(vx, vy, vz)[0] + 0.7);
+        nuvtxy_sc.emplace_back(vy + SCE.GetPosOffsets(vx, vy, vz)[1]);
+        nuvtxz_sc.emplace_back(vz + SCE.GetPosOffsets(vx, vy, vz)[2]);
 
         //geo::Point_t point;
         //point.SetXYZ(neutrino.Nu().Vx(), neutrino.Nu().Vy(), neutrino.Nu().Vz());
@@ -417,7 +421,7 @@ void lee::ElectronSelectionAna::fillOticalTree(art::Event const & e){
       flsZwidth.emplace_back(flash.ZWidth());
       for(int ipmt=0; ipmt < nrPMT ; ++ipmt)
       {
-      	flsPePMT.emplace_back(flash.PE(ipmt));
+        flsPePMT.emplace_back(flash.PE(ipmt));
       }
     }
   }

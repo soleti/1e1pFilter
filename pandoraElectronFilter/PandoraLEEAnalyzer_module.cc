@@ -7,7 +7,7 @@
 // from cetpkgsupport v1_10_02.
 ////////////////////////////////////////////////////////////////////////
 
-
+#include <cstdlib>
 #include <fstream>
 
 #include "art/Framework/Core/EDAnalyzer.h"
@@ -551,10 +551,18 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
       _true_vz = true_neutrino_vertex[2];
       _true_nu_is_fiducial = int(fElectronEventSelectionAlg.is_fiducial(true_neutrino_vertex));
 
-      SpaceChargeMicroBooNE SCE = SpaceChargeMicroBooNE("SCEoffsets_MicroBooNE_E273.root");
-      _true_vx_sce = _true_vx-SCE.GetPosOffsets(_true_vx, _true_vy, _true_vz)[0]+0.7;
-      _true_vy_sce = _true_vy+SCE.GetPosOffsets(_true_vx, _true_vy, _true_vz)[1];
-      _true_vz_sce = _true_vz+SCE.GetPosOffsets(_true_vx, _true_vy, _true_vz)[2];
+      // Get an environment variable to help find the spacecharge file:
+      std::string _env = std::getenv("MRB_INSTALL");
+      _env = _env + "/pandoraElectronFilter/v00_01_00/slf6.x86_64.e10.prof/lib/";
+
+      SpaceChargeMicroBooNE SCE =
+          SpaceChargeMicroBooNE(_env + "SCEoffsets_MicroBooNE_E273.root");
+      _true_vx_sce =
+          _true_vx - SCE.GetPosOffsets(_true_vx, _true_vy, _true_vz)[0] + 0.7;
+      _true_vy_sce =
+          _true_vy + SCE.GetPosOffsets(_true_vx, _true_vy, _true_vz)[1];
+      _true_vz_sce =
+          _true_vz + SCE.GetPosOffsets(_true_vx, _true_vy, _true_vz)[2];
 
       if (is_dirt(true_neutrino_vertex)) {
         _category = k_dirt;

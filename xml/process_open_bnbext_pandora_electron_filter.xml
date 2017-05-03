@@ -1,6 +1,6 @@
 <project name="bnb_nu_cosmic_pandora_electron_filter">
     <!--  Project size  -->
-    <numevents>15000</numevents>
+    <numevents>30000</numevents>
 
     <!--  Operating System  -->
     <os>SL6</os>
@@ -13,7 +13,7 @@
     <larsoft>
         <tag>v06_30_00</tag>
         <qual>e10:prof</qual>
-        <local>/uboone/app/users/cadams/lee_v6_30_00/localProducts_larsoft_v06_30_00_e10_prof.tar</local>
+        <local>/pnfs/uboone/scratch/users/cadams/submission/localProducts_larsoft_v06_30_00_e10_prof.tar</local>
     </larsoft>
     
     <!--  Project stages  -->
@@ -26,7 +26,7 @@
         <!-- <output> -->
             <!-- bnb_nu_cosmic_pandora_electron_filter${PROCESS}_%tc_gen.root -->
         <!-- </output> -->
-        <numjobs>300</numjobs>
+        <numjobs>600</numjobs>
         <disk>50GB</disk>
         <maxfilesperjob>1</maxfilesperjob>
         <datatier>filtered</datatier>
