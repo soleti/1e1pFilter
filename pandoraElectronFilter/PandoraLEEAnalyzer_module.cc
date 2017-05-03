@@ -142,6 +142,10 @@ private:
   double _pot;
   int _event_passed;
   double _distance;
+
+  std::vector< int > _nu_daughters_pdg;
+  std::vector< double > _nu_daughters_E;
+
   double distance(double a[3], double b[3]);
   bool is_dirt(double x[3]) const;
   void measure_energy(size_t ipf, const art::Event & evt, double & energy);
@@ -198,6 +202,8 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const & pset)
   myTTree->Branch("nu_matched_tracks", &_nu_matched_tracks, "nu_matched_tracks/i");
   myTTree->Branch("nu_matched_showers", &_nu_matched_showers, "nu_matched_showers/i");
 
+  myTTree->Branch("nu_daughters_pdg",  "std::vector< int >", &_nu_daughters_pdg);
+  myTTree->Branch("nu_daughters_E",  "std::vector< double >", &_nu_daughters_E);
 
   myPOTTTree->Branch("run", &_run_sr, "run/i");
   myPOTTTree->Branch("subrun", &_subrun_sr, "subrun/i");
@@ -473,6 +479,10 @@ void lee::PandoraLEEAnalyzer::clear() {
   _pot = std::numeric_limits<double>::lowest();
   _event_passed = std::numeric_limits<int>::lowest();
   _distance = std::numeric_limits<double>::lowest();
+
+  _nu_daughters_E.clear();
+  _nu_daughters_pdg.clear();
+
 }
 
 void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
@@ -565,8 +575,13 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
     int electrons = 0;
     int muons = 0;
 
+
+    // TODO: STORE PDG AND ENERGY OF EVERY NU_MCPARTICLE
     for (auto& mcparticle : nu_mcparticles) {
       if (mcparticle.Process() == "primary" and mcparticle.T() != 0 and mcparticle.StatusCode() == 1) {
+
+        _nu_daughters_E.push_back(mcparticle.E());
+        _nu_daughters_pdg.push_back(mcparticle.PdgCode());
 
         switch (mcparticle.PdgCode())
         {
