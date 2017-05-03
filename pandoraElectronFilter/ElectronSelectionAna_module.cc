@@ -118,7 +118,7 @@ private:
   Short_t nfls;                                         ///< Number of reconstructed flashes
   std::vector<Float_t> flsTime;                         ///< Flash time (us)
   std::vector<Float_t> flsPe;                           ///< Flash total PE
-  std::vector<Float_t> flsPePMT;                        ///< Flash PE per PMT
+  std::vector<Float_t> flsPePMT;                        ///< Flash PE per PMT, needs a reshape, nrPMT
   std::vector<Float_t> flsYcenter;                      ///< Flash Y center (cm)
   std::vector<Float_t> flsZcenter;                      ///< Flash Z center (cm)
   std::vector<Float_t> flsYwidth;                       ///< Flash Y width (cm)
