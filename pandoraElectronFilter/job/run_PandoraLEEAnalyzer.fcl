@@ -16,14 +16,16 @@ services :
   TimeTracker:              {}
   RandomNumberGenerator:    {}
   @table::microboone_services_reco
+  BackTracker:             @local::microboone_backtracker
+
 }
 
 outputs: {
-  optionalout: { 
+  optionalout: {
     module_type: RootOutput
     fileName: "output_file.root"
     dataTier: "reconstructed"
-    fastCloning: false 
+    fastCloning: false
   }
 }
 
@@ -56,3 +58,26 @@ physics: {
 }
 services.DetectorClocksService.InheritClockConfig:                                   false
 services.DetectorClocksService.TriggerOffsetTPC:                                     -0.400e3
+
+services.message.destinations :
+{
+  STDCOUT:
+  {
+     type:      "cout"      #tells the message service to output this destination to cout
+     threshold: "WARNING"   #tells the message service that this destination applies to WARNING and higher level messages
+     append:     true       #says to append all messages to the output
+     categories:
+     {
+       ChannelFilter:
+       {
+         limit: 0
+         reportEvery: 0
+       }
+       default:
+       {
+         limit: -1  #don't print anything at the infomsg level except the explicitly named categories
+         reportEvery: 1
+       }
+     }
+  }
+}
