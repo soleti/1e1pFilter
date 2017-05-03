@@ -60,6 +60,7 @@ include(BuildPlugins)
 
 # source
 add_subdirectory(pandoraElectronFilter)
+add_subdirectory(flashChargeAnalyzer)
 
 # ups - table and config files
 add_subdirectory(ups)
