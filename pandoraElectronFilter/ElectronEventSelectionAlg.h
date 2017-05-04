@@ -121,7 +121,7 @@ public:
   bool opticalfilter(  size_t ipf,
                        const std::vector<recob::PFParticle> & pfparticles,
                        TVector3 _this_center_of_charge,
-                       size_t & _selected_flash,
+                       int & _selected_flash,
                        const art::Event & evt);
 
   void traversePFParticleTree(const art::ValidHandle<std::vector<recob::PFParticle> > pfparticles,
