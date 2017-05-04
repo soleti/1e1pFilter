@@ -370,7 +370,7 @@ bool ElectronEventSelectionAlg::opticalfilter(
   size_t ipf,
   const std::vector<recob::PFParticle> & pfparticles,
   TVector3 _this_center_of_charge,
-  size_t _selected_flash,
+  size_t &_selected_flash,
   const art::Event & evt)
 {
 
