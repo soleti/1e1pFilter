@@ -143,6 +143,10 @@ private:
   int _event_passed;
   double _distance;
 
+  int _flash_passed;
+  int _track_passed;
+  int _shower_passed;
+
   std::vector< int > _nu_daughters_pdg;
   std::vector< double > _nu_daughters_E;
 
@@ -209,6 +213,9 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const & pset)
   myTTree->Branch("run", &_run, "run/i");
   myTTree->Branch("subrun", &_subrun, "subrun/i");
 
+  myTTree->Branch("flash_passed", &_flash_passed, "flash_passed/i");
+  myTTree->Branch("track_passed", &_track_passed, "track_passed/i");
+  myTTree->Branch("shower_passed", &_shower_passed, "shower_passed/i");
 
   myPOTTTree->Branch("run", &_run_sr, "run/i");
   myPOTTTree->Branch("subrun", &_subrun_sr, "subrun/i");
@@ -448,6 +455,9 @@ void lee::PandoraLEEAnalyzer::endSubRun(const art::SubRun& sr)
 
 }
 void lee::PandoraLEEAnalyzer::clear() {
+  _flash_passed = 0;
+  _track_passed = 0;
+  _shower_passed = 0;
   _energy = std::numeric_limits<double>::lowest();
   _track_dir_z = std::numeric_limits<double>::lowest();
   _track_length = std::numeric_limits<double>::lowest();
@@ -482,7 +492,7 @@ void lee::PandoraLEEAnalyzer::clear() {
   _subrun_sr = std::numeric_limits<int>::lowest();
   _n_matched = std::numeric_limits<int>::lowest();
   _pot = std::numeric_limits<double>::lowest();
-  _event_passed = std::numeric_limits<int>::lowest();
+  _event_passed = 0;
   _distance = std::numeric_limits<double>::lowest();
 
   _nu_daughters_E.clear();
@@ -621,6 +631,18 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
   std::cout << "Nu energy " << _nu_energy << std::endl;
 
   _energy = std::numeric_limits<double>::lowest();
+
+  for (auto & i_primary : fElectronEventSelectionAlg.get_primary_indexes() ) {
+    if (fElectronEventSelectionAlg.get_op_flash_indexes().at(i_primary) != -1) {
+      _flash_passed = 1;
+      if (fElectronEventSelectionAlg.get_n_showers().at(i_primary) != 0) {
+        _shower_passed = 1;
+        if (fElectronEventSelectionAlg.get_n_tracks().at(i_primary) != 0) {
+          _track_passed = 1;
+        }
+      }
+    }
+  }
 
   if (_event_passed) {
     auto const& pfparticle_handle = evt.getValidHandle< std::vector< recob::PFParticle > >( pandoraNu_tag );
