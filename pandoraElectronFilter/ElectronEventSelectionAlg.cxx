@@ -370,7 +370,7 @@ bool ElectronEventSelectionAlg::opticalfilter(
   size_t ipf,
   const std::vector<recob::PFParticle> & pfparticles,
   TVector3 _this_center_of_charge,
-  size_t _selected_flash,
+  int &_selected_flash,
   const art::Event & evt)
 {
 
@@ -388,8 +388,8 @@ bool ElectronEventSelectionAlg::opticalfilter(
   {
     recob::OpFlash const& flash = optical_handle->at(ifl);
     if ((flash.Time() > 4.8 || flash.Time() < 3.2)) continue;
-    bool sigma    = flash.ZCenter() + flash.ZWidth() / par1 > _this_center_of_charge.Z() &&
-                    flash.ZCenter() + flash.ZWidth() / par1 < _this_center_of_charge.Z();
+    bool sigma    = (flash.ZCenter() + flash.ZWidth() / par1) > _this_center_of_charge.Z() &&
+                    (flash.ZCenter() - flash.ZWidth() / par1) < _this_center_of_charge.Z();
     bool absolute = std::abs(flash.ZCenter() - _this_center_of_charge.Z()) < par2;
     // std::cout << "The flash time is " << flash.Time()
     //           << ", Zcentre: " << flash.ZCenter()
