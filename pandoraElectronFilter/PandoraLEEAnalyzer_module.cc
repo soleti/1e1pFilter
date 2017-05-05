@@ -401,7 +401,7 @@ int lee::PandoraLEEAnalyzer::correct_direction(size_t pfp_id, const art::Event &
     TVector3 b;
     a = shower_vec;
     b = avg_spcpnt - start_vec;
-    double costheta = a.Dot(b)/(a.Mag()*b.Mag());
+    double costheta = a.Dot(b);
     direction = costheta >= 0 ? 1 : -1;
   }
 
@@ -720,8 +720,6 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
     int electrons = 0;
     int muons = 0;
 
-
-    // TODO: STORE PDG AND ENERGY OF EVERY NU_MCPARTICLE
     for (auto& mcparticle : nu_mcparticles) {
       if (mcparticle.Process() == "primary" and mcparticle.T() != 0 and mcparticle.StatusCode() == 1) {
 
