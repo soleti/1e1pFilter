@@ -171,7 +171,10 @@ private:
   void get_daughter_tracks( std::vector < size_t > pf_ids, const art::Event & evt, std::vector< art::Ptr<recob::Track> > &tracks);
   void get_daughter_showers( std::vector < size_t > pf_ids, const art::Event & evt, std::vector< art::Ptr<recob::Shower> > &showers);
   double trackEnergy(const art::Ptr<recob::Track>& track, const art::Event & evt);
+  int correct_direction(size_t pfp_id,const art::Event & evt);
+
   void clear();
+
   art::Ptr<recob::Track> get_longest_track(std::vector< art::Ptr<recob::Track> > &tracks);
   art::Ptr<recob::Shower> get_most_energetic_shower(std::vector< art::Ptr<recob::Shower> > &showers);
 
@@ -346,6 +349,42 @@ void lee::PandoraLEEAnalyzer::get_daughter_showers(std::vector < size_t > pf_ids
     }
   }
 
+}
+
+// CORRECT SHOWER DIRECTION THAT SOMETIMES IS INVERTED
+int lee::PandoraLEEAnalyzer::correct_direction(size_t pfp_id, const art::Event & evt) {
+  art::InputTag pandoraNu_tag { "pandoraNu" };
+
+  auto const& pfparticle_handle = evt.getValidHandle< std::vector< recob::PFParticle > >( pandoraNu_tag );
+
+  art::FindManyP<recob::SpacePoint > spcpnts_per_pfpart ( pfparticle_handle, evt, pandoraNu_tag );
+  std::vector<art::Ptr < recob::SpacePoint > > spcpnts = spcpnts_per_pfpart.at(pfp_id);
+
+  int direction = 1;
+
+  if (spcpnts.size() > 0) {
+    art::FindOneP< recob::Vertex > vertex_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
+    auto const& vertex_obj = vertex_per_pfpart.at(pfp_id);
+    double vertex_xyz[3];
+    vertex_obj->XYZ(vertex_xyz);
+    TVector3 start_vec(vertex_xyz[0],vertex_xyz[1],vertex_xyz[2]);
+
+    art::FindOneP< recob::Shower > shower_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
+    auto const& shower_obj = shower_per_pfpart.at(pfp_id);
+    TVector3 shower_vec(shower_obj->Direction().X(),shower_obj->Direction().Y(),shower_obj->Direction().Z());
+
+    auto spcpnt_xyz = spcpnts[spcpnts.size()-1]->XYZ();
+    TVector3 spcpnt_vec(spcpnt_xyz[0],spcpnt_xyz[1],spcpnt_xyz[2]);
+
+    TVector3 a;
+    TVector3 b;
+    a = shower_vec;
+    b = spcpnt_vec - start_vec;
+    double costheta = a.Dot(b)/(a.Mag()*b.Mag());
+    direction = costheta >= 0 ? 1 : -1;
+  }
+
+  return direction;
 }
 
 double lee::PandoraLEEAnalyzer::trackEnergy(const art::Ptr<recob::Track>& track, const art::Event & evt)
@@ -735,6 +774,25 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
     std::vector<art::Ptr<recob::Shower>> chosen_showers;
     std::vector< size_t > pfp_showers_id = fElectronEventSelectionAlg.get_pfp_id_showers_from_primary().at(ipf_candidate);
     get_daughter_showers(pfp_tracks_id, evt, chosen_showers);
+
+    for (auto &pf_id: pfp_showers_id) {
+
+      int direction = correct_direction(pf_id, evt);
+      std::cout << "Correct direction " << direction << std::endl;
+      art::FindOneP< recob::Shower > shower_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
+      auto const& shower_obj = shower_per_pfpart.at(pf_id);
+
+      TVector3 correct_dir(direction*shower_obj->Direction().X(),direction*shower_obj->Direction().Y(),direction*shower_obj->Direction().Z());
+
+      _shower_dir_x.push_back(correct_dir.X());
+      _shower_dir_y.push_back(correct_dir.Y());
+      _shower_dir_z.push_back(correct_dir.Z());
+
+      _shower_phi.push_back(correct_dir.Phi());
+      _shower_theta.push_back(correct_dir.Theta());
+
+    }
+
     _n_showers = fElectronEventSelectionAlg.get_n_showers().at(ipf_candidate);
 
 
