@@ -107,8 +107,6 @@ private:
   const int k_dirt = 5;
   const int k_data = 6;
   double _energy;
-  double _track_dir_z;
-  double _track_length;
   int _true_nu_is_fiducial;
   double _nu_energy;
 
@@ -154,6 +152,19 @@ private:
   std::vector< double > _shower_theta;
   std::vector< double > _shower_phi;
 
+  std::vector< double > _shower_energy;
+
+  std::vector< double > _track_dir_x;
+  std::vector< double > _track_dir_y;
+  std::vector< double > _track_dir_z;
+
+  std::vector< double > _track_theta;
+  std::vector< double > _track_phi;
+
+  std::vector< double > _track_length;
+
+  std::vector< double > _track_energy;
+
   std::vector< int > _nu_daughters_pdg;
   std::vector< double > _nu_daughters_E;
 
@@ -196,8 +207,6 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const & pset)
 
   myTTree->Branch("category",  &_category, "category/i");
   myTTree->Branch("E",  &_energy, "E/d");
-  myTTree->Branch("trk_dir_z",  &_track_dir_z, "trk_dir_z/d");
-  myTTree->Branch("trk_len",  &_track_length, "trk_len/d");
   myTTree->Branch("n_tracks",  &_n_tracks, "n_tracks/i");
   myTTree->Branch("n_showers",  &_n_showers, "n_showers/i");
   myTTree->Branch("vx",  &_vx, "vx/d");
@@ -248,6 +257,19 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const & pset)
 
   myTTree->Branch("shower_theta",  "std::vector< double >", &_shower_theta);
   myTTree->Branch("shower_phi",  "std::vector< double >", &_shower_phi);
+
+  myTTree->Branch("shower_energy",  "std::vector< double >", &_shower_energy);
+  myTTree->Branch("track_energy",  "std::vector< double >", &_track_energy);
+
+  myTTree->Branch("track_dir_x",  "std::vector< double >", &_track_dir_x);
+  myTTree->Branch("track_dir_y",  "std::vector< double >", &_track_dir_y);
+  myTTree->Branch("track_dir_z",  "std::vector< double >", &_track_dir_z);
+
+  myTTree->Branch("track_theta",  "std::vector< double >", &_track_theta);
+  myTTree->Branch("track_phi",  "std::vector< double >", &_track_phi);
+
+  myTTree->Branch("track_len",  "std::vector< double >", &_track_length);
+
 
   myPOTTTree->Branch("run", &_run_sr, "run/i");
   myPOTTTree->Branch("subrun", &_subrun_sr, "subrun/i");
@@ -379,7 +401,7 @@ int lee::PandoraLEEAnalyzer::correct_direction(size_t pfp_id, const art::Event &
     TVector3 b;
     a = shower_vec;
     b = avg_spcpnt - start_vec;
-    double costheta = a.Dot(b)/(a.Mag()*b.Mag());
+    double costheta = a.Dot(b);
     direction = costheta >= 0 ? 1 : -1;
   }
 
@@ -545,6 +567,18 @@ void lee::PandoraLEEAnalyzer::clear() {
   _shower_theta.clear();
   _shower_phi.clear();
 
+  _track_dir_x.clear();
+  _track_dir_y.clear();
+  _track_dir_z.clear();
+
+  _track_theta.clear();
+  _track_phi.clear();
+
+  _shower_energy.clear();
+  _track_energy.clear();
+
+  _track_length.clear();
+
   _reco_px = std::numeric_limits<double>::lowest();
   _reco_py = std::numeric_limits<double>::lowest();
   _reco_pz = std::numeric_limits<double>::lowest();
@@ -556,8 +590,7 @@ void lee::PandoraLEEAnalyzer::clear() {
   _track_passed = 0;
   _shower_passed = 0;
   _energy = std::numeric_limits<double>::lowest();
-  _track_dir_z = std::numeric_limits<double>::lowest();
-  _track_length = std::numeric_limits<double>::lowest();
+
   _true_nu_is_fiducial = std::numeric_limits<int>::lowest();
   _nu_energy = std::numeric_limits<double>::lowest();
 
@@ -695,8 +728,6 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
     int electrons = 0;
     int muons = 0;
 
-
-    // TODO: STORE PDG AND ENERGY OF EVERY NU_MCPARTICLE
     for (auto& mcparticle : nu_mcparticles) {
       if (mcparticle.Process() == "primary" and mcparticle.T() != 0 and mcparticle.StatusCode() == 1) {
 
@@ -789,10 +820,22 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
     std::vector<art::Ptr<recob::Track>> chosen_tracks;
     std::vector< size_t > pfp_tracks_id = fElectronEventSelectionAlg.get_pfp_id_tracks_from_primary().at(ipf_candidate);
     get_daughter_tracks(pfp_tracks_id, evt, chosen_tracks);
-    _track_dir_z = get_longest_track(chosen_tracks)->StartDirection().Z();
-    _track_length = get_longest_track(chosen_tracks)->Length();
-    _n_tracks = fElectronEventSelectionAlg.get_n_tracks().at(ipf_candidate);
 
+    for (auto &pf_id: pfp_tracks_id) {
+      art::FindOneP< recob::Track > track_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
+      auto const& track_obj = track_per_pfpart.at(pf_id);
+
+      _track_energy.push_back(trackEnergy(track_obj,evt));
+      _track_length.push_back(track_obj->Length());
+      _track_dir_x.push_back(track_obj->StartDirection().X());
+      _track_dir_y.push_back(track_obj->StartDirection().Y());
+      _track_dir_z.push_back(track_obj->StartDirection().Z());
+      _track_theta.push_back(track_obj->Theta());
+      _track_phi.push_back(track_obj->Phi());
+
+    }
+
+    _n_tracks = fElectronEventSelectionAlg.get_n_tracks().at(ipf_candidate);
 
     std::vector<art::Ptr<recob::Shower>> chosen_showers;
     std::vector< size_t > pfp_showers_id = fElectronEventSelectionAlg.get_pfp_id_showers_from_primary().at(ipf_candidate);
@@ -814,10 +857,10 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
       _shower_phi.push_back(correct_dir.Phi());
       _shower_theta.push_back(correct_dir.Theta());
 
+      _shower_energy.push_back(shower_obj->Energy()[shower_obj->best_plane()]);
     }
 
     _n_showers = fElectronEventSelectionAlg.get_n_showers().at(ipf_candidate);
-
 
     std::cout << "Chosen neutrino " << ipf_candidate << std::endl;
     art::ServiceHandle<cheat::BackTracker> bt;
