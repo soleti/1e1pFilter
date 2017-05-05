@@ -172,7 +172,7 @@ private:
   void get_daughter_showers( std::vector < size_t > pf_ids, const art::Event & evt, std::vector< art::Ptr<recob::Shower> > &showers);
   double trackEnergy(const art::Ptr<recob::Track>& track, const art::Event & evt);
   int correct_direction(size_t pfp_id,const art::Event & evt);
-
+  TVector3 average_position(std::vector<art::Ptr < recob::SpacePoint > > &spcpnts);
   void clear();
 
   art::Ptr<recob::Track> get_longest_track(std::vector< art::Ptr<recob::Track> > &tracks);
@@ -373,18 +373,33 @@ int lee::PandoraLEEAnalyzer::correct_direction(size_t pfp_id, const art::Event &
     auto const& shower_obj = shower_per_pfpart.at(pfp_id);
     TVector3 shower_vec(shower_obj->Direction().X(),shower_obj->Direction().Y(),shower_obj->Direction().Z());
 
-    auto spcpnt_xyz = spcpnts[spcpnts.size()-1]->XYZ();
-    TVector3 spcpnt_vec(spcpnt_xyz[0],spcpnt_xyz[1],spcpnt_xyz[2]);
+    TVector3 avg_spcpnt = average_position(spcpnts);
 
     TVector3 a;
     TVector3 b;
     a = shower_vec;
-    b = spcpnt_vec - start_vec;
+    b = avg_spcpnt - start_vec;
     double costheta = a.Dot(b)/(a.Mag()*b.Mag());
     direction = costheta >= 0 ? 1 : -1;
   }
 
   return direction;
+}
+
+TVector3 lee::PandoraLEEAnalyzer::average_position(std::vector<art::Ptr < recob::SpacePoint > > &spcpnts) {
+  double avg_x = 0;
+  double avg_y = 0;
+  double avg_z = 0;
+
+  for (auto &spcpnt: spcpnts) {
+    auto spcpnt_xyz = spcpnt->XYZ();
+    avg_x += spcpnt_xyz[0];
+    avg_y += spcpnt_xyz[1];
+    avg_z += spcpnt_xyz[2];
+  }
+
+  return TVector3(avg_x/spcpnts.size(), avg_y/spcpnts.size(), avg_z/spcpnts.size());
+
 }
 
 double lee::PandoraLEEAnalyzer::trackEnergy(const art::Ptr<recob::Track>& track, const art::Event & evt)
