@@ -535,7 +535,6 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
           }
 
           contained_shower = is_fiducial(start_point) && is_fiducial(end_point);
-          // TODO flash position check
           if (contained_shower) {
             _pfp_id_showers_from_primary[_i_primary].push_back(pfdaughter);
             showers++;
