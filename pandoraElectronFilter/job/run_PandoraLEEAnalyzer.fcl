@@ -1,6 +1,26 @@
 #include "services_microboone.fcl"
-#include "detectorclocks_microboone.fcl"
+#include "singles_microboone.fcl"
+#include "largeantmodules_microboone.fcl"
+#include "mcreco.fcl"
+#include "detsimmodules_microboone.fcl"
+#include "triggersim_microboone.fcl"
+#include "opticaldetectorsim_microboone.fcl"
+#include "opticaldetectormodules_microboone.fcl"
+#include "photpropservices_microboone.fcl"
+#include "correct_saturation.fcl"
+#include "caldata_microboone.fcl" 
+#include "time_memory_tracker_microboone.fcl"
+#include "photpropservices_microboone.fcl"
+
 #include "pandora_lee_ana.fcl"
+
+
+#include "neutrinomcflash.fcl"
+#include "T0RecoAnodeCathodePiercing.fcl"
+#include "ubflashfinder.fcl"
+#include "neutrinoflashmatch.fcl"
+#include "cosmicflashmatch.fcl"
+#include "ubxsec.fcl"
 
 process_name : PandoraLEEAnalyzer      #The process name must NOT contain any underscores
 
@@ -16,6 +36,7 @@ services :
   TimeTracker:              {}
   RandomNumberGenerator:    {}
   @table::microboone_services_reco
+  @table::microboone_simulation_services
   BackTracker:             @local::microboone_backtracker
 
 }
@@ -34,29 +55,38 @@ physics: {
 
   producers : {
      # ParameterSets for zero or more producer modules
+     NeutrinoMCFlash    : @local::NeutrinoMCFlash
+     NeutrinoFlashMatch : @local::NeutrinoFlashMatch
+     CosmicFlashMatch   : @local::CosmicFlashMatch
+     T0TrackTaggerCosmicpandoraNu : @local::T0RecoAnodeCathodePiercing_mc
+     T0TrackTaggerBeampandoraNu   : @local::T0RecoAnodeCathodePiercing_mc
   }
   analyzers: {
      # ParameterSets for zero or more analyzer modules
      robertoana:  @local::lee_pandora_analyzer
-     wouterana:   @local::electron_selection_ana
+     UBXSec: @local::UBXSec
 
   }
 
   filters : {
      # ParameterSets for zero or more filter modules
   }
+  reco: [ NeutrinoMCFlash, 
+          NeutrinoFlashMatch,
+          T0TrackTaggerCosmicpandoraNu, T0TrackTaggerBeampandoraNu ]
 
-  path0 : [  robertoana, wouterana ]
+  path0 : [  robertoana, UBXSec ]
 
   #path1 : [  comma separated list of module labels of analyzer or output modules  ]
   #path2 : [  comma separated list of module labels of analyzer or output modules  ]
   #path3 : [  comma separated list of module labels of analyzer or output modules  ]
 
   #here, just a shorthand: could have done ana: [ robertoana ] then end_paths: [ ana ]
+  trigger_paths: [ reco ]
   end_paths: [ path0 ]
 
 }
-services.DetectorClocksService.InheritClockConfig:                                   false
-services.DetectorClocksService.TriggerOffsetTPC:                                     -0.400e3
-
+services.DetectorClocksService.InheritClockConfig:         false
+services.DetectorClocksService.TriggerOffsetTPC:           -0.400e3
+services.ChannelStatusService.ChannelStatusProvider.UseDB: false
 
