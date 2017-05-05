@@ -1,5 +1,7 @@
 #include "electron_selection_alg.fcl"
 
+BEGIN_PROLOG
+
 lee_pandora_analyzer:
 {
     module_type:                "PandoraLEEAnalyzer"
@@ -14,3 +16,6 @@ lee_pandora_analyzer:
     fidvolZstart:               10
     fidvolZend:                 50
 }
+
+
+END_PROLOG
