@@ -168,6 +168,14 @@ private:
   std::vector< int > _nu_daughters_pdg;
   std::vector< double > _nu_daughters_E;
 
+  std::vector< double > _nu_daughters_px;
+  std::vector< double > _nu_daughters_py;
+  std::vector< double > _nu_daughters_pz;
+
+  std::vector< double > _nu_daughters_vx;
+  std::vector< double > _nu_daughters_vy;
+  std::vector< double > _nu_daughters_vz;
+
   double _reco_px;
   double _reco_py;
   double _reco_pz;
@@ -234,6 +242,14 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const & pset)
 
   myTTree->Branch("nu_daughters_pdg",  "std::vector< int >", &_nu_daughters_pdg);
   myTTree->Branch("nu_daughters_E",  "std::vector< double >", &_nu_daughters_E);
+
+  myTTree->Branch("nu_daughters_vx",  "std::vector< double >", &_nu_daughters_vx);
+  myTTree->Branch("nu_daughters_vy",  "std::vector< double >", &_nu_daughters_vy);
+  myTTree->Branch("nu_daughters_vz",  "std::vector< double >", &_nu_daughters_vz);
+
+  myTTree->Branch("nu_daughters_px",  "std::vector< double >", &_nu_daughters_px);
+  myTTree->Branch("nu_daughters_py",  "std::vector< double >", &_nu_daughters_py);
+  myTTree->Branch("nu_daughters_pz",  "std::vector< double >", &_nu_daughters_pz);
 
   myTTree->Branch("event", &_event, "event/i");
   myTTree->Branch("run", &_run, "run/i");
@@ -628,6 +644,14 @@ void lee::PandoraLEEAnalyzer::clear() {
   _nu_daughters_E.clear();
   _nu_daughters_pdg.clear();
 
+  _nu_daughters_px.clear();
+  _nu_daughters_py.clear();
+  _nu_daughters_pz.clear();
+
+  _nu_daughters_vx.clear();
+  _nu_daughters_vy.clear();
+  _nu_daughters_vz.clear();
+
 }
 
 void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
@@ -733,6 +757,14 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
 
         _nu_daughters_E.push_back(mcparticle.E());
         _nu_daughters_pdg.push_back(mcparticle.PdgCode());
+
+        _nu_daughters_px.push_back(mcparticle.Px());
+        _nu_daughters_py.push_back(mcparticle.Py());
+        _nu_daughters_pz.push_back(mcparticle.Pz());
+
+        _nu_daughters_vx.push_back(mcparticle.Vx());
+        _nu_daughters_vy.push_back(mcparticle.Vy());
+        _nu_daughters_vz.push_back(mcparticle.Vz());
 
         switch (mcparticle.PdgCode())
         {
