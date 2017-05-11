@@ -566,12 +566,14 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
 
           bool contained_track = is_fiducial(start_point) && is_fiducial(end_point);
 
-          if (track_obj->Length() < m_trackLength && contained_track) {
-            tracks++;
-            std::cout << "Stored track " << track_obj << " " << track_obj->Length() << std::endl;
-            _pfp_id_tracks_from_primary[_i_primary].push_back(pfdaughter);
-          } else {
-            longer_tracks++;
+          if (contained_track) {
+            if (track_obj->Length() < m_trackLength) {
+              tracks++;
+              std::cout << "Stored track " << track_obj << " " << track_obj->Length() << std::endl;
+              _pfp_id_tracks_from_primary[_i_primary].push_back(pfdaughter);
+            } else {
+              longer_tracks++;
+            }
           }
 
         } catch (...) {
