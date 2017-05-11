@@ -68,7 +68,7 @@ namespace lee {
                                              lar_pandora::MCParticlesToHits &matchedHits)
   {
       PFParticleSet recoVeto; MCParticleSet trueVeto;
-      bool _recursiveMatching = false;
+      bool _recursiveMatching = true;
 
       GetRecoToTrueMatches(recoParticlesToHits, trueHitsToParticles, matchedParticles, matchedHits, recoVeto, trueVeto, _recursiveMatching);
   }
