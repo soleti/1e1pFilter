@@ -151,6 +151,10 @@ private:
   std::vector< double > _shower_dir_y;
   std::vector< double > _shower_dir_z;
 
+  std::vector< double > _shower_start_x;
+  std::vector< double > _shower_start_y;
+  std::vector< double > _shower_start_z;
+
   std::vector< double > _shower_theta;
   std::vector< double > _shower_phi;
 
@@ -159,6 +163,14 @@ private:
   std::vector< double > _track_dir_x;
   std::vector< double > _track_dir_y;
   std::vector< double > _track_dir_z;
+
+  std::vector< double > _track_start_x;
+  std::vector< double > _track_start_y;
+  std::vector< double > _track_start_z;
+
+  std::vector< double > _track_end_x;
+  std::vector< double > _track_end_y;
+  std::vector< double > _track_end_z;
 
   std::vector< double > _track_theta;
   std::vector< double > _track_phi;
@@ -273,6 +285,10 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const & pset)
   myTTree->Branch("shower_dir_y",  "std::vector< double >", &_shower_dir_y);
   myTTree->Branch("shower_dir_z",  "std::vector< double >", &_shower_dir_z);
 
+  myTTree->Branch("shower_start_x",  "std::vector< double >", &_shower_start_x);
+  myTTree->Branch("shower_start_y",  "std::vector< double >", &_shower_start_y);
+  myTTree->Branch("shower_start_z",  "std::vector< double >", &_shower_start_z);
+
   myTTree->Branch("shower_theta",  "std::vector< double >", &_shower_theta);
   myTTree->Branch("shower_phi",  "std::vector< double >", &_shower_phi);
 
@@ -282,6 +298,14 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const & pset)
   myTTree->Branch("track_dir_x",  "std::vector< double >", &_track_dir_x);
   myTTree->Branch("track_dir_y",  "std::vector< double >", &_track_dir_y);
   myTTree->Branch("track_dir_z",  "std::vector< double >", &_track_dir_z);
+
+  myTTree->Branch("track_start_x",  "std::vector< double >", &_track_start_x);
+  myTTree->Branch("track_start_y",  "std::vector< double >", &_track_start_y);
+  myTTree->Branch("track_start_z",  "std::vector< double >", &_track_start_z);
+
+  myTTree->Branch("track_end_x",  "std::vector< double >", &_track_end_x);
+  myTTree->Branch("track_end_y",  "std::vector< double >", &_track_end_y);
+  myTTree->Branch("track_end_z",  "std::vector< double >", &_track_end_z);
 
   myTTree->Branch("track_theta",  "std::vector< double >", &_track_theta);
   myTTree->Branch("track_phi",  "std::vector< double >", &_track_phi);
@@ -860,6 +884,15 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
       _track_dir_x.push_back(track_obj->StartDirection().X());
       _track_dir_y.push_back(track_obj->StartDirection().Y());
       _track_dir_z.push_back(track_obj->StartDirection().Z());
+
+      _track_start_x.push_back(track_obj->Start().X());
+      _track_start_y.push_back(track_obj->Start().Y());
+      _track_start_z.push_back(track_obj->Start().Z());
+
+      _track_end_x.push_back(track_obj->End().X());
+      _track_end_y.push_back(track_obj->End().Y());
+      _track_end_z.push_back(track_obj->End().Z());
+
       _track_theta.push_back(track_obj->Theta());
       _track_phi.push_back(track_obj->Phi());
 
@@ -883,6 +916,10 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
       _shower_dir_x.push_back(correct_dir.X());
       _shower_dir_y.push_back(correct_dir.Y());
       _shower_dir_z.push_back(correct_dir.Z());
+
+      _shower_start_x.push_back(shower_obj->ShowerStart().X());
+      _shower_start_y.push_back(shower_obj->ShowerStart().Y());
+      _shower_start_z.push_back(shower_obj->ShowerStart().Z());
 
       _shower_phi.push_back(correct_dir.Phi());
       _shower_theta.push_back(correct_dir.Theta());

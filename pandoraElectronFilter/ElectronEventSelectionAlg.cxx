@@ -478,7 +478,6 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
                                        _center_of_charge[_i_primary],
                                        _selected_flash,
                                        evt);
-
     if (! _flash_passed) {
       _neutrino_candidate_passed[_i_primary] = false;
       continue;
