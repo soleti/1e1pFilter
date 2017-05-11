@@ -68,7 +68,7 @@ namespace lee {
                                              lar_pandora::MCParticlesToHits &matchedHits)
   {
       PFParticleSet recoVeto; MCParticleSet trueVeto;
-      bool _recursiveMatching = false;
+      bool _recursiveMatching = true;
 
       GetRecoToTrueMatches(recoParticlesToHits, trueHitsToParticles, matchedParticles, matchedHits, recoVeto, trueVeto, _recursiveMatching);
   }
@@ -478,7 +478,6 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
                                        _center_of_charge[_i_primary],
                                        _selected_flash,
                                        evt);
-
     if (! _flash_passed) {
       _neutrino_candidate_passed[_i_primary] = false;
       continue;
@@ -553,12 +552,27 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
           art::FindOneP< recob::Track > track_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
           auto const& track_obj = track_per_pfpart.at(pfdaughter);
 
-          if (track_obj->Length() < m_trackLength) {
-            tracks++;
-            std::cout << "Stored track " << track_obj << " " << track_obj->Length() << std::endl;
-            _pfp_id_tracks_from_primary[_i_primary].push_back(pfdaughter);
-          } else {
-            longer_tracks++;
+          std::vector<double> start_point;
+          std::vector<double> end_point;
+
+          start_point.push_back(track_obj->Start().X());
+          start_point.push_back(track_obj->Start().Y());
+          start_point.push_back(track_obj->Start().Z());
+
+          end_point.push_back(track_obj->End().X());
+          end_point.push_back(track_obj->End().Y());
+          end_point.push_back(track_obj->End().Z());
+
+          bool contained_track = is_fiducial(start_point) && is_fiducial(end_point);
+
+          if (contained_track) {
+            if (track_obj->Length() < m_trackLength) {
+              tracks++;
+              std::cout << "Stored track " << track_obj << " " << track_obj->Length() << std::endl;
+              _pfp_id_tracks_from_primary[_i_primary].push_back(pfdaughter);
+            } else {
+              longer_tracks++;
+            }
           }
 
         } catch (...) {
