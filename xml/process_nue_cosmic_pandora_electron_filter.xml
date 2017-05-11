@@ -26,9 +26,9 @@
         <!-- <output> -->
             <!-- bnb_nu_cosmic_pandora_electron_filter${PROCESS}_%tc_gen.root -->
         <!-- </output> -->
-        <numjobs>1</numjobs>
+        <numjobs>600</numjobs>
         <disk>50GB</disk>
-        <maxfilesperjob>1</maxfilesperjob>
+        <maxfilesperjob>2</maxfilesperjob>
         <datatier>filtered</datatier>
         <!-- <defname>prodgenie_bnb_intrinsic_nue_uboone_mcc8_detsim</defname> -->
         <memory>2000</memory>
