@@ -326,6 +326,7 @@ TVector3 ElectronEventSelectionAlg::calculateChargeCenter(
 
     // Loop over the spacepoints and get the associated hits:
     for (auto & _sps : spcpnts) {
+      auto xyz = _sps->XYZ();
       std::vector<art::Ptr<recob::Hit> > hits = hits_per_spcpnts.at(_sps.key());
       // Add the hits to the weighted average, if they are collection hits:
       for (auto & hit : hits) {
@@ -335,12 +336,11 @@ TVector3 ElectronEventSelectionAlg::calculateChargeCenter(
           // std::cout << "Hit Integral: " << hit->Integral() << std::endl;
           // std::cout << "Hit PeakAmplitude: " << hit->PeakAmplitude() << std::endl;
           // std::cout << "Hit SummedADC: " << hit->SummedADC() << std::endl;
-          auto xyz = _sps->XYZ();
           chargecenter[0] += (xyz[0]) * weight;
           chargecenter[1] += (xyz[1]) * weight;
           chargecenter[2] += (xyz[2]) * weight;
           totalweight += weight;
-          break; // Exit the loop over hits
+          //break; // Exit the loop over hits
         } // if collection
 
       } // hits
