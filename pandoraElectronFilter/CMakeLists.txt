@@ -21,8 +21,8 @@ art_make(
                         art_Utilities 
                         art_Persistency_Common 
                         art_Persistency_Provenance 
-                        uboone_SpaceCharge
-                        uboone_SpaceChargeServices_SpaceChargeServiceMicroBooNE_service
+#                        uboone_SpaceCharge
+#                        uboone_SpaceChargeServices_SpaceChargeServiceMicroBooNE_service
                         ${ART_FRAMEWORK_CORE}
                         ${ART_FRAMEWORK_IO_SOURCES}
                         ${ART_FRAMEWORK_PRINCIPAL}

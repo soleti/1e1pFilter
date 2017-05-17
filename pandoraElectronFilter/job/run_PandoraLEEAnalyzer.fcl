@@ -82,11 +82,32 @@ physics: {
   #path3 : [  comma separated list of module labels of analyzer or output modules  ]
 
   #here, just a shorthand: could have done ana: [ robertoana ] then end_paths: [ ana ]
-  trigger_paths: [ reco ]
+  trigger_paths: [ reco  ]
   end_paths: [ path0 ]
 
 }
 services.DetectorClocksService.InheritClockConfig:         false
 services.DetectorClocksService.TriggerOffsetTPC:           -0.400e3
 services.ChannelStatusService.ChannelStatusProvider.UseDB: false
-
+services.message.destinations :
+{
+  STDCOUT:
+  {
+     type:      "cout"      #tells the message service to output this destination to cout
+     threshold: "WARNING"   #tells the message service that this destination applies to WARNING and higher level messages
+     append:     true       #says to append all messages to the output
+     categories:
+     {
+       ChannelFilter:
+       {
+         limit: 0
+         reportEvery: 0
+       }
+       default:
+       {
+         limit: -1  #don't print anything at the infomsg level except the explicitly named categories
+         reportEvery: 1
+       }
+     }
+  }
+}

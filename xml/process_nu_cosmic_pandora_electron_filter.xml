@@ -13,15 +13,15 @@
     <larsoft>
         <tag>v06_30_00</tag>
         <qual>e10:prof</qual>
-        <local>/pnfs/uboone/scratch/users/cadams/submission/localProducts_larsoft_v06_30_00_e10_prof.tar</local>
+        <local>/pnfs/uboone/scratch/users/srsoleti/v06_30_00.tar</local>
     </larsoft>
     
     <!--  Project stages  -->
     <stage name="filter">
         <fcl>run_PandoraLEEAnalyzer.fcl</fcl>
-        <outdir>/pnfs/uboone/scratch/users/cadams/v06_30_00/filter/bnb_nu_cosmic_pandora_electron_filter</outdir>
-        <logdir>/pnfs/uboone/scratch/users/cadams/v06_30_00/filter/bnb_nu_cosmic_pandora_electron_filter</logdir>
-        <workdir>/pnfs/uboone/scratch/users/cadams/work/v06_30_00/filter/bnb_nu_cosmic_pandora_electron_filter</workdir>
+        <outdir>/pnfs/uboone/scratch/users/srsoleti/v06_30_00/filter/bnb_nu_cosmic_pandora_electron_filter</outdir>
+        <logdir>/pnfs/uboone/scratch/users/srsoleti/v06_30_00/filter/bnb_nu_cosmic_pandora_electron_filter</logdir>
+        <workdir>/pnfs/uboone/scratch/users/srsoleti/work/v06_30_00/filter/bnb_nu_cosmic_pandora_electron_filter</workdir>
         <inputdef>prodgenie_bnb_nu_cosmic_uboone_mcc8_reco2</inputdef>
         <!-- <output> -->
             <!-- bnb_nu_cosmic_pandora_electron_filter${PROCESS}_%tc_gen.root -->

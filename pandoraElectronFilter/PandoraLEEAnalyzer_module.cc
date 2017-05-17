@@ -106,6 +106,7 @@ private:
   const int k_nc = 4;
   const int k_dirt = 5;
   const int k_data = 6;
+  const int k_other = 0;
   double _energy;
   int _true_nu_is_fiducial;
   double _nu_energy;
@@ -688,6 +689,8 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
   _subrun = evt.subRun();
   _event = evt.id().event();
 
+  std::cout << "RUN " << _run << " SUBRUN " << _subrun << " EVENT " << _event << std::endl;
+
   std::vector<size_t> nu_candidates;
 
   _event_passed = int(fElectronEventSelectionAlg.eventSelected(evt));
@@ -748,8 +751,12 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
       _true_vz = true_neutrino_vertex[2];
       _true_nu_is_fiducial = int(fElectronEventSelectionAlg.is_fiducial(true_neutrino_vertex));
 
-      // FIXME ABSOLUTE PATH THIS ASAP
-      SpaceChargeMicroBooNE SCE = SpaceChargeMicroBooNE("/uboone/app/users/srsoleti/v06_26_00_2/srcs/1e1pFilter/pandoraElectronFilter/SCEoffsets_MicroBooNE_E273.root");
+      std::string _env = std::getenv("MRB_INSTALL");
+      _env = _env + "/pandoraElectronFilter/v00_01_00/slf6.x86_64.e10.prof/lib/";
+
+      SpaceChargeMicroBooNE SCE =
+          SpaceChargeMicroBooNE(_env + "SCEoffsets_MicroBooNE_E273.root");
+          
       _true_vx_sce = _true_vx-SCE.GetPosOffsets(_true_vx, _true_vy, _true_vz)[0]+0.7;
       _true_vy_sce = _true_vy+SCE.GetPosOffsets(_true_vx, _true_vy, _true_vz)[1];
       _true_vz_sce = _true_vz+SCE.GetPosOffsets(_true_vx, _true_vy, _true_vz)[2];
@@ -863,8 +870,6 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
     }
 
 
-    std::cout << "Category " << _category << std::endl;
-
     std::vector<art::Ptr<recob::Track>> chosen_tracks;
     std::vector< size_t > pfp_tracks_id = fElectronEventSelectionAlg.get_pfp_id_tracks_from_primary().at(ipf_candidate);
     get_daughter_tracks(pfp_tracks_id, evt, chosen_tracks);
@@ -901,7 +906,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
     for (auto &pf_id: pfp_showers_id) {
 
       int direction = correct_direction(pf_id, evt);
-      std::cout << "Correct direction " << direction << std::endl;
+      //std::cout << "Correct direction " << direction << std::endl;
       art::FindOneP< recob::Shower > shower_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
       auto const& shower_obj = shower_per_pfpart.at(pf_id);
 
@@ -971,8 +976,10 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
       std::cout << "Shower PFP " << pfp_showers_id[ish] << std::endl;
       std::cout << "Neutrino? " << _nu_matched_showers << std::endl;
       std::cout << "Cosmic? " << shower_cr_found << std::endl;
-      if (!shower_cr_found && _nu_matched_showers == 0) std::cout << "***NOT NEUTRINO NOR COSMIC***" << std::endl;
-
+      if (!shower_cr_found && _nu_matched_showers == 0) {
+        _category = k_other;
+        std::cout << "***NOT NEUTRINO NOR COSMIC***" << std::endl;
+      }
     }
 
     bool track_cr_found = false;
@@ -993,12 +1000,15 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
       std::cout << "Track PFP " << pfp_tracks_id[itr] << std::endl;
       std::cout << "Neutrino? " << _nu_matched_tracks << std::endl;
       std::cout << "Cosmic? " << track_cr_found << std::endl;
-      if (!track_cr_found && _nu_matched_tracks == 0) std::cout << "***NOT NEUTRINO NOR COSMIC***" << std::endl;
+      if (!track_cr_found && _nu_matched_tracks == 0) {
+        _category = k_other;
+        std::cout << "***NOT NEUTRINO NOR COSMIC***" << std::endl;
+      }
     }
 
 
     if (track_cr_found || shower_cr_found) _category = k_cosmic;
-
+    std::cout << "Category " << _category << std::endl;
 
   }
 

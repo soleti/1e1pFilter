@@ -568,7 +568,6 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
           if (contained_track) {
             if (track_obj->Length() < m_trackLength) {
               tracks++;
-              std::cout << "Stored track " << track_obj << " " << track_obj->Length() << std::endl;
               _pfp_id_tracks_from_primary[_i_primary].push_back(pfdaughter);
             } else {
               longer_tracks++;
