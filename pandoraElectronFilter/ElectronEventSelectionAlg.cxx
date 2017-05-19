@@ -274,10 +274,11 @@ void ElectronEventSelectionAlg::traversePFParticleTree(
   // This is a tree-traversal algorithm.  It returns the index of the top particle, plus the index
   // of all daughter particles.
 
-  // This is a recursive algorithm, so it needs a break clause:
+  // Make sure to get the top level particle:
+  unordered_daugthers.push_back(top_index);
 
+  // This is a recursive algorithm, so it needs a break clause:
   if (pfparticles->at(top_index).Daughters().size() == 0) {
-    unordered_daugthers.push_back(top_index);
     return;
   }
 
