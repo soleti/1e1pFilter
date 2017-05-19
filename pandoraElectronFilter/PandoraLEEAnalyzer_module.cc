@@ -177,6 +177,7 @@ private:
   std::vector< double > _track_phi;
 
   std::vector< double > _track_length;
+  std::vector< double > _track_id;
 
   std::vector< double > _track_energy;
 
@@ -312,6 +313,7 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const & pset)
   myTTree->Branch("track_phi",  "std::vector< double >", &_track_phi);
 
   myTTree->Branch("track_len",  "std::vector< double >", &_track_length);
+  myTTree->Branch("track_id",  "std::vector< double >", &_track_id);
 
   myTTree->Branch("nu_pdg",  &_nu_pdg, "nu_pdg/i");
 
@@ -620,6 +622,7 @@ void lee::PandoraLEEAnalyzer::clear() {
   _track_energy.clear();
 
   _track_length.clear();
+  _track_id.clear();
 
   _reco_px = std::numeric_limits<double>::lowest();
   _reco_py = std::numeric_limits<double>::lowest();
@@ -756,7 +759,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
 
       SpaceChargeMicroBooNE SCE =
           SpaceChargeMicroBooNE(_env + "SCEoffsets_MicroBooNE_E273.root");
-          
+
       _true_vx_sce = _true_vx-SCE.GetPosOffsets(_true_vx, _true_vy, _true_vz)[0]+0.7;
       _true_vy_sce = _true_vy+SCE.GetPosOffsets(_true_vx, _true_vy, _true_vz)[1];
       _true_vz_sce = _true_vz+SCE.GetPosOffsets(_true_vx, _true_vy, _true_vz)[2];
@@ -880,6 +883,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
 
       _track_energy.push_back(trackEnergy(track_obj,evt));
       _track_length.push_back(track_obj->Length());
+      _track_id.push_back(track_obj->ID());
       _track_dir_x.push_back(track_obj->StartDirection().X());
       _track_dir_y.push_back(track_obj->StartDirection().Y());
       _track_dir_z.push_back(track_obj->StartDirection().Z());
