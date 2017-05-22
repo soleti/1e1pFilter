@@ -154,8 +154,7 @@ private:
   std::vector< double > _shower_theta;
   std::vector< double > _shower_phi;
 
-<<<<<<< HEAD
-=======
+
   std::vector< double > _shower_energy;
 
   std::vector< double > _track_dir_x;
@@ -177,7 +176,6 @@ private:
 
   std::vector< double > _track_energy;
 
->>>>>>> parent of 7f3ac76... Katherine BDT
   std::vector< int > _nu_daughters_pdg;
   std::vector< double > _nu_daughters_E;
 
@@ -273,8 +271,6 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const & pset)
   myTTree->Branch("shower_theta",  "std::vector< double >", &_shower_theta);
   myTTree->Branch("shower_phi",  "std::vector< double >", &_shower_phi);
 
-<<<<<<< HEAD
-=======
   myTTree->Branch("shower_energy",  "std::vector< double >", &_shower_energy);
   myTTree->Branch("track_energy",  "std::vector< double >", &_track_energy);
 
@@ -297,7 +293,6 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const & pset)
 
   myTTree->Branch("nu_pdg",  &_nu_pdg, "nu_pdg/i");
 
->>>>>>> parent of 7f3ac76... Katherine BDT
   myPOTTTree->Branch("run", &_run_sr, "run/i");
   myPOTTTree->Branch("subrun", &_subrun_sr, "subrun/i");
   myPOTTTree->Branch("pot", &_pot, "pot/d");
@@ -580,8 +575,6 @@ void lee::PandoraLEEAnalyzer::clear() {
   _shower_theta.clear();
   _shower_phi.clear();
 
-<<<<<<< HEAD
-=======
   _track_dir_x.clear();
   _track_dir_y.clear();
   _track_dir_z.clear();
@@ -594,7 +587,6 @@ void lee::PandoraLEEAnalyzer::clear() {
 
   _track_length.clear();
 
->>>>>>> parent of 7f3ac76... Katherine BDT
   _reco_px = std::numeric_limits<double>::lowest();
   _reco_py = std::numeric_limits<double>::lowest();
   _reco_pz = std::numeric_limits<double>::lowest();
@@ -715,15 +707,10 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
 
       std::string _env = std::getenv("MRB_INSTALL");
       _env = _env + "/pandoraElectronFilter/v00_01_00/slf6.x86_64.e10.prof/lib/";
-<<<<<<< HEAD
-      SpaceChargeMicroBooNE SCE = SpaceChargeMicroBooNE(_env+"SCEoffsets_MicroBooNE_E273.root");
-
-=======
-
+      
       SpaceChargeMicroBooNE SCE =
           SpaceChargeMicroBooNE(_env + "SCEoffsets_MicroBooNE_E273.root");
           
->>>>>>> parent of 7f3ac76... Katherine BDT
       _true_vx_sce = _true_vx-SCE.GetPosOffsets(_true_vx, _true_vy, _true_vz)[0]+0.7;
       _true_vy_sce = _true_vy+SCE.GetPosOffsets(_true_vx, _true_vy, _true_vz)[1];
       _true_vz_sce = _true_vz+SCE.GetPosOffsets(_true_vx, _true_vy, _true_vz)[2];
@@ -841,10 +828,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
     std::vector<art::Ptr<recob::Track>> chosen_tracks;
     std::vector< size_t > pfp_tracks_id = fElectronEventSelectionAlg.get_pfp_id_tracks_from_primary().at(ipf_candidate);
     get_daughter_tracks(pfp_tracks_id, evt, chosen_tracks);
-<<<<<<< HEAD
-    _track_dir_z = get_longest_track(chosen_tracks)->StartDirection().Z();
-    _track_length = get_longest_track(chosen_tracks)->Length();
-=======
+
 
     for (auto &pf_id: pfp_tracks_id) {
       art::FindOneP< recob::Track > track_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
@@ -869,7 +853,6 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
 
     }
 
->>>>>>> parent of 7f3ac76... Katherine BDT
     _n_tracks = fElectronEventSelectionAlg.get_n_tracks().at(ipf_candidate);
 
 
