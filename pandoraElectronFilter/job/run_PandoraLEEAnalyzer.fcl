@@ -8,13 +8,11 @@
 #include "opticaldetectormodules_microboone.fcl"
 #include "photpropservices_microboone.fcl"
 #include "correct_saturation.fcl"
-#include "caldata_microboone.fcl"
+#include "caldata_microboone.fcl" 
 #include "time_memory_tracker_microboone.fcl"
 #include "photpropservices_microboone.fcl"
 
 #include "pandora_lee_ana.fcl"
-#include "decisiontreeidana.fcl"
-#include "decisiontreeid.fcl"
 
 
 #include "neutrinomcflash.fcl"
@@ -62,23 +60,22 @@ physics: {
      CosmicFlashMatch   : @local::CosmicFlashMatch
      T0TrackTaggerCosmicpandoraNu : @local::T0RecoAnodeCathodePiercing_mc
      T0TrackTaggerBeampandoraNu   : @local::T0RecoAnodeCathodePiercing_mc
-     decisiontreeid: @local::DecisionTreeID
   }
   analyzers: {
      # ParameterSets for zero or more analyzer modules
      robertoana:  @local::lee_pandora_analyzer
      UBXSec: @local::UBXSec
-     decisiontreeidana: @local::DecisionTreeIDAna
+
   }
 
   filters : {
      # ParameterSets for zero or more filter modules
   }
-  reco: [ NeutrinoMCFlash,
+  reco: [ NeutrinoMCFlash, 
           NeutrinoFlashMatch,
-          T0TrackTaggerCosmicpandoraNu, T0TrackTaggerBeampandoraNu, decisiontreeid ]
+          T0TrackTaggerCosmicpandoraNu, T0TrackTaggerBeampandoraNu ]
 
-  path0 : [  robertoana, UBXSec, decisiontreeidana ]
+  path0 : [  robertoana, UBXSec ]
 
   #path1 : [  comma separated list of module labels of analyzer or output modules  ]
   #path2 : [  comma separated list of module labels of analyzer or output modules  ]
