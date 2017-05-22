@@ -275,9 +275,9 @@ void ElectronEventSelectionAlg::traversePFParticleTree(
   // of all daughter particles.
 
   // This is a recursive algorithm, so it needs a break clause:
+  unordered_daugthers.push_back(top_index);
 
   if (pfparticles->at(top_index).Daughters().size() == 0) {
-    unordered_daugthers.push_back(top_index);
     return;
   }
 
