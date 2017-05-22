@@ -175,6 +175,7 @@ private:
   std::vector< double > _track_length;
 
   std::vector< double > _track_energy;
+  std::vector< int > _track_id;
 
   std::vector< int > _nu_daughters_pdg;
   std::vector< double > _nu_daughters_E;
@@ -290,6 +291,7 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const & pset)
   myTTree->Branch("track_phi",  "std::vector< double >", &_track_phi);
 
   myTTree->Branch("track_len",  "std::vector< double >", &_track_length);
+  myTTree->Branch("track_id",  "std::vector< int >", &_track_id);
 
   myTTree->Branch("nu_pdg",  &_nu_pdg, "nu_pdg/i");
 
@@ -586,6 +588,7 @@ void lee::PandoraLEEAnalyzer::clear() {
   _track_energy.clear();
 
   _track_length.clear();
+  _track_id.clear();
 
   _reco_px = std::numeric_limits<double>::lowest();
   _reco_py = std::numeric_limits<double>::lowest();
@@ -707,10 +710,10 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
 
       std::string _env = std::getenv("MRB_INSTALL");
       _env = _env + "/pandoraElectronFilter/v00_01_00/slf6.x86_64.e10.prof/lib/";
-      
+
       SpaceChargeMicroBooNE SCE =
           SpaceChargeMicroBooNE(_env + "SCEoffsets_MicroBooNE_E273.root");
-          
+
       _true_vx_sce = _true_vx-SCE.GetPosOffsets(_true_vx, _true_vy, _true_vz)[0]+0.7;
       _true_vy_sce = _true_vy+SCE.GetPosOffsets(_true_vx, _true_vy, _true_vz)[1];
       _true_vz_sce = _true_vz+SCE.GetPosOffsets(_true_vx, _true_vy, _true_vz)[2];
@@ -850,6 +853,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
 
       _track_theta.push_back(track_obj->Theta());
       _track_phi.push_back(track_obj->Phi());
+      _track_id.push_back(track_obj->ID());
 
     }
 
