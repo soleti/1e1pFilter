@@ -15,7 +15,7 @@
         <qual>e10:prof</qual>
         <local>/pnfs/uboone/scratch/users/srsoleti/v06_30_00.tar</local>
     </larsoft>
-    
+
     <!--  Project stages  -->
     <stage name="filter">
         <fcl>run_PandoraLEEAnalyzer.fcl</fcl>
@@ -28,6 +28,7 @@
         <!-- </output> -->
         <numjobs>600</numjobs>
         <disk>50GB</disk>
+        <memory>4096</memory>
         <maxfilesperjob>2</maxfilesperjob>
         <datatier>filtered</datatier>
         <!-- <defname>prodgenie_bnb_intrinsic_nue_uboone_mcc8_detsim</defname> -->

@@ -39,6 +39,7 @@
 #include "lardataobj/AnalysisBase/Calorimetry.h"
 #include "larpandora/LArPandoraInterface/LArPandoraHelper.h"
 #include "larcoreobj/SummaryData/POTSummary.h"
+#include "lardataobj/AnalysisBase/CosmicTag.h"
 
 #include "TTree.h"
 #include "TFile.h"
@@ -81,6 +82,18 @@ public:
   void reconfigure(fhicl::ParameterSet const &pset) override;
 
 private:
+
+  std::vector< double > _predict_p;
+  std::vector< double > _predict_mu;
+  std::vector< double > _predict_pi;
+  std::vector< double > _predict_em;
+  std::vector< double > _predict_cos;
+
+  const anab::CosmicTagID_t TAGID_P  = anab::CosmicTagID_t::kGeometry_YY;
+  const anab::CosmicTagID_t TAGID_MU = anab::CosmicTagID_t::kGeometry_YZ;
+  const anab::CosmicTagID_t TAGID_PI = anab::CosmicTagID_t::kGeometry_ZZ;
+  const anab::CosmicTagID_t TAGID_EM = anab::CosmicTagID_t::kGeometry_XX;
+  const anab::CosmicTagID_t TAGID_CS = anab::CosmicTagID_t::kGeometry_XY;
 
   lee::ElectronEventSelectionAlg fElectronEventSelectionAlg;
 
@@ -287,9 +300,9 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const & pset)
   myTTree->Branch("shower_dir_y",  "std::vector< double >", &_shower_dir_y);
   myTTree->Branch("shower_dir_z",  "std::vector< double >", &_shower_dir_z);
 
-  myTTree->Branch("shower_dir_x",  "std::vector< double >", &_shower_dir_x);
-  myTTree->Branch("shower_dir_y",  "std::vector< double >", &_shower_dir_y);
-  myTTree->Branch("shower_dir_z",  "std::vector< double >", &_shower_dir_z);
+  myTTree->Branch("shower_start_x",  "std::vector< double >", &_shower_start_x);
+  myTTree->Branch("shower_start_y",  "std::vector< double >", &_shower_start_y);
+  myTTree->Branch("shower_start_z",  "std::vector< double >", &_shower_start_z);
 
   myTTree->Branch("shower_theta",  "std::vector< double >", &_shower_theta);
   myTTree->Branch("shower_phi",  "std::vector< double >", &_shower_phi);
@@ -321,6 +334,11 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const & pset)
   myPOTTTree->Branch("subrun", &_subrun_sr, "subrun/i");
   myPOTTTree->Branch("pot", &_pot, "pot/d");
 
+  myTTree->Branch("predict_p","std::vector< double >",&_predict_p);
+  myTTree->Branch("predict_mu","std::vector< double >",&_predict_mu);
+  myTTree->Branch("predict_pi","std::vector< double >",&_predict_pi);
+  myTTree->Branch("predict_em","std::vector< double >",&_predict_em);
+  myTTree->Branch("predict_cos","std::vector< double >",&_predict_cos);
 
   this->reconfigure(pset);
 
@@ -608,6 +626,12 @@ void lee::PandoraLEEAnalyzer::clear() {
   _shower_dir_y.clear();
   _shower_dir_z.clear();
 
+  _predict_p.clear();
+  _predict_mu.clear();
+  _predict_em.clear();
+  _predict_pi.clear();
+  _predict_cos.clear();
+
   _shower_theta.clear();
   _shower_phi.clear();
 
@@ -880,6 +904,22 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
     for (auto &pf_id: pfp_tracks_id) {
       art::FindOneP< recob::Track > track_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
       auto const& track_obj = track_per_pfpart.at(pf_id);
+
+      auto const& trackVecHandle = evt.getValidHandle< std::vector< recob::Track > >( pandoraNu_tag );
+
+      art::FindManyP<anab::CosmicTag> dtAssns(trackVecHandle, evt, "decisiontreeid");
+
+      std::vector< art::Ptr<anab::CosmicTag> > dtVec = dtAssns.at(track_obj.key());
+
+      for(auto const& dttag : dtVec)
+      {
+        if(dttag->CosmicType() == TAGID_P)  _predict_p.push_back(dttag->CosmicScore());
+        else if(dttag->CosmicType() == TAGID_MU) _predict_mu.push_back(dttag->CosmicScore());
+        else if(dttag->CosmicType() == TAGID_PI) _predict_pi.push_back(dttag->CosmicScore());
+        else if(dttag->CosmicType() == TAGID_EM) _predict_em.push_back(dttag->CosmicScore());
+        else if(dttag->CosmicType() == TAGID_CS) _predict_cos.push_back(dttag->CosmicScore());
+      }
+
 
       _track_energy.push_back(trackEnergy(track_obj,evt));
       _track_length.push_back(track_obj->Length());
