@@ -222,6 +222,7 @@ private:
   int correct_direction(size_t pfp_id,const art::Event & evt);
   TVector3 average_position(std::vector<art::Ptr < recob::SpacePoint > > &spcpnts);
   void clear();
+  void dQdx(size_t pfp_id, const art::Event & evt, std::vector< double > &dqdx);
 
   art::Ptr<recob::Track> get_longest_track(std::vector< art::Ptr<recob::Track> > &tracks);
   art::Ptr<recob::Shower> get_most_energetic_shower(std::vector< art::Ptr<recob::Shower> > &showers);
@@ -435,6 +436,37 @@ void lee::PandoraLEEAnalyzer::get_daughter_showers(std::vector < size_t > pf_ids
 
 }
 
+void lee::PandoraLEEAnalyzer::dQdx(size_t pfp_id, const art::Event & evt, double &dqdx) {
+  art::InputTag pandoraNu_tag { "pandoraNu" };
+
+  auto const& pfparticle_handle = evt.getValidHandle< std::vector< recob::PFParticle > >( pandoraNu_tag );
+  auto const& cluster_handle = evt.getValidHandle<std::vector<recob::Cluster>>(pandoraNu_tag);
+
+  art::FindManyP<recob::Cluster > clusters_per_pfpart ( pfparticle_handle, evt, pandoraNu_tag );
+  art::FindManyP<recob::Hit > hits_per_clusters ( cluster_handle, evt, pandoraNu_tag );
+
+  std::vector<art::Ptr < recob::Cluster > > clusters = clusters_per_pfpart.at(pfp_id);
+
+  for (size_t icl = 0; icl < clusters.size(); icl++) {
+
+    std::vector<art::Ptr<recob::Hit> > hits = hits_per_clusters.at(clusters[icl].key());
+    double plane_dqdx = 0;
+
+  //   for (auto & hit : hits) {
+  //
+  //     double dist_hit_clu = sqrt((hit.w - clusters[icl].StartWire()) * (hit.w - clu_start.w) +
+  //                     (hit.t - clu_start.t) * (hit.t - clu_start.t));
+  // // distance to clustering start point
+  // dist_hit_shr = sqrt((hit.w - shr_start.w) * (hit.w - shr_start.w) +
+  //                     (hit.t - shr_start.t) * (hit.t - shr_start.t));
+  //
+  //   }
+
+    dqdx[icl] = plane_dqdx;
+
+  }
+}
+
 // CORRECT SHOWER DIRECTION THAT SOMETIMES IS INVERTED
 int lee::PandoraLEEAnalyzer::correct_direction(size_t pfp_id, const art::Event & evt) {
   art::InputTag pandoraNu_tag { "pandoraNu" };
@@ -625,6 +657,18 @@ void lee::PandoraLEEAnalyzer::clear() {
   _shower_dir_x.clear();
   _shower_dir_y.clear();
   _shower_dir_z.clear();
+
+  _shower_start_x.clear();
+  _shower_start_y.clear();
+  _shower_start_z.clear();
+
+  _track_start_x.clear();
+  _track_start_y.clear();
+  _track_start_z.clear();
+
+  _track_end_x.clear();
+  _track_end_y.clear();
+  _track_end_z.clear();
 
   _predict_p.clear();
   _predict_mu.clear();
