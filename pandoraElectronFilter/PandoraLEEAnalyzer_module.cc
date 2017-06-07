@@ -207,12 +207,7 @@ private:
   std::vector< double > _nu_daughters_vy;
   std::vector< double > _nu_daughters_vz;
 
-  double _reco_px;
-  double _reco_py;
-  double _reco_pz;
-  double _true_px;
-  double _true_py;
-  double _true_pz;
+
 
   double distance(double a[3], double b[3]);
   bool is_dirt(double x[3]) const;
@@ -291,13 +286,6 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const & pset)
   myTTree->Branch("track_passed", &_track_passed, "track_passed/i");
   myTTree->Branch("shower_passed", &_shower_passed, "shower_passed/i");
 
-  myTTree->Branch("reco_px", &_reco_px, "reco_px/d");
-  myTTree->Branch("reco_py", &_reco_px, "reco_py/d");
-  myTTree->Branch("reco_pz", &_reco_px, "reco_pz/d");
-
-  myTTree->Branch("true_px", &_true_px, "true_px/d");
-  myTTree->Branch("true_py", &_true_py, "true_py/d");
-  myTTree->Branch("true_pz", &_true_pz, "true_pz/d");
 
   myTTree->Branch("shower_dir_x",  "std::vector< double >", &_shower_dir_x);
   myTTree->Branch("shower_dir_y",  "std::vector< double >", &_shower_dir_y);
@@ -697,13 +685,6 @@ void lee::PandoraLEEAnalyzer::clear() {
   _track_length.clear();
   _track_id.clear();
 
-  _reco_px = std::numeric_limits<double>::lowest();
-  _reco_py = std::numeric_limits<double>::lowest();
-  _reco_pz = std::numeric_limits<double>::lowest();
-  _true_px = std::numeric_limits<double>::lowest();
-  _true_py = std::numeric_limits<double>::lowest();
-  _true_pz = std::numeric_limits<double>::lowest();
-
   _nu_pdg = 0;
 
   _flash_passed = 0;
@@ -854,10 +835,6 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
       _nu_energy = std::numeric_limits<double>::lowest();
     }
 
-    int protons = 0;
-    int electrons = 0;
-    int muons = 0;
-
     for (auto& mcparticle : nu_mcparticles) {
       if (mcparticle.Process() == "primary" and mcparticle.T() != 0 and mcparticle.StatusCode() == 1) {
 
@@ -871,21 +848,6 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
         _nu_daughters_vx.push_back(mcparticle.Vx());
         _nu_daughters_vy.push_back(mcparticle.Vy());
         _nu_daughters_vz.push_back(mcparticle.Vz());
-
-        switch (mcparticle.PdgCode())
-        {
-        case (abs(2212)):
-          protons++;
-          break;
-
-        case (abs(11)):
-          electrons++;
-          break;
-
-        case (abs(13)):
-          muons++;
-          break;
-        }
 
       }
     }
@@ -912,10 +874,11 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
       _flash_passed = 1;
       if (fElectronEventSelectionAlg.get_n_showers().at(i_primary) != 0) {
         _shower_passed = 1;
-        if (fElectronEventSelectionAlg.get_n_tracks().at(i_primary) != 0) {
-          _track_passed = 1;
-        }
       }
+      if (fElectronEventSelectionAlg.get_n_tracks().at(i_primary) != 0) {
+        _track_passed = 1;
+      }
+
     }
   }
 
