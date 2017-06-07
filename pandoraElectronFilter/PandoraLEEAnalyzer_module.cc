@@ -207,7 +207,9 @@ private:
   std::vector< double > _nu_daughters_vy;
   std::vector< double > _nu_daughters_vz;
 
-
+  std::vector< double > _nu_daughters_endx;
+  std::vector< double > _nu_daughters_endy;
+  std::vector< double > _nu_daughters_endz;
 
   double distance(double a[3], double b[3]);
   bool is_dirt(double x[3]) const;
@@ -273,6 +275,10 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const & pset)
   myTTree->Branch("nu_daughters_vx",  "std::vector< double >", &_nu_daughters_vx);
   myTTree->Branch("nu_daughters_vy",  "std::vector< double >", &_nu_daughters_vy);
   myTTree->Branch("nu_daughters_vz",  "std::vector< double >", &_nu_daughters_vz);
+
+  myTTree->Branch("nu_daughters_endx",  "std::vector< double >", &_nu_daughters_endx);
+  myTTree->Branch("nu_daughters_endy",  "std::vector< double >", &_nu_daughters_endy);
+  myTTree->Branch("nu_daughters_endz",  "std::vector< double >", &_nu_daughters_endz);
 
   myTTree->Branch("nu_daughters_px",  "std::vector< double >", &_nu_daughters_px);
   myTTree->Branch("nu_daughters_py",  "std::vector< double >", &_nu_daughters_py);
@@ -737,6 +743,10 @@ void lee::PandoraLEEAnalyzer::clear() {
   _nu_daughters_vy.clear();
   _nu_daughters_vz.clear();
 
+  _nu_daughters_endx.clear();
+  _nu_daughters_endy.clear();
+  _nu_daughters_endz.clear();
+
 }
 
 void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
@@ -848,6 +858,10 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
         _nu_daughters_vx.push_back(mcparticle.Vx());
         _nu_daughters_vy.push_back(mcparticle.Vy());
         _nu_daughters_vz.push_back(mcparticle.Vz());
+
+        _nu_daughters_endx.push_back(mcparticle.EndX());
+        _nu_daughters_endy.push_back(mcparticle.EndY());
+        _nu_daughters_endz.push_back(mcparticle.EndZ());
 
       }
     }
