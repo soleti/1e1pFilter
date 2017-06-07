@@ -101,6 +101,8 @@ private:
   TTree * myTTree;
   TTree * myPOTTTree;
 
+  int _interaction_type;
+
   bool m_printDebug;
   double m_fidvolXstart;
   double m_fidvolXend;
@@ -341,6 +343,8 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const & pset)
   myTTree->Branch("predict_em","std::vector< double >",&_predict_em);
   myTTree->Branch("predict_cos","std::vector< double >",&_predict_cos);
 
+  myTTree->Branch("interaction_type",&_interaction_type, "interaction_type/i");
+
   this->reconfigure(pset);
 
 }
@@ -436,7 +440,7 @@ void lee::PandoraLEEAnalyzer::get_daughter_showers(std::vector < size_t > pf_ids
 
 }
 
-void lee::PandoraLEEAnalyzer::dQdx(size_t pfp_id, const art::Event & evt, double &dqdx) {
+void lee::PandoraLEEAnalyzer::dQdx(size_t pfp_id, const art::Event & evt, std::vector< double > &dqdx) {
   art::InputTag pandoraNu_tag { "pandoraNu" };
 
   auto const& pfparticle_handle = evt.getValidHandle< std::vector< recob::PFParticle > >( pandoraNu_tag );
@@ -654,6 +658,7 @@ void lee::PandoraLEEAnalyzer::endSubRun(const art::SubRun& sr)
 
 }
 void lee::PandoraLEEAnalyzer::clear() {
+  _interaction_type = std::numeric_limits<int>::lowest();
   _shower_dir_x.clear();
   _shower_dir_y.clear();
   _shower_dir_z.clear();
@@ -821,6 +826,8 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
       _true_vy = true_neutrino_vertex[1];
       _true_vz = true_neutrino_vertex[2];
       _true_nu_is_fiducial = int(fElectronEventSelectionAlg.is_fiducial(true_neutrino_vertex));
+
+      _interaction_type = generator[0].GetNeutrino().InteractionType();
 
       std::string _env = std::getenv("MRB_INSTALL");
       _env = _env + "/pandoraElectronFilter/v00_01_00/slf6.x86_64.e10.prof/lib/";
