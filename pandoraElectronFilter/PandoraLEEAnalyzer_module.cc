@@ -179,6 +179,8 @@ private:
   std::vector< double > _track_dir_x;
   std::vector< double > _track_dir_y;
   std::vector< double > _track_dir_z;
+  std::vector< int > _track_is_fiducial;
+  std::vector< int > _shower_is_fiducial;
 
   std::vector< double > _track_start_x;
   std::vector< double > _track_start_y;
@@ -314,6 +316,10 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const & pset)
   myTTree->Branch("track_start_x",  "std::vector< double >", &_track_start_x);
   myTTree->Branch("track_start_y",  "std::vector< double >", &_track_start_y);
   myTTree->Branch("track_start_z",  "std::vector< double >", &_track_start_z);
+
+  myTTree->Branch("track_is_fiducial",  "std::vector< int >", &_track_is_fiducial);
+  myTTree->Branch("shower_is_fiducial",  "std::vector< int >", &_shower_is_fiducial);
+
 
   myTTree->Branch("track_end_x",  "std::vector< double >", &_track_end_x);
   myTTree->Branch("track_end_y",  "std::vector< double >", &_track_end_y);
@@ -661,6 +667,9 @@ void lee::PandoraLEEAnalyzer::clear() {
   _shower_start_y.clear();
   _shower_start_z.clear();
 
+  _track_is_fiducial.clear();
+  _shower_is_fiducial.clear();
+
   _track_start_x.clear();
   _track_start_y.clear();
   _track_start_z.clear();
@@ -948,6 +957,18 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
         else if(dttag->CosmicType() == TAGID_CS) _predict_cos.push_back(dttag->CosmicScore());
       }
 
+      std::vector<double> start_point;
+      std::vector<double> end_point;
+
+      start_point.push_back(track_obj->Start().X());
+      start_point.push_back(track_obj->Start().Y());
+      start_point.push_back(track_obj->Start().Z());
+
+      end_point.push_back(track_obj->End().X());
+      end_point.push_back(track_obj->End().Y());
+      end_point.push_back(track_obj->End().Z());
+
+      _track_is_fiducial.push_back(int(fElectronEventSelectionAlg.is_fiducial(start_point) && fElectronEventSelectionAlg.is_fiducial(end_point)));
 
       _track_energy.push_back(trackEnergy(track_obj,evt));
       _track_length.push_back(track_obj->Length());
@@ -987,6 +1008,25 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
       _shower_dir_x.push_back(correct_dir.X());
       _shower_dir_y.push_back(correct_dir.Y());
       _shower_dir_z.push_back(correct_dir.Z());
+
+      std::vector<double> correct_dir_v;
+      correct_dir_v.resize(3);
+      correct_dir_v[0] = correct_dir.X();
+      correct_dir_v[1] = correct_dir.Y();
+      correct_dir_v[2] = correct_dir.Z();
+      double shower_length = shower_obj->Length();
+
+      std::vector<double> start_point;
+      std::vector<double> end_point;
+      start_point.resize(3);
+      end_point.resize(3);
+      for (int ix = 0; ix < 3; ix++)
+      {
+        start_point[ix] = shower_obj->ShowerStart()[ix];
+        end_point[ix] = shower_obj->ShowerStart()[ix] + shower_length * correct_dir_v[ix];
+      }
+
+      _shower_is_fiducial.push_back(int(fElectronEventSelectionAlg.is_fiducial(start_point) && fElectronEventSelectionAlg.is_fiducial(end_point)));
 
       _shower_start_x.push_back(shower_obj->ShowerStart().X());
       _shower_start_y.push_back(shower_obj->ShowerStart().Y());

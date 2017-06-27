@@ -448,7 +448,7 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
   }
 
   _n_neutrino_candidates = _primary_indexes.size();
-
+  std::cout << "Primary PFParticles " << _n_neutrino_candidates << std::endl;
   // For each of the primary particles, determine if it and it's daughters pass the cuts:
 
   // Need associations from pfparticle to vertex
@@ -534,7 +534,7 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
           }
 
           contained_shower = is_fiducial(start_point) && is_fiducial(end_point);
-          if (contained_shower) {
+          if (contained_shower || !contained_shower) {
             _pfp_id_showers_from_primary[_i_primary].push_back(pfdaughter);
             showers++;
           }
@@ -552,27 +552,14 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
           art::FindOneP< recob::Track > track_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
           auto const& track_obj = track_per_pfpart.at(pfdaughter);
 
-          std::vector<double> start_point;
-          std::vector<double> end_point;
+          tracks++;
+          _pfp_id_tracks_from_primary[_i_primary].push_back(pfdaughter);
 
-          start_point.push_back(track_obj->Start().X());
-          start_point.push_back(track_obj->Start().Y());
-          start_point.push_back(track_obj->Start().Z());
+          if (track_obj->Length() > m_trackLength) {
 
-          end_point.push_back(track_obj->End().X());
-          end_point.push_back(track_obj->End().Y());
-          end_point.push_back(track_obj->End().Z());
-
-          bool contained_track = is_fiducial(start_point) && is_fiducial(end_point);
-
-          if (contained_track) {
-            if (track_obj->Length() < m_trackLength) {
-              tracks++;
-              _pfp_id_tracks_from_primary[_i_primary].push_back(pfdaughter);
-            } else {
-              longer_tracks++;
-            }
+            longer_tracks++;
           }
+
 
         } catch (...) {
           std::cout << "NO TRACKS AVAILABLE" << std::endl;
@@ -583,7 +570,9 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
       _n_tracks[_i_primary] = tracks;
       _n_showers[_i_primary] = showers;
 
-      if (showers >= 1 && tracks >= m_nTracks && longer_tracks == 0)
+      std::cout << "Showers tracks " << showers << " " << tracks << std::endl;
+
+      if (showers >= 1 && tracks >= m_nTracks)
       {
         //closest_distance = std::min(distance(neutrino_vertex,true_neutrino_vertex),closest_distance);
         _neutrino_candidate_passed[_i_primary] = true;
