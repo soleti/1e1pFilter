@@ -456,6 +456,8 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
 
 
   for (auto & _i_primary : _primary_indexes ) {
+    std::cout << "Primary PDG " << pfparticle_handle->at(_i_primary).PdgCode() << std::endl;
+    std::cout << "N. of Daughters " << pfparticle_handle->at(_i_primary).NumDaughters() << std::endl;
 
     _neutrino_candidate_passed[_i_primary] = false;
     _center_of_charge[_i_primary] = TVector3(0,0,0);
@@ -478,12 +480,15 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
                                        _center_of_charge[_i_primary],
                                        _selected_flash,
                                        evt);
+
+    std::cout << "Flash passed? " << _flash_passed << std::endl;
+    _op_flash_indexes[_i_primary] = _selected_flash;
+
     if (! _flash_passed) {
       _neutrino_candidate_passed[_i_primary] = false;
       continue;
     }
 
-    _op_flash_indexes[_i_primary] = _selected_flash;
 
     // Get the neutrino vertex and check if it's fiducial:
     std::vector<double> neutrino_vertex;
@@ -499,6 +504,7 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
 
       if (! is_fiducial(_neutrino_vertex.at(_i_primary))) {
         _neutrino_candidate_passed[_i_primary] = false;
+        std::cout << "Neutrino vertex not within fiducial volume" << std::endl;
         continue;
       }
     } catch (...) {
@@ -511,9 +517,10 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
     int showers = 0;
     int tracks = 0;
     int longer_tracks = 0;
+
     for (auto const& pfdaughter : pfparticle_handle->at(_i_primary).Daughters())
     {
-
+      std::cout << "Daughter PDG " << pfparticle_handle->at(pfdaughter).PdgCode() << std::endl;
 
       if (pfparticle_handle->at(pfdaughter).PdgCode() == 11)
       {
