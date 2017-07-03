@@ -893,15 +893,14 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
   _energy = std::numeric_limits<double>::lowest();
 
   for (auto & i_primary : fElectronEventSelectionAlg.get_primary_indexes() ) {
-    if (fElectronEventSelectionAlg.get_op_flash_indexes().at(i_primary) != -1) {
+    if (fElectronEventSelectionAlg.get_op_flash_indexes().at(i_primary) == 1) {
       _flash_passed = 1;
-      if (fElectronEventSelectionAlg.get_n_showers().at(i_primary) != 0) {
-        _shower_passed = 1;
-      }
-      if (fElectronEventSelectionAlg.get_n_tracks().at(i_primary) != 0) {
-        _track_passed = 1;
-      }
-
+    }
+    if (fElectronEventSelectionAlg.get_n_showers().at(i_primary) != 0) {
+      _shower_passed = 1;
+    }
+    if (fElectronEventSelectionAlg.get_n_tracks().at(i_primary) != 0) {
+      _track_passed = 1;
     }
   }
 
