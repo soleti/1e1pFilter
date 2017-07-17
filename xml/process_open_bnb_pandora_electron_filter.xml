@@ -1,6 +1,6 @@
-<project name="bnb_nu_cosmic_pandora_electron_filter">
+<project name="bnb_filter_data">
     <!--  Project size  -->
-    <numevents>60000</numevents>
+    <numevents>300000</numevents>
 
     <!--  Operating System  -->
     <os>SL6</os>
@@ -13,26 +13,27 @@
     <larsoft>
         <tag>v06_30_00</tag>
         <qual>e10:prof</qual>
-        <local>/pnfs/uboone/scratch/users/cadams/submission/localProducts_larsoft_v06_30_00_e10_prof.tar</local>
+        <local>/pnfs/uboone/scratch/users/srsoleti/v06_30_00.tar</local>
     </larsoft>
     
     <!--  Project stages  -->
     <stage name="filter">
-        <fcl>run_PandoraLEEAnalyzer.fcl</fcl>
-        <outdir>/pnfs/uboone/scratch/users/cadams/v06_30_00/filter/data_bnb_pandora_electron_filter</outdir>
-        <logdir>/pnfs/uboone/scratch/users/cadams/v06_30_00/filter/data_bnb_pandora_electron_filter</logdir>
-        <workdir>/pnfs/uboone/scratch/users/cadams/work/v06_30_00/filter/data_bnb_pandora_electron_filter</workdir>
-        <inputdef>prod_reco2_bnb_v6_mcc8</inputdef>
+        <fcl>run_PandoraLEEAnalyzer_data.fcl</fcl>
+        <outdir>/pnfs/uboone/scratch/users/srsoleti/v06_30_00/filter/data_bnb_pandora_electron_filter</outdir>
+        <logdir>/pnfs/uboone/scratch/users/srsoleti/v06_30_00/filter/data_bnb_pandora_electron_filter</logdir>
+        <workdir>/pnfs/uboone/scratch/users/srsoleti/work/v06_30_00/filter/data_bnb_pandora_electron_filter</workdir>
+        <inputdef>prod_reco2_bnb_v7_mcc8</inputdef>
         <!-- <output> -->
             <!-- bnb_nu_cosmic_pandora_electron_filter${PROCESS}_%tc_gen.root -->
         <!-- </output> -->
-        <numjobs>600</numjobs>
-        <disk>50GB</disk>
-        <maxfilesperjob>2</maxfilesperjob>
+
+        <numjobs>1200</numjobs>
+        <disk>70GB</disk>
+        <memory>4096</memory>
+        <maxfilesperjob>5</maxfilesperjob>
         <datatier>filtered</datatier>
         <!-- <defname>prodgenie_bnb_intrinsic_nue_uboone_mcc8_detsim</defname> -->
-        <memory>2000</memory>
-        <jobsub>--expected-lifetime=8h</jobsub>
+        <jobsub>--expected-lifetime=24h</jobsub>
     </stage>
     <!--  file type  -->
     <!-- <filetype>mc</filetype> -->

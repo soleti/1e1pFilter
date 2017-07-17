@@ -31,8 +31,8 @@ namespace lee {
     lar_pandora::LArPandoraHelper::BuildPFParticleHitMaps(e, _pfp_producer, _spacepointLabel, recoParticlesToHits, recoHitsToParticles, lar_pandora::LArPandoraHelper::kAddDaughters);
 
     if (_debug) {
-      std::cout << "  RecoNeutrinos: " << recoNeutrinoVector.size() << std::endl;
-      std::cout << "  RecoParticles: " << recoParticleVector.size() << std::endl;
+      std::cout << "[ElectronEventSelectionAlg] " << "  RecoNeutrinos: " << recoNeutrinoVector.size() << std::endl;
+      std::cout << "[ElectronEventSelectionAlg] " << "  RecoParticles: " << recoParticleVector.size() << std::endl;
     }
 
     // --- Collect MCParticles and match True Particles to Hits
@@ -49,8 +49,8 @@ namespace lee {
     }
 
     if (_debug) {
-      std::cout << "  TrueParticles: " << particlesToTruth.size() << std::endl;
-      std::cout << "  TrueEvents: " << truthToParticles.size() << std::endl;
+      std::cout << "[ElectronEventSelectionAlg] " << "  TrueParticles: " << particlesToTruth.size() << std::endl;
+      std::cout << "[ElectronEventSelectionAlg] " << "  TrueEvents: " << truthToParticles.size() << std::endl;
     }
 
 
@@ -333,9 +333,9 @@ TVector3 ElectronEventSelectionAlg::calculateChargeCenter(
         if (hit->View() == geo::kZ) {
           // Collection hits only
           double weight = hit->Integral();
-          // std::cout << "Hit Integral: " << hit->Integral() << std::endl;
-          // std::cout << "Hit PeakAmplitude: " << hit->PeakAmplitude() << std::endl;
-          // std::cout << "Hit SummedADC: " << hit->SummedADC() << std::endl;
+          // std::cout << "[ElectronEventSelectionAlg] " << "Hit Integral: " << hit->Integral() << std::endl;
+          // std::cout << "[ElectronEventSelectionAlg] " << "Hit PeakAmplitude: " << hit->PeakAmplitude() << std::endl;
+          // std::cout << "[ElectronEventSelectionAlg] " << "Hit SummedADC: " << hit->SummedADC() << std::endl;
           chargecenter[0] += (xyz[0]) * weight;
           chargecenter[1] += (xyz[1]) * weight;
           chargecenter[2] += (xyz[2]) * weight;
@@ -391,11 +391,11 @@ bool ElectronEventSelectionAlg::opticalfilter(
     bool sigma    = (flash.ZCenter() + flash.ZWidth() / par1) > _this_center_of_charge.Z() &&
                     (flash.ZCenter() - flash.ZWidth() / par1) < _this_center_of_charge.Z();
     bool absolute = std::abs(flash.ZCenter() - _this_center_of_charge.Z()) < par2;
-    // std::cout << "The flash time is " << flash.Time()
+    // std::cout << "[ElectronEventSelectionAlg] " << "The flash time is " << flash.Time()
     //           << ", Zcentre: " << flash.ZCenter()
     //           << " and the Zwidth: " << flash.ZWidth()
     //           << std::endl;
-    // std::cout << "Z Center of charge is " << _this_center_of_charge.Z() << std::endl;
+    // std::cout << "[ElectronEventSelectionAlg] " << "Z Center of charge is " << _this_center_of_charge.Z() << std::endl;
     if (sigma || absolute)
     {
       pass = true;
@@ -427,7 +427,7 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
 
   // Are there any pfparticles?
   if (pfparticle_handle -> size() == 0) {
-    std::cout << "NO RECO DATA PRODUCTS" << std::endl;
+    std::cout << "[ElectronEventSelectionAlg] " << "NO RECO DATA PRODUCTS" << std::endl;
     return false;
   }
 
@@ -448,7 +448,7 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
   }
 
   _n_neutrino_candidates = _primary_indexes.size();
-  std::cout << "Primary PFParticles " << _n_neutrino_candidates << std::endl;
+  std::cout << "[ElectronEventSelectionAlg] " << "Primary PFParticles " << _n_neutrino_candidates << std::endl;
   // For each of the primary particles, determine if it and it's daughters pass the cuts:
 
   // Need associations from pfparticle to vertex
@@ -456,8 +456,8 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
 
 
   for (auto & _i_primary : _primary_indexes ) {
-    std::cout << "Primary PDG " << pfparticle_handle->at(_i_primary).PdgCode() << std::endl;
-    std::cout << "N. of Daughters " << pfparticle_handle->at(_i_primary).NumDaughters() << std::endl;
+    std::cout << "[ElectronEventSelectionAlg] " << "Primary PDG " << pfparticle_handle->at(_i_primary).PdgCode() << std::endl;
+    std::cout << "[ElectronEventSelectionAlg] " << "N. of Daughters " << pfparticle_handle->at(_i_primary).NumDaughters() << std::endl;
 
     _neutrino_candidate_passed[_i_primary] = false;
     _center_of_charge[_i_primary] = TVector3(0,0,0);
@@ -481,7 +481,7 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
                                        _selected_flash,
                                        evt);
 
-    std::cout << "Flash passed? " << _flash_passed << std::endl;
+    std::cout << "[ElectronEventSelectionAlg] " << "Flash passed? " << _flash_passed << std::endl;
     _op_flash_indexes[_i_primary] = _selected_flash;
 
     if (! _flash_passed) {
@@ -504,11 +504,12 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
 
       if (! is_fiducial(_neutrino_vertex.at(_i_primary))) {
         _neutrino_candidate_passed[_i_primary] = false;
-        std::cout << "Neutrino vertex not within fiducial volume" << std::endl;
+        std::cout << "[ElectronEventSelectionAlg] " << "Neutrino vertex not within fiducial volume" << std::endl;
         continue;
       }
     } catch (...) {
-      std::cout << "NO VERTEX AVAILABLE " << std::endl;
+      std::cout << "[ElectronEventSelectionAlg] " << "NO VERTEX AVAILABLE " << std::endl;
+      return false;
     }
 
 
@@ -520,7 +521,7 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
 
     for (auto const& pfdaughter : pfparticle_handle->at(_i_primary).Daughters())
     {
-      std::cout << "Daughter PDG " << pfparticle_handle->at(pfdaughter).PdgCode() << std::endl;
+      std::cout << "[ElectronEventSelectionAlg] " << "Daughter PDG " << pfparticle_handle->at(pfdaughter).PdgCode() << std::endl;
 
       if (pfparticle_handle->at(pfdaughter).PdgCode() == 11)
       {
@@ -545,8 +546,14 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
             _pfp_id_showers_from_primary[_i_primary].push_back(pfdaughter);
             showers++;
           }
+          std::cout << "[ElectronEventSelectionAlg] " << "Shower energy array length " << shower_obj->Energy().size() << std::endl;
+          std::cout << "[ElectronEventSelectionAlg] " << "Shower best plane " << shower_obj->best_plane() << std::endl;
+          for (size_t i = 0; i < shower_obj->Energy().size();i++) {
+            std::cout << "[ElectronEventSelectionAlg] " << "E " << shower_obj->Energy()[i] << std::endl;
+          }
         } catch (...) {
-          std::cout << "NO SHOWERS AVAILABLE" << std::endl;
+          std::cout << "[ElectronEventSelectionAlg] " << "NO SHOWERS AVAILABLE" << std::endl;
+          return false;
         }
       }
 
@@ -560,6 +567,11 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
           auto const& track_obj = track_per_pfpart.at(pfdaughter);
 
           tracks++;
+          std::cout << "Tracks " << tracks << std::endl;
+          std::cout << "track obj length " << track_obj->Length() << std::endl;
+          std::cout << "pfdaughter " << pfdaughter << std::endl;
+          std::cout << "i primary " << _i_primary << std::endl;
+
           _pfp_id_tracks_from_primary[_i_primary].push_back(pfdaughter);
 
           if (track_obj->Length() > m_trackLength) {
@@ -569,7 +581,8 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
 
 
         } catch (...) {
-          std::cout << "NO TRACKS AVAILABLE" << std::endl;
+          std::cout << "[ElectronEventSelectionAlg] " << "NO TRACKS AVAILABLE" << std::endl;
+          return false;
         }
         // h_track_length->Fill(track_obj->Length());
       }
@@ -577,7 +590,7 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
       _n_tracks[_i_primary] = tracks;
       _n_showers[_i_primary] = showers;
 
-      std::cout << "Showers tracks " << showers << " " << tracks << std::endl;
+      std::cout << "[ElectronEventSelectionAlg] " << "Showers tracks " << showers << " " << tracks << std::endl;
 
       if (showers >= 1 && tracks >= m_nTracks)
       {
@@ -594,12 +607,10 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
   // Last, determine if any primary particles passed:
   for (auto  val : _neutrino_candidate_passed) {
     if (val.second) {
-      std::cout << "EVENT SELECTED" << std::endl;
+      std::cout << "[ElectronEventSelectionAlg] " << "EVENT SELECTED" << std::endl;
       return true;
     }
   }
-
-
 
 
   return false;

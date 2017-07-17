@@ -1,16 +1,3 @@
-#include "services_microboone.fcl"
-#include "singles_microboone.fcl"
-#include "largeantmodules_microboone.fcl"
-#include "mcreco.fcl"
-#include "detsimmodules_microboone.fcl"
-#include "triggersim_microboone.fcl"
-#include "opticaldetectorsim_microboone.fcl"
-#include "opticaldetectormodules_microboone.fcl"
-#include "photpropservices_microboone.fcl"
-#include "correct_saturation.fcl"
-#include "caldata_microboone.fcl"
-#include "time_memory_tracker_microboone.fcl"
-#include "photpropservices_microboone.fcl"
 
 #include "pandora_lee_ana.fcl"
 #include "decisiontreeidana.fcl"
@@ -23,34 +10,7 @@
 #include "neutrinoflashmatch.fcl"
 #include "cosmicflashmatch.fcl"
 #include "ubxsec.fcl"
-
-process_name : PandoraLEEAnalyzer      #The process name must NOT contain any underscores
-
-source : {
-  module_type : RootInput
-  maxEvents   : -1
-}
-
-services :
-{
-  scheduler:                { defaultExceptions: false }    # Make all uncaught exceptions fatal.
-  TFileService:             { fileName: "PandoraLEEAnalyzer.root" }
-  TimeTracker:              {}
-  RandomNumberGenerator:    {}
-  @table::microboone_services_reco
-  @table::microboone_simulation_services
-  BackTracker:             @local::microboone_backtracker
-
-}
-
-outputs: {
-  optionalout: {
-    module_type: RootOutput
-    fileName: "output_file.root"
-    dataTier: "reconstructed"
-    fastCloning: false
-  }
-}
+#include "pandora_lee_ana_common.fcl"
 
 
 physics: {
@@ -89,28 +49,6 @@ physics: {
   end_paths: [ path0 ]
 
 }
-services.DetectorClocksService.InheritClockConfig:         false
-services.DetectorClocksService.TriggerOffsetTPC:           -0.400e3
-services.ChannelStatusService.ChannelStatusProvider.UseDB: false
-services.message.destinations :
-{
-  STDCOUT:
-  {
-     type:      "cout"      #tells the message service to output this destination to cout
-     threshold: "WARNING"   #tells the message service that this destination applies to WARNING and higher level messages
-     append:     true       #says to append all messages to the output
-     categories:
-     {
-       ChannelFilter:
-       {
-         limit: 0
-         reportEvery: 0
-       }
-       default:
-       {
-         limit: -1  #don't print anything at the infomsg level except the explicitly named categories
-         reportEvery: 1
-       }
-     }
-  }
-}
+
+physics.analyzers.robertoana.isData: false
+
