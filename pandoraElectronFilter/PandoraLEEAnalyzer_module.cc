@@ -475,10 +475,12 @@ void lee::PandoraLEEAnalyzer::get_daughter_showers(std::vector < size_t > pf_ids
 
 void lee::PandoraLEEAnalyzer::dEdxFromdQdx(std::vector< double > &dedx, std::vector< double > &dqdx) {
 
-  for (size_t i = 0; i < dqdx.size(); i++) {
-    if (dqdx[i] > 0) dedx[i] = dqdx[i]*(23./1e6)/0.62;
-    std::cout << "[dEdx] " << i << " " << dedx[i] << std::endl;
+  double work_function = 23;
+  double recombination_factor = 0.62;
 
+  for (size_t i = 0; i < dqdx.size(); i++) {
+    if (dqdx[i] > 0) dedx[i] = dqdx[i]*(work_function/1e6)/recombination_factor;
+    std::cout << "[dEdx] " << i << " " << dedx[i] << std::endl;
   }
 
 }
@@ -598,7 +600,7 @@ void lee::PandoraLEEAnalyzer::dQdx(size_t pfp_id, const art::Event & evt, std::v
       std::vector< double > hit_pos = {hit->WireID().Wire*0.3,500*drift*hit->PeakTime()};
 
       double pitch = getPitch(shower_dir, clusters[icl]->Plane().Plane);
-      
+
       // Hit within the rectangle
       if (withinRectangle(points, hit_pos) and pitch > 0) {
         double q = hit->Integral()*_gain;
@@ -1441,8 +1443,8 @@ void lee::PandoraLEEAnalyzer::reconfigure(fhicl::ParameterSet const & pset)
   m_fidvolZend = pset.get<double>("fidvolZend", 50);
 
   m_isData = pset.get<bool>("isData", false);
-  m_dQdxRectangleWidth = pset.get<bool>("dQdxRectangleWidth", 1);
-  m_dQdxRectangleLength = pset.get<bool>("dQdxRectangleLength", 4);
+  m_dQdxRectangleWidth = pset.get<double>("dQdxRectangleWidth", 1);
+  m_dQdxRectangleLength = pset.get<double>("dQdxRectangleLength", 4);
 
 }
 
