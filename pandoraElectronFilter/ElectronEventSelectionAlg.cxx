@@ -420,6 +420,15 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
 
   art::InputTag pandoraNu_tag { "pandoraNu" };
 
+  auto const& shower_handle = evt.getValidHandle<std::vector<recob::Shower>>(pandoraNu_tag);
+
+  auto const& showers_handle(*shower_handle);
+  for (auto & shower: showers_handle ) {
+    for (size_t i = 0; i < shower.Energy().size();i++) {
+      std::cout << "[ElectronEventSelectionAlg] " << "E " << shower.Energy()[i] << std::endl;
+    }
+  }
+
   clear();
 
   // Get the list of pfparticles:
@@ -528,6 +537,7 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
         try {
           art::FindOneP< recob::Shower > shower_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
           auto const& shower_obj = shower_per_pfpart.at(pfdaughter);
+
           bool contained_shower = false;
           std::vector<double> start_point;
           std::vector<double> end_point;
@@ -546,11 +556,11 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event & evt)
             _pfp_id_showers_from_primary[_i_primary].push_back(pfdaughter);
             showers++;
           }
-          std::cout << "[ElectronEventSelectionAlg] " << "Shower energy array length " << shower_obj->Energy().size() << std::endl;
-          std::cout << "[ElectronEventSelectionAlg] " << "Shower best plane " << shower_obj->best_plane() << std::endl;
-          for (size_t i = 0; i < shower_obj->Energy().size();i++) {
-            std::cout << "[ElectronEventSelectionAlg] " << "E " << shower_obj->Energy()[i] << std::endl;
-          }
+          // std::cout << "[ElectronEventSelectionAlg] " << "Shower energy array length " << shower_obj->Energy().size() << std::endl;
+          // std::cout << "[ElectronEventSelectionAlg] " << "Shower best plane " << shower_obj->best_plane() << std::endl;
+          // for (size_t i = 0; i < shower_obj->Energy().size();i++) {
+          //   std::cout << "[ElectronEventSelectionAlg] " << "E " << shower_obj->Energy()[i] << std::endl;
+          // }
         } catch (...) {
           std::cout << "[ElectronEventSelectionAlg] " << "NO SHOWERS AVAILABLE" << std::endl;
           return false;
