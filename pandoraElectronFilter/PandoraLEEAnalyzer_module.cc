@@ -228,8 +228,6 @@ private:
   std::vector< int > _matched_tracks;
   std::vector< int > _matched_showers;
 
-
-  double distance(double a[3], double b[3]);
   bool is_dirt(double x[3]) const;
   void measure_energy(size_t ipf, const art::Event & evt, double & energy);
   size_t choose_candidate(std::vector<size_t> & candidates, const art::Event & evt);
@@ -397,15 +395,7 @@ lee::PandoraLEEAnalyzer::~PandoraLEEAnalyzer()
   std::cout << "[PandoraLEE] " << "End!" << std::endl;
 }
 
-double lee::PandoraLEEAnalyzer::distance(double a[3], double b[3]) {
-  double d = 0;
 
-  for (int i = 0; i < 3; i++) {
-    d += pow((a[i] - b[i]), 2);
-  }
-
-  return sqrt(d);
-}
 
 art::Ptr<recob::Shower> lee::PandoraLEEAnalyzer::get_most_energetic_shower(std::vector< art::Ptr<recob::Shower> > &showers) {
   art::Ptr<recob::Shower> most_energetic_shower;
