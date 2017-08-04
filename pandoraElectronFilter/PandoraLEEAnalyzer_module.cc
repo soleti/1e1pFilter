@@ -597,7 +597,7 @@ void lee::PandoraLEEAnalyzer::dQdx(size_t pfp_id, const art::Event & evt, std::v
       std::cout << "Hit wire ID " << hit->WireID().Wire << std::endl;
       // std::cout << "Hit peak time " << hit->PeakTime() << std::endl;
 
-      std::vector< double > hit_pos = {hit->WireID().Wire*0.3,500*drift*hit->PeakTime()};
+      std::vector< double > hit_pos = {hit->WireID().Wire*wireSpacing,fromTickToNs*drift*hit->PeakTime()};
 
       double pitch = getPitch(shower_dir, clusters[icl]->Plane().Plane);
 
