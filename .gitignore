@@ -1,3 +1,9 @@
 *.root
 *.log
 *.vdp
+._*
+mem.db
+time.db
+.DS_Store
+*~
+*.txt
