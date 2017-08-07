@@ -43,233 +43,269 @@ namespace lee {
   typedef std::set< art::Ptr<recob::PFParticle> > PFParticleSet;
   typedef std::set< art::Ptr<simb::MCParticle> >  MCParticleSet;
 
-class ElectronEventSelectionAlg
-{
-public:
-  // ElectronEventSelectionAlg(){}
-  // ~ElectronEventSelectionAlg(){}
-
-  /**
-   * @brief Main Event Selection Function
-   * @details Decides whether or not this event is an electron neutrino candidate
-   *
-   * @param evt art::Event containing the information for this event.
-   * @return True or False.  True == event passed cuts, false == event failed cuts
-   */
-  bool eventSelected(const art::Event & evt);
+  class ElectronEventSelectionAlg
+  {
+  public:
+    // ElectronEventSelectionAlg(){}
+    // ~ElectronEventSelectionAlg(){}
 
 
-  /**
-   * @brief Configure all of the parameters of this class
-   *
-   * @param p fcl parameter set
-   */
-  void reconfigure(fhicl::ParameterSet const & p) ;
+
+    /**
+    * @brief Main Event Selection Function
+    * @details Decides whether or not this event is an electron neutrino candidate
+    *
+    * @param evt art::Event containing the information for this event.
+    * @return True or False.  True == event passed cuts, false == event failed cuts
+    */
+    bool eventSelected(const art::Event & evt);
 
 
-  // General Worker functions
-
-  /**
-   * @brief Determine if the specified point is in the fiducial volume
-   *
-   * @param x vector of length 3
-   * @return True or false
-   */
-  bool is_fiducial(const std::vector<double> & x) const;
-
-  /**
-   * @brief Determine if the specified point is in the fiducial volume
-   *
-   * @param x TVector3 of 3D location
-   * @return True or false
-   */
-  bool is_fiducial(const TVector3 & x) const;
+    /**
+    * @brief Configure all of the parameters of this class
+    *
+    * @param p fcl parameter set
+    */
+    void reconfigure(fhicl::ParameterSet const & p) ;
 
 
-  /**
-  * @brief Determine if the specified point is in the fiducial volume
-  *        Not recommended, no array size checking is done.
-  *
-  * @param x array of 3D location
-  * @return True or false
-  */
-  bool is_fiducial(double x[3]) const;
+    // General Worker functions
 
-  /**
-   * @brief Compute the 3D distance between two points
-   *
-   * @param a First Point
-   * @param b Second Point
-   * @return Returns SQRT( (a.x - b.x)^2 + (a.y - b.y)^2 + (a.z - b.z)^2 )
-   */
-  double distance(const std::vector<double> & a , const std::vector<double> & b) const ;
+    /**
+    * @brief Determine if the specified point is in outside the TPC borders
+    *
+    * @param x vector of length 3
+    * @return True or false
+    */
+    bool is_dirt(const std::vector<double> & x) const;
 
-  /**
-   * @brief Compute the 3D distance between two points
-   *
-   * @param a First Point
-   * @param b Second Point
-   * @return Returns SQRT( (a.x - b.x)^2 + (a.y - b.y)^2 + (a.z - b.z)^2 )
-   */
-  double distance(const TVector3 & a , const TVector3 & b) const ;
+    /**
+    * @brief Determine if the specified point is in the fiducial volume
+    *
+    * @param x vector of length 3
+    * @return True or false
+    */
+    bool is_fiducial(const std::vector<double> & x) const;
 
-
-  TVector3 calculateChargeCenter(size_t ipf,
-                                 const art::ValidHandle<std::vector<recob::PFParticle> > pfparticles,
-                                 const art::Event & evt);
-
-  bool opticalfilter(  size_t ipf,
-                       const std::vector<recob::PFParticle> & pfparticles,
-                       TVector3 _this_center_of_charge,
-                       int & _selected_flash,
-                       const art::Event & evt);
-
-  void traversePFParticleTree(const art::ValidHandle<std::vector<recob::PFParticle> > pfparticles,
-                              size_t top_index,
-                              std::vector<size_t> & unordered_daugthers );
-
-  static void GetRecoToTrueMatches(const lar_pandora::PFParticlesToHits &recoParticlesToHits, const lar_pandora::HitsToMCParticles &trueHitsToParticles, lar_pandora::MCParticlesToPFParticles &matchedParticles, lar_pandora::MCParticlesToHits &matchedHits);
-  /**
-  *  @brief Perform matching between true and reconstructed particles
-  *
-  *  @param recoParticlesToHits the mapping from reconstructed particles to hits
-  *  @param trueHitsToParticles the mapping from hits to true particles
-  *  @param matchedParticles the output matches between reconstructed and true particles
-  *  @param matchedHits the output matches between reconstructed particles and hits
-  *  @param recoVeto the veto list for reconstructed particles
-  *  @param trueVeto the veto list for true particles
-  */
-  static void GetRecoToTrueMatches(const lar_pandora::PFParticlesToHits &recoParticlesToHits, const lar_pandora::HitsToMCParticles &trueHitsToParticles, lar_pandora::MCParticlesToPFParticles &matchedParticles, lar_pandora::MCParticlesToHits &matchedHits, PFParticleSet &recoVeto, MCParticleSet &trueVeto, bool _recursiveMatching);
-
-  void GetRecoToTrueMatches(art::Event const & e, std::string _pfp_producer, std::string _spacepointLabel, std::string _hitfinderLabel, std::string _geantModuleLabel, lar_pandora::MCParticlesToPFParticles &matchedParticles, lar_pandora::MCParticlesToHits &matchedHits);
+    /**
+    * @brief Determine if the specified point is in the fiducial volume
+    *
+    * @param x TVector3 of 3D location
+    * @return True or false
+    */
+    bool is_fiducial(const TVector3 & x) const;
 
 
-  /**
-   * @brief Reset internal variables
-   */
-  void clear();
+    /**
+    * @brief Determine if the specified point is in the fiducial volume
+    *        Not recommended, no array size checking is done.
+    *
+    * @param x array of 3D location
+    * @return True or false
+    */
+    bool is_fiducial(double x[3]) const;
 
-  TVector3 spaceChargeTrueToReco(const TVector3 & xyz);
+    /**
+    * @brief Compute the 3D distance between two points
+    *
+    * @param a First Point
+    * @param b Second Point
+    * @return Returns SQRT( (a.x - b.x)^2 + (a.y - b.y)^2 + (a.z - b.z)^2 )
+    */
+    double distance(const std::vector<double> & a , const std::vector<double> & b) const ;
 
+    /**
+    * @brief Compute the 3D distance between two points
+    *
+    * @param a First Point
+    * @param b Second Point
+    * @return Returns SQRT( (a.x - b.x)^2 + (a.y - b.y)^2 + (a.z - b.z)^2 )
+    */
+    double distance(const TVector3 & a , const TVector3 & b) const ;
 
-public:
+    /**
+    * @brief Measures the three-dimensional center of the deposited charge for a PFParticle
+    *
+    * @param ipf Index of the PFParticle
+    * @param pfparticles PFParticles handle
+    * @param evt art Event
+    * @return TVector3 of the charge center
+    */
+    TVector3 calculateChargeCenter(size_t ipf, const art::ValidHandle<std::vector<recob::PFParticle> > pfparticles, const art::Event & evt);
 
-  // Access functions for the saved data:
+    /**
+    * @brief Checks if there is a flash within the 3.2-4.8 ms window and compatible with the center of charge
+    *
+    * @param ipf Index of the PFParticle
+    * @param pfparticles PFParticles handle
+    * @param _this_center_of_charge Position of the center of charge
+    * @param _selected_flash index of the selected flash
+    * @param evt art Event
+    * @return True or false
+    */
+    bool opticalfilter(size_t ipf, const std::vector<recob::PFParticle> & pfparticles, TVector3 _this_center_of_charge, int & _selected_flash, const art::Event & evt);
 
-  /**
-   * @brief Returns the number of neutrino candidates from pandora, regardless of whether the passed
-   * @return Number of candidates
-   */
-
-  /**
-   * @brief Return a list of the selected pfparticle top level neutrino candidate indexes
-   */
-  const std::vector<size_t> & get_primary_indexes() const {return _primary_indexes;}
-
-  /**
-   * @brief Return the number of neutrino candidates
-   */
-  const size_t & get_n_neutrino_candidates() const {return _n_neutrino_candidates;}
-
-  /**
-   * @brief Informs whether a particular candidate passed or failed the algorithm
-   * @return Vector of bool, one-to-one with get_primary_indexes
-   */
-  const std::map<size_t, bool> & get_neutrino_candidate_passed() const {return _neutrino_candidate_passed;}
-
-  /**
-   * @brief Return the calculated center of charge, as indexed by the pfparticle id number (it's a map)
-   * @details [long description]
-   * @return [description]
-   */
-  const std::map<size_t, TVector3> & get_center_of_charge() const {return _center_of_charge;}
-
-  /**
-   * @brief Return the index of the flash matched with the pfparticle
-   * @details [long description]
-   * @return [description]
-   */
-  const std::map<size_t, int > & get_op_flash_indexes() const {return _op_flash_indexes;}
-
-  /**
-   * @brief Return the pandora calculated vertex indexed by pfparticle id number
-   * @details [long description]
-   * @return [description]
-   */
-  const std::map<size_t, TVector3> & get_neutrino_vertex() const {return _neutrino_vertex;}
-
-  /**
-   * @brief Return number of showers for this pfparticle
-   * @details [long description]
-   * @return [description]
-   */
-  const std::map<size_t, int> & get_n_showers() const {return _n_showers;}
-
-  /**
-   * @brief Return number of tracks for pfparticle index
-   * @details [long description]
-   * @return [description]
-   */
-  const std::map<size_t, int> & get_n_tracks() const {return _n_tracks;}
-
-  /**
-   * @brief Return the list of pfparticle indexes that are showers that are associated with primary pfparticle indexes
-   * @details [long description]
-   * @return [description]
-   */
-  const std::map<size_t,  std::vector<size_t> > &
-  get_pfp_id_showers_from_primary() const {return _pfp_id_showers_from_primary;}
+    /**
+    * @brief Travers the tree of the daughters of a PFParticle
+    *
+    * @param pfparticles PFParticles handle
+    * @param top_index Index of the parent
+    * @param unordered_daugthers Vector of PFParticles daughters
+    */
+    void traversePFParticleTree(const art::ValidHandle<std::vector<recob::PFParticle> > pfparticles, size_t top_index, std::vector<size_t> & unordered_daugthers );
 
 
-   /**
+    /**
+    *  @brief Perform matching between true and reconstructed particles
+    *
+    *  @param recoParticlesToHits the mapping from reconstructed particles to hits
+    *  @param trueHitsToParticles the mapping from hits to true particles
+    *  @param matchedParticles the output matches between reconstructed and true particles
+    *  @param matchedHits the output matches between reconstructed particles and hits
+    *  @param recoVeto the veto list for reconstructed particles
+    *  @param trueVeto the veto list for true particles
+    */
+    void GetRecoToTrueMatches(const lar_pandora::PFParticlesToHits &recoParticlesToHits, const lar_pandora::HitsToMCParticles &trueHitsToParticles, lar_pandora::MCParticlesToPFParticles &matchedParticles, lar_pandora::MCParticlesToHits &matchedHits);
+
+    void GetRecoToTrueMatches(const lar_pandora::PFParticlesToHits &recoParticlesToHits, const lar_pandora::HitsToMCParticles &trueHitsToParticles, lar_pandora::MCParticlesToPFParticles &matchedParticles, lar_pandora::MCParticlesToHits &matchedHits, PFParticleSet &recoVeto, MCParticleSet &trueVeto, bool _recursiveMatching);
+
+    void GetRecoToTrueMatches(art::Event const & e, std::string _pfp_producer, std::string _spacepointLabel, std::string _hitfinderLabel, std::string _geantModuleLabel, lar_pandora::MCParticlesToPFParticles &matchedParticles, lar_pandora::MCParticlesToHits &matchedHits);
+
+    /**
+    * @brief Return the true coordinates corrected by the space-charge effect
+    *
+    * @param xyz TVector3 of the true position
+    * @return TVector3 of the space-charge corrected position
+    */
+    TVector3 spaceChargeTrueToReco(const TVector3 & xyz);
+
+    /**
+    * @brief Reset internal variables
+    */
+    void clear();
+
+
+
+  public:
+
+    // Access functions for the saved data:
+
+    /**
+    * @brief Returns the number of neutrino candidates from pandora, regardless of whether the passed
+    * @return Number of candidates
+    */
+
+    /**
+    * @brief Return a list of the selected pfparticle top level neutrino candidate indexes
+    */
+    const std::vector<size_t> & get_primary_indexes() const {return _primary_indexes;}
+
+    /**
+    * @brief Return the number of neutrino candidates
+    */
+    const size_t & get_n_neutrino_candidates() const {return _n_neutrino_candidates;}
+
+    /**
+    * @brief Informs whether a particular candidate passed or failed the algorithm
+    * @return Vector of bool, one-to-one with get_primary_indexes
+    */
+    const std::map<size_t, bool> & get_neutrino_candidate_passed() const {return _neutrino_candidate_passed;}
+
+    /**
+    * @brief Return the calculated center of charge, as indexed by the pfparticle id number (it's a map)
+    * @details [long description]
+    * @return [description]
+    */
+    const std::map<size_t, TVector3> & get_center_of_charge() const {return _center_of_charge;}
+
+    /**
+    * @brief Return the index of the flash matched with the pfparticle
+    * @details [long description]
+    * @return [description]
+    */
+    const std::map<size_t, int > & get_op_flash_indexes() const {return _op_flash_indexes;}
+
+    /**
+    * @brief Return the pandora calculated vertex indexed by pfparticle id number
+    * @details [long description]
+    * @return [description]
+    */
+    const std::map<size_t, TVector3> & get_neutrino_vertex() const {return _neutrino_vertex;}
+
+    /**
+    * @brief Return number of showers for this pfparticle
+    * @details [long description]
+    * @return [description]
+    */
+    const std::map<size_t, int> & get_n_showers() const {return _n_showers;}
+
+    /**
+    * @brief Return number of tracks for pfparticle index
+    * @details [long description]
+    * @return [description]
+    */
+    const std::map<size_t, int> & get_n_tracks() const {return _n_tracks;}
+
+    /**
+    * @brief Return the list of pfparticle indexes that are showers that are associated with primary pfparticle indexes
+    * @details [long description]
+    * @return [description]
+    */
+    const std::map<size_t,  std::vector<size_t> > &
+    get_pfp_id_showers_from_primary() const {return _pfp_id_showers_from_primary;}
+
+
+    /**
     * @brief Return the list of pfparticle indexes that are tracks that are associated with primary pfparticle indexes
     * @details [long description]
     * @return [description]
     */
-  const std::map<size_t,  std::vector<size_t> > &
-  get_pfp_id_tracks_from_primary() const {return _pfp_id_tracks_from_primary;}
+    const std::map<size_t,  std::vector<size_t> > &
+    get_pfp_id_tracks_from_primary() const {return _pfp_id_tracks_from_primary;}
 
 
-protected:
+  protected:
 
-  // Variables that are used to determine the selection and might be worth passing
-  // to an analyzer module:
-
-
-  size_t _n_neutrino_candidates;
-  std::vector<size_t> _primary_indexes;
-  std::map<size_t, bool> _neutrino_candidate_passed;
-  std::map<size_t, TVector3> _center_of_charge;
-  std::map<size_t, int > _op_flash_indexes;
-  std::map<size_t, TVector3> _neutrino_vertex;
-  std::map<size_t, int> _n_showers;
-  std::map<size_t,  std::vector < size_t > > _pfp_id_showers_from_primary;
-  std::map<size_t, int> _n_tracks;
-  std::map<size_t, std::vector < size_t > > _pfp_id_tracks_from_primary;
+    // Variables that are used to determine the selection and might be worth passing
+    // to an analyzer module:
 
 
-protected:
-
-  // Configurable variables from the fcl file:
-  int m_nTracks;
-  double m_fidvolXstart;
-  double m_fidvolXend;
-
-  double m_fidvolYstart;
-  double m_fidvolYend;
-
-  double m_fidvolZstart;
-  double m_fidvolZend;
-
-  double m_trackLength;
-
-  double m_fractionsigmaflashwidth;
-  double m_absoluteflashdist;
-
-  std::string fOpticalFlashFinderLabel;
+    size_t _n_neutrino_candidates;
+    std::vector<size_t> _primary_indexes;
+    std::map<size_t, bool> _neutrino_candidate_passed;
+    std::map<size_t, TVector3> _center_of_charge;
+    std::map<size_t, int > _op_flash_indexes;
+    std::map<size_t, TVector3> _neutrino_vertex;
+    std::map<size_t, int> _n_showers;
+    std::map<size_t,  std::vector < size_t > > _pfp_id_showers_from_primary;
+    std::map<size_t, int> _n_tracks;
+    std::map<size_t, std::vector < size_t > > _pfp_id_tracks_from_primary;
 
 
-};
+  protected:
+
+    // Configurable variables from the fcl file:
+    int m_nTracks;
+    double m_fidvolXstart;
+    double m_fidvolXend;
+
+    double m_fidvolYstart;
+    double m_fidvolYend;
+
+    double m_fidvolZstart;
+    double m_fidvolZend;
+
+    double m_trackLength;
+
+    double m_fractionsigmaflashwidth;
+    double m_absoluteflashdist;
+
+    std::string _pfp_producer = "pandoraNu";
+
+    std::string fOpticalFlashFinderLabel;
+
+
+  };
 
 } // lee
 
