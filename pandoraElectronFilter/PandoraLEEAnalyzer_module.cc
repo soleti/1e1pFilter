@@ -964,6 +964,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const & evt)
   _subrun = evt.subRun();
   _event = evt.id().event();
 
+  // nu_e flux must be corrected by event weight
   if (!m_isData) {
     art::InputTag eventweight_tag("eventweight");
 
