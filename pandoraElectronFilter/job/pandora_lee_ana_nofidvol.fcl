@@ -1,0 +1,21 @@
+#include "electron_selection_alg.fcl"
+
+BEGIN_PROLOG
+
+lee_pandora_analyzer:
+{
+    module_type:                "PandoraLEEAnalyzer"
+    ElectronSelectionAlg:       @local::lee_electron_alg
+
+    PrintDebug:                 false
+    trackLength:                100
+    fidvolXstart:               0
+    fidvolXstart:               0
+    fidvolYstart:               0
+    fidvolYend:                 0
+    fidvolZstart:               0
+    fidvolZend:                 0
+}
+
+
+END_PROLOG
