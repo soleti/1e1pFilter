@@ -243,6 +243,11 @@ namespace lee {
     bool withinRectangle(std::vector< std::vector < double > > &points, std::vector< double > &point);
     art::Ptr<recob::Track> get_longest_track(std::vector< art::Ptr<recob::Track> > &tracks);
     art::Ptr<recob::Shower> get_most_energetic_shower(std::vector< art::Ptr<recob::Shower> > &showers);
+    bool doIntersect(std::vector< double > p1, std::vector< double > q1, std::vector< double > p2, std::vector< double > q2);
+    bool isInside(std::vector< std::vector< double > > &polygon, std::vector< double > &p);
+    int orientation(std::vector< double > p, std::vector< double > q, std::vector< double > r);
+    bool onSegment(std::vector< double > p, std::vector< double > q, std::vector< double > r);
+
 
   };
 }
