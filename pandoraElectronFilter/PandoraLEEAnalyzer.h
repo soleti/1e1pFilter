@@ -59,6 +59,7 @@
 #include "lardata/DetectorInfoServices/DetectorPropertiesService.h"
 
 namespace lee {
+
 class PandoraLEEAnalyzer : public art::EDAnalyzer {
 public:
   explicit PandoraLEEAnalyzer(fhicl::ParameterSet const &pset);
@@ -224,11 +225,11 @@ private:
 
   size_t choose_candidate(std::vector<size_t> &candidates,
                           const art::Event &evt);
-  int correct_direction(size_t pfp_id, const art::Event &evt);
   void clear();
   art::Ptr<recob::Track>
   get_longest_track(std::vector<art::Ptr<recob::Track>> &tracks);
   art::Ptr<recob::Shower>
   get_most_energetic_shower(std::vector<art::Ptr<recob::Shower>> &showers);
 };
+
 }

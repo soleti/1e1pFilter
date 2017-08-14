@@ -1,4 +1,4 @@
-<project name="bnb_nu_cosmic_pandora_electron_filter">
+<project name="bnb_nue_cosmic_pandora_electron_filter">
     <!--  Project size  -->
     <numevents>120000</numevents>
 

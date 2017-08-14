@@ -3,3 +3,8 @@ This module is a [LArSoft](http://www.larsoft.org) analyzer that builds a ROOT `
 It looks for neutrino PFParticles with at least one daughter shower and at least one daughter track.
 
 There are two FCL files, one for data (`run_PandoraLEEAnalyzer_data.fcl`) and one for Monte Carlo (`run_PandoraLEEAnalyzer.fcl`).
+
+## Requirements
+
+- `uboonecode v06_30_00` or higher
+- [XGBoost](http://xgboost.readthedocs.io/en/latest/). Follow the instructions in [DocDB 10685](https://microboone-docdb.fnal.gov/cgi-bin/private/ShowDocument?docid=10685).

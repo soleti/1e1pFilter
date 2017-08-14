@@ -121,8 +121,7 @@ double EnergyHelper::trackEnergy(const art::Ptr<recob::Track> &track,
 }
 
 void EnergyHelper::dQdx(size_t pfp_id, const art::Event &evt,
-                        std::vector<double> &dqdx, 
-                        double m_dQdxRectangleLength,
+                        std::vector<double> &dqdx, double m_dQdxRectangleLength,
                         double m_dQdxRectangleWidth,
                         std::string _pfp_producer) {
 
@@ -147,6 +146,10 @@ void EnergyHelper::dQdx(size_t pfp_id, const art::Event &evt,
 
   TVector3 shower_dir(shower_obj->Direction().X(), shower_obj->Direction().Y(),
                       shower_obj->Direction().Z());
+
+  int correct = geoHelper.correct_direction(pfp_id, evt);
+  std::cout << "[dQdx] *****"
+            << "Correct direction? " << correct << std::endl;
 
   art::FindManyP<recob::Cluster> clusters_per_pfpart(pfparticle_handle, evt,
                                                      _pfp_producer);
@@ -191,9 +194,8 @@ void EnergyHelper::dQdx(size_t pfp_id, const art::Event &evt,
     if (cluster_length <= 0)
       continue;
 
-    std::vector<double> cluster_axis = {
-        (cluster_end[0] - cluster_start[0]) / cluster_length,
-        (cluster_end[1] - cluster_start[1]) / cluster_length};
+    std::vector<double> cluster_axis = {cos(clusters[icl]->StartAngle()),
+                                        sin(clusters[icl]->StartAngle())};
 
     // Build rectangle 4 x 1 cm around the cluster axis
     std::vector<std::vector<double>> points;
@@ -211,10 +213,11 @@ void EnergyHelper::dQdx(size_t pfp_id, const art::Event &evt,
       std::vector<double> hit_pos = {hit->WireID().Wire * wireSpacing,
                                      fromTickToNs * drift * hit->PeakTime()};
 
-      double pitch = geoHelper.getPitch(shower_dir, clusters[icl]->Plane().Plane);
+      double pitch =
+          geoHelper.getPitch(shower_dir, clusters[icl]->Plane().Plane);
 
       // Hit within the rectangle
-      if (geoHelper.withinRectangle(points, hit_pos) and pitch > 0) {
+      if (geoHelper.isInside(points, hit_pos) and pitch > 0) {
         double q = hit->Integral() * _gain;
         dqdxs.push_back(q / pitch);
       }

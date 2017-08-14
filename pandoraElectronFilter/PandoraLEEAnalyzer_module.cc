@@ -190,47 +190,9 @@ art::Ptr<recob::Track> lee::PandoraLEEAnalyzer::get_longest_track(
   return longest_track;
 }
 
-// CORRECT SHOWER DIRECTION THAT SOMETIMES IS INVERTED
-int lee::PandoraLEEAnalyzer::correct_direction(size_t pfp_id,
-                                               const art::Event &evt) {
 
-  auto const &pfparticle_handle =
-      evt.getValidHandle<std::vector<recob::PFParticle>>(_pfp_producer);
 
-  art::FindManyP<recob::SpacePoint> spcpnts_per_pfpart(pfparticle_handle, evt,
-                                                       _pfp_producer);
-  std::vector<art::Ptr<recob::SpacePoint>> spcpnts =
-      spcpnts_per_pfpart.at(pfp_id);
 
-  int direction = 1;
-
-  if (spcpnts.size() > 0) {
-    art::FindOneP<recob::Vertex> vertex_per_pfpart(pfparticle_handle, evt,
-                                                   _pfp_producer);
-    auto const &vertex_obj = vertex_per_pfpart.at(pfp_id);
-    double vertex_xyz[3];
-    vertex_obj->XYZ(vertex_xyz);
-    TVector3 start_vec(vertex_xyz[0], vertex_xyz[1], vertex_xyz[2]);
-
-    art::FindOneP<recob::Shower> shower_per_pfpart(pfparticle_handle, evt,
-                                                   _pfp_producer);
-    auto const &shower_obj = shower_per_pfpart.at(pfp_id);
-    TVector3 shower_vec(shower_obj->Direction().X(),
-                        shower_obj->Direction().Y(),
-                        shower_obj->Direction().Z());
-
-    TVector3 avg_spcpnt = geoHelper.getAveragePosition(spcpnts);
-
-    TVector3 a;
-    TVector3 b;
-    a = shower_vec;
-    b = avg_spcpnt - start_vec;
-    double costheta = a.Dot(b);
-    direction = costheta >= 0 ? 1 : -1;
-  }
-
-  return direction;
-}
 
 size_t
 lee::PandoraLEEAnalyzer::choose_candidate(std::vector<size_t> &candidates,
@@ -688,7 +650,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
       _shower_dQdx.push_back(dqdx);
       _shower_dEdx.push_back(dedx);
 
-      int direction = correct_direction(pf_id, evt);
+      int direction = geoHelper.correct_direction(pf_id, evt);
       // std::cout << "[PandoraLEE] " << "Correct direction " << direction <<
       // std::endl;
       art::FindOneP<recob::Shower> shower_per_pfpart(pfparticle_handle, evt,
