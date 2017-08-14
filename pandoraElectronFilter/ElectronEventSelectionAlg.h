@@ -20,9 +20,7 @@
 #include "canvas/Persistency/Common/FindManyP.h"
 #include "canvas/Utilities/InputTag.h"
 
-#include "TVector3.h"
 
-#include "larpandora/LArPandoraInterface/LArPandoraHelper.h"
 #include "lardataobj/RecoBase/PFParticle.h"
 #include "lardataobj/RecoBase/Vertex.h"
 #include "lardataobj/RecoBase/Track.h"
@@ -32,16 +30,15 @@
 #include "lardataobj/RecoBase/Hit.h"
 #include "lardataobj/RecoBase/OpFlash.h"
 
-#include "larcore/Geometry/Geometry.h"
 #include "uboone/SpaceChargeServices/SpaceChargeServiceMicroBooNE.h"
+
+#include "GeometryHelper.h"
+#include "PandoraInterfaceHelper.h"
 
 
 namespace lee {
 
-  typedef std::map< art::Ptr<recob::PFParticle>, unsigned int > RecoParticleToNMatchedHits;
-  typedef std::map< art::Ptr<simb::MCParticle>,  RecoParticleToNMatchedHits > ParticleMatchingMap;
-  typedef std::set< art::Ptr<recob::PFParticle> > PFParticleSet;
-  typedef std::set< art::Ptr<simb::MCParticle> >  MCParticleSet;
+
 
   class ElectronEventSelectionAlg
   {
@@ -79,59 +76,8 @@ namespace lee {
     */
     bool is_dirt(const std::vector<double> & x) const;
 
-    /**
-    * @brief Determine if the specified point is in the fiducial volume
-    *
-    * @param x vector of length 3
-    * @return True or false
-    */
-    bool is_fiducial(const std::vector<double> & x) const;
+    
 
-    /**
-    * @brief Determine if the specified point is in the fiducial volume
-    *
-    * @param x TVector3 of 3D location
-    * @return True or false
-    */
-    bool is_fiducial(const TVector3 & x) const;
-
-
-    /**
-    * @brief Determine if the specified point is in the fiducial volume
-    *        Not recommended, no array size checking is done.
-    *
-    * @param x array of 3D location
-    * @return True or false
-    */
-    bool is_fiducial(double x[3]) const;
-
-    /**
-    * @brief Compute the 3D distance between two points
-    *
-    * @param a First Point
-    * @param b Second Point
-    * @return Returns SQRT( (a.x - b.x)^2 + (a.y - b.y)^2 + (a.z - b.z)^2 )
-    */
-    double distance(const std::vector<double> & a , const std::vector<double> & b) const ;
-
-    /**
-    * @brief Compute the 3D distance between two points
-    *
-    * @param a First Point
-    * @param b Second Point
-    * @return Returns SQRT( (a.x - b.x)^2 + (a.y - b.y)^2 + (a.z - b.z)^2 )
-    */
-    double distance(const TVector3 & a , const TVector3 & b) const ;
-
-    /**
-    * @brief Measures the three-dimensional center of the deposited charge for a PFParticle
-    *
-    * @param ipf Index of the PFParticle
-    * @param pfparticles PFParticles handle
-    * @param evt art Event
-    * @return TVector3 of the charge center
-    */
-    TVector3 calculateChargeCenter(size_t ipf, const art::ValidHandle<std::vector<recob::PFParticle> > pfparticles, const art::Event & evt);
 
     /**
     * @brief Checks if there is a flash within the 3.2-4.8 ms window and compatible with the center of charge
@@ -145,32 +91,7 @@ namespace lee {
     */
     bool opticalfilter(size_t ipf, const std::vector<recob::PFParticle> & pfparticles, TVector3 _this_center_of_charge, int & _selected_flash, const art::Event & evt);
 
-    /**
-    * @brief Travers the tree of the daughters of a PFParticle
-    *
-    * @param pfparticles PFParticles handle
-    * @param top_index Index of the parent
-    * @param unordered_daugthers Vector of PFParticles daughters
-    */
-    void traversePFParticleTree(const art::ValidHandle<std::vector<recob::PFParticle> > pfparticles, size_t top_index, std::vector<size_t> & unordered_daugthers );
-
-
-    /**
-    *  @brief Perform matching between true and reconstructed particles
-    *
-    *  @param recoParticlesToHits the mapping from reconstructed particles to hits
-    *  @param trueHitsToParticles the mapping from hits to true particles
-    *  @param matchedParticles the output matches between reconstructed and true particles
-    *  @param matchedHits the output matches between reconstructed particles and hits
-    *  @param recoVeto the veto list for reconstructed particles
-    *  @param trueVeto the veto list for true particles
-    */
-    void GetRecoToTrueMatches(const lar_pandora::PFParticlesToHits &recoParticlesToHits, const lar_pandora::HitsToMCParticles &trueHitsToParticles, lar_pandora::MCParticlesToPFParticles &matchedParticles, lar_pandora::MCParticlesToHits &matchedHits);
-
-    void GetRecoToTrueMatches(const lar_pandora::PFParticlesToHits &recoParticlesToHits, const lar_pandora::HitsToMCParticles &trueHitsToParticles, lar_pandora::MCParticlesToPFParticles &matchedParticles, lar_pandora::MCParticlesToHits &matchedHits, PFParticleSet &recoVeto, MCParticleSet &trueVeto, bool _recursiveMatching);
-
-    void GetRecoToTrueMatches(art::Event const & e, std::string _pfp_producer, std::string _spacepointLabel, std::string _hitfinderLabel, std::string _geantModuleLabel, lar_pandora::MCParticlesToPFParticles &matchedParticles, lar_pandora::MCParticlesToHits &matchedHits);
-
+    
     /**
     * @brief Return the true coordinates corrected by the space-charge effect
     *
@@ -304,6 +225,11 @@ namespace lee {
 
     std::string fOpticalFlashFinderLabel;
 
+    // Helper class for geometry functions:
+    GeometryHelper geoHelper;
+
+    // Helper class for dealing with pandora heirarchy:
+    PandoraInterfaceHelper pandoraHelper;
 
   };
 
