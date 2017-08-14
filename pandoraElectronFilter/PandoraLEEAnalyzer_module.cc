@@ -455,9 +455,9 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
 
       _interaction_type = generator[0].GetNeutrino().InteractionType();
 
-      std::string _env = std::getenv("MRB_INSTALL");
+      std::string _env = std::getenv("UBOONE_DATA_DIR");
       _env =
-          _env + "/pandoraElectronFilter/v00_01_00/slf6.x86_64.e10.prof/lib/";
+          _env + "/SpaceCharge/";
 
       SpaceChargeMicroBooNE SCE =
           SpaceChargeMicroBooNE(_env + "SCEoffsets_MicroBooNE_E273.root");
