@@ -66,17 +66,6 @@ namespace lee {
     void reconfigure(fhicl::ParameterSet const & p) ;
 
 
-    // General Worker functions
-
-    /**
-    * @brief Determine if the specified point is in outside the TPC borders
-    *
-    * @param x vector of length 3
-    * @return True or false
-    */
-    bool is_dirt(const std::vector<double> & x) const;
-
-    
 
 
     /**
