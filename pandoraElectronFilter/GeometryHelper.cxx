@@ -135,6 +135,23 @@ TVector3 GeometryHelper::getAveragePosition(
                   avg_z / spcpnts.size());
 }
 
+
+int
+GeometryHelper::cn_PnPoly( std::vector<double> P, std::vector<std::vector<double>> V)
+{
+
+  int nvert = (int)V.size();
+
+  int i, j, c = 0;
+  for (i = 0, j = nvert-1; i < nvert; j = i++) {
+    if ( ((V[i][1]>P[1]) != (V[j][1]>P[1])) &&
+    (P[0] < (V[j][0]-V[i][0]) * (P[1]-V[i][1]) / (V[j][1]-V[i][1]) + V[i][0]) )
+    c = !c;
+  }
+  return c;
+}
+
+
 double GeometryHelper::getPitch(const TVector3 &direction,
                                 const int &pl) const {
   // prepare a direction vector for the plane
@@ -235,7 +252,7 @@ bool GeometryHelper::isInside(std::vector<std::vector<double>> &polygon,
     return false;
 
   // Create a std::vector< double > for line segment from p to infinite
-  std::vector<double> extreme = {std::numeric_limits<double>::max(), p[1]};
+  std::vector<double> extreme = {10000, p[1]};
 
   // Count intersections of the above line with sides of polygon
   int count = 0, i = 0;
@@ -270,11 +287,15 @@ void GeometryHelper::buildRectangle(double length, double width,
   std::vector<double> p1 = {start[0] + perp_axis[0] * width / 2,
                             start[1] + perp_axis[1] * width / 2};
   std::vector<double> p2 = {p1[0] + axis[0] * length, p1[1] + axis[1] * length};
+
   std::vector<double> p3 = {start[0] - perp_axis[0] * width / 2,
                             start[1] - perp_axis[1] * width / 2};
   std::vector<double> p4 = {p3[0] + axis[0] * length, p3[1] + axis[1] * length};
 
-  points.insert(points.end(), {p1, p2, p3, p4});
+
+
+
+  points.insert(points.end(), {p1, p2, p4, p3});
 }
 
 // CORRECT SHOWER DIRECTION THAT SOMETIMES IS INVERTED

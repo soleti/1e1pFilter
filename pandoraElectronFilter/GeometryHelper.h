@@ -28,6 +28,9 @@ public:
   GeometryHelper() = default;
   ~GeometryHelper() = default;
 
+  int
+     cn_PnPoly( std::vector<double> P, std::vector<std::vector<double>> V);
+
   /**
    * @brief Determine if the specified point is in the fiducial volume
    *

@@ -202,6 +202,11 @@ void EnergyHelper::dQdx(size_t pfp_id, const art::Event &evt,
     geoHelper.buildRectangle(m_dQdxRectangleLength, m_dQdxRectangleWidth,
                              cluster_start, cluster_axis, points);
 
+    std::cout << "[dQdx] Point 1 " << points[0][0] << " " << points[0][1] << std::endl;
+    std::cout << "[dQdx] Point 2 " << points[1][0] << " " << points[1][1] << std::endl;
+    std::cout << "[dQdx] Point 3 " << points[2][0] << " " << points[2][1] << std::endl;
+    std::cout << "[dQdx] Point 4 " << points[3][0] << " " << points[3][1] << std::endl;
+
     std::vector<double> dqdxs;
 
     for (auto &hit : hits) {
@@ -213,14 +218,18 @@ void EnergyHelper::dQdx(size_t pfp_id, const art::Event &evt,
       std::vector<double> hit_pos = {hit->WireID().Wire * wireSpacing,
                                      fromTickToNs * drift * hit->PeakTime()};
 
+
       double pitch =
           geoHelper.getPitch(shower_dir, clusters[icl]->Plane().Plane);
 
+      bool is_within = geoHelper.cn_PnPoly(hit_pos, points);
       // Hit within the rectangle
-      if (geoHelper.isInside(points, hit_pos) and pitch > 0) {
+      if (is_within) {
         double q = hit->Integral() * _gain;
         dqdxs.push_back(q / pitch);
       }
+      //std::cout << "[dQdx] Hit pos " << is_within << " " << is_within2 << " " << hit_pos[0] << " " << hit_pos[1] << std::endl;
+
     }
 
     // Get the median
