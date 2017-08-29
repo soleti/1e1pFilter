@@ -36,7 +36,7 @@ void ElectronEventSelectionAlg::reconfigure(fhicl::ParameterSet const &p) {
   m_trackLength = p.get<int>("trackLength", 100);
 
   m_fidvolXstart = p.get<double>("fidvolXstart", 10);
-  m_fidvolXend = p.get<double>("fidvolXstart", 10);
+  m_fidvolXend = p.get<double>("fidvolXend", 10);
 
   m_fidvolYstart = p.get<double>("fidvolYstart", 20);
   m_fidvolYend = p.get<double>("fidvolYend", 20);

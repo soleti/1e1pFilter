@@ -209,6 +209,8 @@ void EnergyHelper::dQdx(size_t pfp_id, const art::Event &evt,
 
     std::vector<double> dqdxs;
 
+    bool first = true;
+
     for (auto &hit : hits) {
 
       // std::cout << "[PandoraLEE] Hit wire ID " << hit->WireID().Wire <<
@@ -222,18 +224,24 @@ void EnergyHelper::dQdx(size_t pfp_id, const art::Event &evt,
       double pitch =
           geoHelper.getPitch(shower_dir, clusters[icl]->Plane().Plane);
 
-      bool is_within = geoHelper.cn_PnPoly(hit_pos, points);
-      // Hit within the rectangle
-      if (is_within) {
+      bool is_within = geoHelper.isInside(hit_pos, points);
+
+      // Hit within the rectangle. The function considers points on the border
+      // as outside, so we manually add the first point
+
+      if (is_within || first) {
         double q = hit->Integral() * _gain;
         dqdxs.push_back(q / pitch);
       }
+      first = false;
+
       //std::cout << "[dQdx] Hit pos " << is_within << " " << is_within2 << " " << hit_pos[0] << " " << hit_pos[1] << std::endl;
 
     }
 
     // Get the median
     size_t n = dqdxs.size() / 2;
+
     std::nth_element(dqdxs.begin(), dqdxs.begin() + n, dqdxs.end());
     if (n > 0) {
       std::cout << "[dQdx] Plane dQdx " << clusters[icl]->Plane().Plane << " "
@@ -241,6 +249,13 @@ void EnergyHelper::dQdx(size_t pfp_id, const art::Event &evt,
                 << std::endl;
 
       dqdx[clusters[icl]->Plane().Plane] = dqdxs[n];
+    } else {
+      for (auto &hit : hits) {
+        std::vector<double> hit_pos = {hit->WireID().Wire * wireSpacing,
+                                       fromTickToNs * drift * hit->PeakTime()};
+
+        std::cout << "[dQdx] Hit pos " << hit_pos[0] << " " << hit_pos[1] << std::endl;
+      }
     }
   }
 }

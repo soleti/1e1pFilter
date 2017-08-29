@@ -28,8 +28,7 @@ public:
   GeometryHelper() = default;
   ~GeometryHelper() = default;
 
-  int
-     cn_PnPoly( std::vector<double> P, std::vector<std::vector<double>> V);
+  int isInside( std::vector<double> P, std::vector< std::vector<double> > V);
 
   /**
    * @brief Determine if the specified point is in the fiducial volume
@@ -149,20 +148,6 @@ public:
    *
    * @return     { description_of_the_return_value }
    */
-  bool withinRectangle(std::vector<std::vector<double>> &points,
-                       std::vector<double> &point);
-
-  bool doIntersect(std::vector<double> p1, std::vector<double> q1,
-                   std::vector<double> p2, std::vector<double> q2);
-
-  bool isInside(std::vector<std::vector<double>> &polygon,
-                std::vector<double> &p);
-
-  int orientation(std::vector<double> p, std::vector<double> q,
-                  std::vector<double> r);
-
-  bool onSegment(std::vector<double> p, std::vector<double> q,
-                 std::vector<double> r);
 
   int correct_direction(size_t pfp_id, const art::Event &evt, std::string _pfp_producer="pandoraNu");
 

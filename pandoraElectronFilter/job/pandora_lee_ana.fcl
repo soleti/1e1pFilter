@@ -10,7 +10,7 @@ lee_pandora_analyzer:
     PrintDebug:                 false
     trackLength:                100
     fidvolXstart:               10
-    fidvolXstart:               10
+    fidvolXend:                 10
     fidvolYstart:               20
     fidvolYend:                 20
     fidvolZstart:               10
