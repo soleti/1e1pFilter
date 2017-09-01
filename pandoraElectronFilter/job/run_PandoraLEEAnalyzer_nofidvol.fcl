@@ -20,17 +20,6 @@ lee_electron_alg: {
     fidvolYend:                 0
     fidvolZstart:               0
     fidvolZend:                 0
-    fractionsigmaflashwidth:    2.0
-    absoluteflashdist:          50.0
-}
-
-electron_selection_ana:
-{
-    module_type:                "ElectronSelectionAna"
-    ElectronSelectionAlg:       @local::lee_electron_alg
-
-    PrintDebug:                 false
-
 }
 
 lee_pandora_analyzer:
@@ -39,13 +28,6 @@ lee_pandora_analyzer:
     ElectronSelectionAlg:       @local::lee_electron_alg
 
     PrintDebug:                 false
-    trackLength:                100
-    fidvolXstart:               0
-    fidvolXend:                 0
-    fidvolYstart:               0
-    fidvolYend:                 0
-    fidvolZstart:               0
-    fidvolZend:                 0
 }
 
 

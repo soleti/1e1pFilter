@@ -361,6 +361,8 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
 
   _event_passed = int(fElectronEventSelectionAlg.eventSelected(evt));
 
+  std::cout << "[PandoraLEE] " << "After ElectronEventSelectionAlg" << std::endl;
+
   _category = 0;
   std::vector<double> true_neutrino_vertex(3);
 
@@ -399,51 +401,61 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
     _true_nu_is_fiducial = 0;
     std::vector<simb::MCParticle> nu_mcparticles;
 
+    bool there_is_a_neutrino = false;
+
     if (generator.size() > 0) {
-      _nu_pdg = generator[0].GetNeutrino().Nu().PdgCode();
-      _nu_energy = generator[0].GetNeutrino().Nu().E();
-      int ccnc = generator[0].GetNeutrino().CCNC();
-      if (ccnc == 1) {
-        _category = k_nc;
-      }
+      for (auto &gen: generator) {
+        if (gen.Origin() == simb::kBeamNeutrino) {
+          there_is_a_neutrino = true;
+          _nu_pdg = gen.GetNeutrino().Nu().PdgCode();
+          std::cout << _nu_pdg << std::endl;
+          std::cout << "Before GetNeutrino" << std::endl;
 
-      true_neutrino_vertex[0] = generator[0].GetNeutrino().Nu().Vx();
-      true_neutrino_vertex[1] = generator[0].GetNeutrino().Nu().Vy();
-      true_neutrino_vertex[2] = generator[0].GetNeutrino().Nu().Vz();
-      _true_vx = true_neutrino_vertex[0];
-      _true_vy = true_neutrino_vertex[1];
-      _true_vz = true_neutrino_vertex[2];
-      _true_nu_is_fiducial = int(geoHelper.isFiducial(true_neutrino_vertex));
+          _nu_energy = gen.GetNeutrino().Nu().E();
+          int ccnc = gen.GetNeutrino().CCNC();
+          std::cout << "After GetNeutrino" << std::endl;
 
-      _interaction_type = generator[0].GetNeutrino().InteractionType();
+          if (ccnc == simb::kNC) {
+            _category = k_nc;
+          }
 
-      std::string _env = std::getenv("UBOONE_DATA_DIR");
-      _env =
-          _env + "/SpaceCharge/";
 
-      SpaceChargeMicroBooNE SCE =
+          true_neutrino_vertex[0] = gen.GetNeutrino().Nu().Vx();
+          true_neutrino_vertex[1] = gen.GetNeutrino().Nu().Vy();
+          true_neutrino_vertex[2] = gen.GetNeutrino().Nu().Vz();
+          _true_vx = true_neutrino_vertex[0];
+          _true_vy = true_neutrino_vertex[1];
+          _true_vz = true_neutrino_vertex[2];
+
+          _true_nu_is_fiducial = int(geoHelper.isFiducial(true_neutrino_vertex));
+
+          _interaction_type = gen.GetNeutrino().InteractionType();
+
+          std::string _env = std::getenv("UBOONE_DATA_DIR");
+          _env = _env + "/SpaceCharge/";
+
+          SpaceChargeMicroBooNE SCE =
           SpaceChargeMicroBooNE(_env + "SCEoffsets_MicroBooNE_E273.root");
 
-      _true_vx_sce =
+          _true_vx_sce =
           _true_vx - SCE.GetPosOffsets(_true_vx, _true_vy, _true_vz)[0] + 0.7;
-      _true_vy_sce =
+          _true_vy_sce =
           _true_vy + SCE.GetPosOffsets(_true_vx, _true_vy, _true_vz)[1];
-      _true_vz_sce =
+          _true_vz_sce =
           _true_vz + SCE.GetPosOffsets(_true_vx, _true_vy, _true_vz)[2];
 
-      if (!geoHelper.isActive(true_neutrino_vertex)) {
-        _category = k_dirt;
-      }
+          if (!geoHelper.isActive(true_neutrino_vertex)) {
+            _category = k_dirt;
+          }
 
-      for (int i = 0; i < generator[0].NParticles(); i++) {
-        if (generator[0].Origin() == 1) {
-          nu_mcparticles.push_back(generator[0].GetParticle(i));
+          for (int i = 0; i < gen.NParticles(); i++) {
+            nu_mcparticles.push_back(gen.GetParticle(i));
+          }
         }
       }
-    } else {
-      _category = k_cosmic;
-      _nu_energy = std::numeric_limits<double>::lowest();
     }
+
+    if (!there_is_a_neutrino) _category = k_cosmic;
 
     for (auto &mcparticle : nu_mcparticles) {
       if (mcparticle.Process() == "primary" and mcparticle.T() != 0 and

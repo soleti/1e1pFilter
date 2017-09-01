@@ -273,7 +273,6 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt) {
           _pfp_id_tracks_from_primary[_i_primary].push_back(pfdaughter);
 
           if (track_obj->Length() > m_trackLength) {
-
             longer_tracks++;
           }
 
@@ -308,6 +307,8 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt) {
       return true;
     }
   }
+
+
 
   return false;
 }

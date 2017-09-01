@@ -235,7 +235,7 @@ void EnergyHelper::dQdx(size_t pfp_id, const art::Event &evt,
       }
       first = false;
 
-      //std::cout << "[dQdx] Hit pos " << is_within << " " << is_within2 << " " << hit_pos[0] << " " << hit_pos[1] << std::endl;
+      // std::cout << "[dQdx] Hit pos " << is_within << " " << hit_pos[0] << " " << hit_pos[1] << std::endl;
 
     }
 
@@ -249,14 +249,8 @@ void EnergyHelper::dQdx(size_t pfp_id, const art::Event &evt,
                 << std::endl;
 
       dqdx[clusters[icl]->Plane().Plane] = dqdxs[n];
-    } else {
-      for (auto &hit : hits) {
-        std::vector<double> hit_pos = {hit->WireID().Wire * wireSpacing,
-                                       fromTickToNs * drift * hit->PeakTime()};
-
-        std::cout << "[dQdx] Hit pos " << hit_pos[0] << " " << hit_pos[1] << std::endl;
-      }
     }
+
   }
 }
 
