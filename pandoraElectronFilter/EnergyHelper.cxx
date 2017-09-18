@@ -274,24 +274,36 @@ void EnergyHelper::measureEnergy(size_t ipf, const art::Event &evt,
       evt.getValidHandle<std::vector<recob::PFParticle>>(_pfp_producer);
   auto const &pfparticles(*pfparticle_handle);
 
-  art::FindManyP<recob::Shower> showers_per_pfparticle(pfparticle_handle, evt,
+  try {
+
+    art::FindManyP<recob::Shower> showers_per_pfparticle(pfparticle_handle, evt,
                                                        _pfp_producer);
-  std::vector<art::Ptr<recob::Shower>> showers = showers_per_pfparticle.at(ipf);
+    std::vector<art::Ptr<recob::Shower>> showers = showers_per_pfparticle.at(ipf);
 
-  for (size_t ish = 0; ish < showers.size(); ish++) {
-    if (showerEnergy(showers[ish], evt) > 0) {
-      energy += showerEnergy(showers[ish], evt);
+    for (size_t ish = 0; ish < showers.size(); ish++) {
+      if (showerEnergy(showers[ish], evt) > 0) {
+        energy += showerEnergy(showers[ish], evt);
+      }
     }
+  } catch (...) {
+    std::cout << "[EnergyHelper] "
+              << "SHOWER NOT AVAILABLE " << std::endl;
   }
+  
+  try {
 
-  art::FindManyP<recob::Track> tracks_per_pfparticle(pfparticle_handle, evt,
+    art::FindManyP<recob::Track> tracks_per_pfparticle(pfparticle_handle, evt,
                                                      _pfp_producer);
-  std::vector<art::Ptr<recob::Track>> tracks = tracks_per_pfparticle.at(ipf);
+    std::vector<art::Ptr<recob::Track>> tracks = tracks_per_pfparticle.at(ipf);
 
-  for (size_t itr = 0; itr < tracks.size(); itr++) {
-    if (trackEnergy(tracks[itr], evt) > 0) {
-      energy += trackEnergy(tracks[itr], evt);
+    for (size_t itr = 0; itr < tracks.size(); itr++) {
+      if (trackEnergy(tracks[itr], evt) > 0) {
+        energy += trackEnergy(tracks[itr], evt);
+      }
     }
+  } catch (...) {
+    std::cout << "[EnergyHelper] "
+              << "TRACK NOT AVAILABLE " << std::endl;
   }
 
   for (auto const &pfdaughter : pfparticles[ipf].Daughters()) {
