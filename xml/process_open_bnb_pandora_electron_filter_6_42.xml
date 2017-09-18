@@ -18,7 +18,7 @@
     
     <!--  Project stages  -->
     <stage name="filter">
-        <fcl>run_PandoraLEEAnalyzer_data.fcl</fcl>
+        <fcl>run_PandoraLEEAnalyzer_data_nofidvol.fcl</fcl>
         <outdir>/pnfs/uboone/scratch/users/srsoleti/v06_30_00/filter/data_bnb_pandora_electron_filter_6_42</outdir>
         <logdir>/pnfs/uboone/scratch/users/srsoleti/v06_30_00/filter/data_bnb_pandora_electron_filter_6_42</logdir>
         <workdir>/pnfs/uboone/scratch/users/srsoleti/work/v06_30_00/filter/data_bnb_pandora_electron_filter_6_42</workdir>
