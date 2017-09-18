@@ -8,6 +8,7 @@ namespace lee {
 void PandoraInterfaceHelper::get_daughter_tracks(
     std::vector<size_t> pf_ids, const art::Event &evt,
     std::vector<art::Ptr<recob::Track>> &tracks, std::string _pfp_producer) {
+      try {
 
   auto const &pfparticle_handle =
       evt.getValidHandle<std::vector<recob::PFParticle>>(_pfp_producer);
@@ -16,14 +17,14 @@ void PandoraInterfaceHelper::get_daughter_tracks(
                                                _pfp_producer);
 
   for (auto const &pf_id : pf_ids) {
-    try {
       auto const &track_obj = track_per_pfpart.at(pf_id);
       tracks.push_back(track_obj);
-    } catch (...) {
-      std::cout << "[PandoraLEE] "
-                << "Error getting the track" << std::endl;
-    }
+
   }
+} catch (...) {
+  std::cout << "[PandoraLEE] "
+            << "Error getting daughter tracks" << std::endl;
+}
 }
 
 void PandoraInterfaceHelper::get_daughter_showers(

@@ -58,6 +58,7 @@ bool GeometryHelper::isFiducial(const double x[3]) const {
       0., 2. * geo->DetHalfWidth(), -geo->DetHalfHeight(), geo->DetHalfHeight(),
       0., geo->DetLength()};
 
+
   bool is_x =
       x[0] > (bnd[0] + m_fidvolXstart) && x[0] < (bnd[1] - m_fidvolXend);
   bool is_y =
