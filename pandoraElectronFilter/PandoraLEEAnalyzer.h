@@ -234,6 +234,23 @@ private:
   get_longest_track(std::vector<art::Ptr<recob::Track>> &tracks);
   art::Ptr<recob::Shower>
   get_most_energetic_shower(std::vector<art::Ptr<recob::Shower>> &showers);
+  /**
+  * @brief Determines if a PFParticle is matched with a MCParticle coming from
+  * a neutrino interaction or a cosmic ray
+  *
+  * @param evt current art Event
+  * @param neutrino_pdg array of PDG codes for neutrino-matched PFParticles
+  * @param neutrino_pf array of neutrino-matched PFParticles
+  * @param cosmic_pdg array of PDG codes for cosmic-matched PFParticles
+  * @param cosmic_pf array of cosmic-matched PFParticles
+  */
+  void categorizePFParticles(
+    art::Event const &evt,
+    std::vector<int> &neutrino_pdg,
+    std::vector<art::Ptr<recob::PFParticle>> &neutrino_pf,
+    std::vector<int> &cosmic_pdg,
+    std::vector<art::Ptr<recob::PFParticle>> &cosmic_pf);
+
 };
 
 }
