@@ -173,7 +173,8 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt) {
                       _center_of_charge[_i_primary], _selected_flash, evt);
 
     std::cout << "[ElectronEventSelectionAlg] "
-              << "Flash passed? " << _flash_passed << std::endl;
+              << "Flash passed? " << _flash_passed << " " << _selected_flash << std::endl;
+
     _op_flash_indexes[_i_primary] = _selected_flash;
 
     if (!_flash_passed) {
@@ -203,14 +204,14 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt) {
     } catch (...) {
       std::cout << "[ElectronEventSelectionAlg] "
                 << "NO VERTEX AVAILABLE " << std::endl;
-      return false;
+      _neutrino_candidate_passed[_i_primary] = false;
+      continue;
     }
 
     // Loop over the neutrino daughters and check if there is a shower and a
     // track
     int showers = 0;
     int tracks = 0;
-    int longer_tracks = 0;
 
     for (auto const &pfdaughter :
          pfparticle_handle->at(_i_primary).Daughters()) {
@@ -253,7 +254,6 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt) {
         } catch (...) {
           std::cout << "[ElectronEventSelectionAlg] "
                     << "NO SHOWERS AVAILABLE" << std::endl;
-          return false;
         }
       }
 
@@ -264,22 +264,20 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt) {
                                                        _pfp_producer);
           auto const &track_obj = track_per_pfpart.at(pfdaughter);
 
-          tracks++;
-          std::cout << "Tracks " << tracks << std::endl;
           std::cout << "track obj length " << track_obj->Length() << std::endl;
           std::cout << "pfdaughter " << pfdaughter << std::endl;
           std::cout << "i primary " << _i_primary << std::endl;
 
           _pfp_id_tracks_from_primary[_i_primary].push_back(pfdaughter);
 
-          if (track_obj->Length() > m_trackLength) {
-            longer_tracks++;
-          }
+
+          tracks++;
+          std::cout << "Tracks " << tracks << std::endl;
+
 
         } catch (...) {
           std::cout << "[ElectronEventSelectionAlg] "
                     << "NO TRACKS AVAILABLE" << std::endl;
-          return false;
         }
         // h_track_length->Fill(track_obj->Length());
       }
