@@ -81,9 +81,15 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
 
   myTTree->Branch("bnbweight", &_bnbweight, "bnbweight/d");
 
-  myTTree->Branch("flash_passed", &_flash_passed, "flash_passed/i");
-  myTTree->Branch("track_passed", &_track_passed, "track_passed/i");
-  myTTree->Branch("shower_passed", &_shower_passed, "shower_passed/i");
+  myTTree->Branch("chosen_candidate", &_chosen_candidate, "chosen_candidate/i");
+  myTTree->Branch("n_primaries", &_n_primaries, "n_primaries/i");
+
+  myTTree->Branch("primary_indexes", "std::vector< int >", &_primary_indexes);
+
+
+  myTTree->Branch("flash_passed", "std::vector< int >", &_flash_passed);
+  myTTree->Branch("track_passed", "std::vector< int >", &_track_passed);
+  myTTree->Branch("shower_passed", "std::vector< int >", &_shower_passed);
 
   myTTree->Branch("shower_dir_x", "std::vector< double >", &_shower_dir_x);
   myTTree->Branch("shower_dir_y", "std::vector< double >", &_shower_dir_y);
@@ -207,8 +213,13 @@ lee::PandoraLEEAnalyzer::choose_candidate(std::vector<size_t> &candidates,
     std::cout << "[PandoraLEE] Candidate " << ic << std::endl;
     std::vector<size_t> pfp_tracks_id =
         fElectronEventSelectionAlg.get_pfp_id_tracks_from_primary().at(ic);
+    std::cout << "[PandoraLEE] Before get daughter" << std::endl;
     pandoraHelper.get_daughter_tracks(pfp_tracks_id, evt, nu_tracks);
+    std::cout << "[PandoraLEE] After get daughter" << std::endl;
+    std::cout << "[PandoraLEE] Before get longest_track" << std::endl;
+
     longest_track_dir = get_longest_track(nu_tracks)->StartDirection().Z();
+    std::cout << "[PandoraLEE] After get longest_track" << std::endl;
 
     if (longest_track_dir > most_z) {
       chosen_candidate = ic;
@@ -289,9 +300,13 @@ void lee::PandoraLEEAnalyzer::clear() {
 
   _nu_pdg = 0;
 
-  _flash_passed = 0;
-  _track_passed = 0;
-  _shower_passed = 0;
+  _flash_passed.clear();
+  _track_passed.clear();
+  _shower_passed.clear();
+  _primary_indexes.clear();
+  _chosen_candidate = std::numeric_limits<int>::lowest();
+  _n_primaries = 0;
+
   _energy = std::numeric_limits<double>::lowest();
 
   _true_nu_is_fiducial = std::numeric_limits<int>::lowest();
@@ -409,11 +424,9 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
           there_is_a_neutrino = true;
           _nu_pdg = gen.GetNeutrino().Nu().PdgCode();
           std::cout << _nu_pdg << std::endl;
-          std::cout << "Before GetNeutrino" << std::endl;
 
           _nu_energy = gen.GetNeutrino().Nu().E();
           int ccnc = gen.GetNeutrino().CCNC();
-          std::cout << "After GetNeutrino" << std::endl;
 
           if (ccnc == simb::kNC) {
             _category = k_nc;
@@ -498,32 +511,103 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
 
   _energy = std::numeric_limits<double>::lowest();
 
-  for (auto &i_primary : fElectronEventSelectionAlg.get_primary_indexes()) {
-    try {
+  // *** RECO-TRUE MATCHING ****************************************************
+  // ***************************************************************************
+  // TODO move to function
+  
+  lar_pandora::MCParticlesToPFParticles
+      matchedParticles; // This is a map: MCParticle to matched PFParticle
+  lar_pandora::MCParticlesToHits matchedParticleHits;
 
-      if (fElectronEventSelectionAlg.get_op_flash_indexes().at(i_primary) !=
-          -1) {
-        _flash_passed = 1;
-      }
-      if (fElectronEventSelectionAlg.get_n_showers().at(i_primary) != 0) {
-        _shower_passed = 1;
-      }
-      if (fElectronEventSelectionAlg.get_n_tracks().at(i_primary) != 0) {
-        _track_passed = 1;
-      }
-    } catch (...) {
-      std::cout << "[PandoraLEE] Error getting passed events" << std::endl;
+  // --- Do the matching
+  pandoraHelper.GetRecoToTrueMatches(evt, _pfp_producer, _spacepointLabel,
+                                     _geantModuleLabel, _hitfinderLabel,
+                                     matchedParticles, matchedParticleHits);
+
+  art::ServiceHandle<cheat::BackTracker> bt;
+
+  std::vector<art::Ptr<recob::PFParticle>> neutrino_pf;
+  std::vector<art::Ptr<recob::PFParticle>> cosmic_pf;
+
+  std::vector<int> neutrino_pdg;
+  std::vector<int> cosmic_pdg;
+
+  for (lar_pandora::MCParticlesToPFParticles::const_iterator
+           iter1 = matchedParticles.begin(),
+           iterEnd1 = matchedParticles.end();
+       iter1 != iterEnd1; ++iter1) {
+
+    art::Ptr<simb::MCParticle> mc_par = iter1->first; // The MCParticle
+    art::Ptr<recob::PFParticle> pf_par =
+        iter1->second; // The matched PFParticle
+
+    const art::Ptr<simb::MCTruth> mc_truth =
+        bt->TrackIDToMCTruth(mc_par->TrackId());
+
+    if (mc_truth->Origin() == simb::kBeamNeutrino) {
+      // std::cout << "[PandoraLEE] " << "Matched neutrino" << std::endl;
+      // std::cout << "[PandoraLEE] " << "Pf PDG: " << pf_par->PdgCode() << "
+      // MC PDG: " << mc_par->PdgCode() << std::endl;
+      neutrino_pf.push_back(pf_par);
+      neutrino_pdg.push_back(mc_par->PdgCode());
+    }
+
+    if (mc_truth->Origin() == simb::kCosmicRay) {
+      cosmic_pf.push_back(pf_par);
+      cosmic_pdg.push_back(mc_par->PdgCode());
     }
   }
 
+  _n_matched = neutrino_pf.size();
+  // ***************************************************************************
+  // ***************************************************************************
+
+  for (auto &inu : fElectronEventSelectionAlg.get_primary_indexes()) {
+    _primary_indexes.push_back(inu);
+
+    _flash_passed.push_back(fElectronEventSelectionAlg.get_op_flash_indexes().at(inu));
+
+    std::vector<size_t> pfp_tracks_id = fElectronEventSelectionAlg.get_pfp_id_tracks_from_primary().at(inu);
+    std::vector<size_t> pfp_showers_id = fElectronEventSelectionAlg.get_pfp_id_showers_from_primary().at(inu);
+
+    int pass_shower = 0;
+
+    for (size_t ish = 0; ish < pfp_showers_id.size(); ish++) {
+      for (size_t ipf = 0; ipf < neutrino_pf.size(); ipf++) {
+        if (pfp_showers_id[ish] == neutrino_pf[ipf].key()) {
+          pass_shower += 1;
+        }
+      }
+    }
+
+    _shower_passed.push_back(pass_shower);
+
+    int pass_track = 0;
+
+    for (size_t itr = 0; itr < pfp_tracks_id.size(); itr++) {
+      for (size_t ipf = 0; ipf < neutrino_pf.size(); ipf++) {
+        if (pfp_tracks_id[itr] == neutrino_pf[ipf].key()) {
+          pass_track += 1;
+        }
+      }
+    }
+
+    _track_passed.push_back(pass_track);
+
+  }
+
+  _n_primaries = _primary_indexes.size();
+
   if (_event_passed) {
 
-    _n_candidates = nu_candidates.size();
     for (auto &inu : fElectronEventSelectionAlg.get_primary_indexes()) {
       if (fElectronEventSelectionAlg.get_neutrino_candidate_passed().at(inu)) {
         nu_candidates.push_back(inu);
       }
     }
+
+    _n_candidates = nu_candidates.size();
+
 
     std::cout << "[PandoraLEE] "
               << "EVENT PASSED" << std::endl;
@@ -534,8 +618,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
     size_t ipf_candidate = choose_candidate(nu_candidates, evt);
     std::cout << "[PandoraLEE] "
               << "Neutrino candidate " << ipf_candidate << std::endl;
-
-    // size_t ipf_candidate = 0;
+    _chosen_candidate = ipf_candidate;
     _energy = 0;
 
     energyHelper.measureEnergy(ipf_candidate, evt, _energy);
@@ -714,51 +797,6 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
                   << shower_obj->Energy()[i] << std::endl;
       }
     }
-
-    lar_pandora::MCParticlesToPFParticles
-        matchedParticles; // This is a map: MCParticle to matched PFParticle
-    lar_pandora::MCParticlesToHits matchedParticleHits;
-
-    // --- Do the matching
-    pandoraHelper.GetRecoToTrueMatches(evt, _pfp_producer, _spacepointLabel,
-                                       _geantModuleLabel, _hitfinderLabel,
-                                       matchedParticles, matchedParticleHits);
-
-    art::ServiceHandle<cheat::BackTracker> bt;
-
-    std::vector<art::Ptr<recob::PFParticle>> neutrino_pf;
-    std::vector<art::Ptr<recob::PFParticle>> cosmic_pf;
-
-    std::vector<int> neutrino_pdg;
-    std::vector<int> cosmic_pdg;
-
-    for (lar_pandora::MCParticlesToPFParticles::const_iterator
-             iter1 = matchedParticles.begin(),
-             iterEnd1 = matchedParticles.end();
-         iter1 != iterEnd1; ++iter1) {
-
-      art::Ptr<simb::MCParticle> mc_par = iter1->first; // The MCParticle
-      art::Ptr<recob::PFParticle> pf_par =
-          iter1->second; // The matched PFParticle
-
-      const art::Ptr<simb::MCTruth> mc_truth =
-          bt->TrackIDToMCTruth(mc_par->TrackId());
-
-      if (mc_truth->Origin() == simb::kBeamNeutrino) {
-        // std::cout << "[PandoraLEE] " << "Matched neutrino" << std::endl;
-        // std::cout << "[PandoraLEE] " << "Pf PDG: " << pf_par->PdgCode() << "
-        // MC PDG: " << mc_par->PdgCode() << std::endl;
-        neutrino_pf.push_back(pf_par);
-        neutrino_pdg.push_back(mc_par->PdgCode());
-      }
-
-      if (mc_truth->Origin() == simb::kCosmicRay) {
-        cosmic_pf.push_back(pf_par);
-        cosmic_pdg.push_back(mc_par->PdgCode());
-      }
-    }
-
-    _n_matched = neutrino_pf.size();
 
     _nu_matched_showers = 0;
     _nu_matched_tracks = 0;

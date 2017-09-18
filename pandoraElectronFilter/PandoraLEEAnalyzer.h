@@ -157,9 +157,13 @@ private:
   int _event_passed;
   double _distance;
 
-  int _flash_passed;
-  int _track_passed;
-  int _shower_passed;
+  std::vector<int> _flash_passed;
+  std::vector<int> _track_passed;
+  std::vector<int> _shower_passed;
+  std::vector<int> _primary_indexes;
+
+  int _n_primaries;
+  int _chosen_candidate;
 
   double _bnbweight;
 
