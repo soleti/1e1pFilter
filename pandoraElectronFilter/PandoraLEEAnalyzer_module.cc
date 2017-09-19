@@ -150,10 +150,6 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
   myTTree->Branch("shower_open_angle", "std::vector< double >",
                   &_shower_open_angle);
 
-  myTTree->Branch("matched_tracks", "std::vector< int > _matched_tracks",
-                  &_matched_tracks);
-  myTTree->Branch("matched_showers", "std::vector< int > _matched_tracks",
-                  &_matched_showers);
 
   this->reconfigure(pset);
 }
@@ -258,8 +254,7 @@ void lee::PandoraLEEAnalyzer::clear() {
   _shower_dir_z.clear();
   _shower_dQdx.clear();
   _shower_dEdx.clear();
-  _matched_tracks.clear();
-  _matched_showers.clear();
+
 
   _shower_start_x.clear();
   _shower_start_y.clear();
@@ -561,49 +556,12 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
   std::vector<int> neutrino_pdg;
   std::vector<int> cosmic_pdg;
 
-  categorizePFParticles(evt, neutrino_pdg, neutrino_pf, cosmic_pdg, cosmic_pf);
-
-  _n_matched = neutrino_pf.size();
-
-  /* For each neutrino PFParticle checks how many daughter tracks and showers
-  with true neutrino origin we have */
-
-  for (auto &inu : fElectronEventSelectionAlg.get_primary_indexes()) {
-    _primary_indexes.push_back(inu);
-
-    _flash_passed.push_back(fElectronEventSelectionAlg.get_op_flash_indexes().at(inu));
-
-    std::vector<size_t> pfp_tracks_id = fElectronEventSelectionAlg.get_pfp_id_tracks_from_primary().at(inu);
-    std::vector<size_t> pfp_showers_id = fElectronEventSelectionAlg.get_pfp_id_showers_from_primary().at(inu);
-
-    int pass_shower = 0;
-
-    for (size_t ish = 0; ish < pfp_showers_id.size(); ish++) {
-      for (size_t ipf = 0; ipf < neutrino_pf.size(); ipf++) {
-        if (pfp_showers_id[ish] == neutrino_pf[ipf].key()) {
-          pass_shower += 1;
-        }
-      }
-    }
-
-    _shower_passed.push_back(pass_shower);
-
-    int pass_track = 0;
-
-    for (size_t itr = 0; itr < pfp_tracks_id.size(); itr++) {
-      for (size_t ipf = 0; ipf < neutrino_pf.size(); ipf++) {
-        if (pfp_tracks_id[itr] == neutrino_pf[ipf].key()) {
-          pass_track += 1;
-        }
-      }
-    }
-
-    _track_passed.push_back(pass_track);
-
+  if (!evt.isRealData()) {
+    categorizePFParticles(evt, neutrino_pdg, neutrino_pf, cosmic_pdg, cosmic_pf);
+    _n_matched = neutrino_pf.size();
   }
 
-  _n_primaries = _primary_indexes.size();
-
+  size_t ipf_candidate = std::numeric_limits<size_t>::lowest();
   if (_event_passed) {
 
     for (auto &inu : fElectronEventSelectionAlg.get_primary_indexes()) {
@@ -620,13 +578,13 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
     auto const &pfparticle_handle =
         evt.getValidHandle<std::vector<recob::PFParticle>>(_pfp_producer);
 
-    size_t ipf_candidate = choose_candidate(nu_candidates, evt);
+    ipf_candidate = choose_candidate(nu_candidates, evt);
     std::cout << "[PandoraLEE] "
               << "Neutrino candidate " << ipf_candidate << std::endl;
     _chosen_candidate = ipf_candidate;
 
+    _energy = 0;
     energyHelper.measureEnergy(ipf_candidate, evt, _energy);
-
     art::FindOneP<recob::Vertex> vertex_per_pfpart(pfparticle_handle, evt,
                                                    _pfp_producer);
     auto const &vertex_obj = vertex_per_pfpart.at(ipf_candidate);
@@ -658,7 +616,6 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
     }
 
     for (auto &pf_id : pfp_tracks_id) {
-      _matched_tracks.push_back(std::numeric_limits<int>::lowest());
 
       art::FindOneP<recob::Track> track_per_pfpart(pfparticle_handle, evt,
                                                    _pfp_producer);
@@ -744,8 +701,6 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
                         m_dQdxRectangleWidth);
       energyHelper.dEdxFromdQdx(dedx, dqdx);
 
-      _matched_showers.push_back(std::numeric_limits<int>::lowest());
-
       _shower_dQdx.push_back(dqdx);
       _shower_dEdx.push_back(dedx);
 
@@ -802,70 +757,87 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
       }
     }
 
+
+    /* For each neutrino PFParticle checks how many daughter tracks and showers
+    with true neutrino origin we have */
     _nu_matched_showers = 0;
     bool shower_cr_found = false;
-
-    for (size_t ish = 0; ish < pfp_showers_id.size(); ish++) {
-      for (size_t ipf = 0; ipf < cosmic_pf.size(); ipf++) {
-        if (pfp_showers_id[ish] == cosmic_pf[ipf].key()) {
-          shower_cr_found = true;
-          _matched_showers[ish] = cosmic_pdg[ipf];
-        }
-      }
-
-      for (size_t ipf = 0; ipf < neutrino_pf.size(); ipf++) {
-        if (pfp_showers_id[ish] == neutrino_pf[ipf].key()) {
-          _nu_matched_showers++;
-          _matched_showers[ish] = neutrino_pdg[ipf];
-        }
-      }
-
-      std::cout << "[PandoraLEE] "
-                << "Shower PFP " << pfp_showers_id[ish] << std::endl;
-      std::cout << "[PandoraLEE] "
-                << "Neutrino? " << _nu_matched_showers << std::endl;
-      std::cout << "[PandoraLEE] "
-                << "Cosmic? " << shower_cr_found << std::endl;
-
-    }
 
     _nu_matched_tracks = 0;
     bool track_cr_found = false;
 
-    for (size_t itr = 0; itr < pfp_tracks_id.size(); itr++) {
+    for (auto &inu : fElectronEventSelectionAlg.get_primary_indexes()) {
+      _primary_indexes.push_back(inu);
 
-      for (size_t ipf = 0; ipf < cosmic_pf.size(); ipf++) {
-        if (pfp_tracks_id[itr] == cosmic_pf[ipf].key()) {
-          track_cr_found = true;
-          _matched_tracks[itr] = cosmic_pdg[ipf];
+      _flash_passed.push_back(fElectronEventSelectionAlg.get_op_flash_indexes().at(inu));
+
+      std::vector<size_t> pfp_tracks_id = fElectronEventSelectionAlg.get_pfp_id_tracks_from_primary().at(inu);
+      std::vector<size_t> pfp_showers_id = fElectronEventSelectionAlg.get_pfp_id_showers_from_primary().at(inu);
+
+      int pass_shower = 0;
+
+      for (size_t ish = 0; ish < pfp_showers_id.size(); ish++) {
+        for (size_t ipf = 0; ipf < neutrino_pf.size(); ipf++) {
+          if (pfp_showers_id[ish] == neutrino_pf[ipf].key()) {
+            pass_shower += 1;
+            if (inu == ipf_candidate) {
+              _nu_matched_showers++;
+            }
+          }
         }
+
+        if (inu == ipf_candidate) {
+          for (size_t ipf = 0; ipf < cosmic_pf.size(); ipf++) {
+            if (pfp_showers_id[ish] == cosmic_pf[ipf].key()) {
+              shower_cr_found = true;
+            }
+          }
+        }
+
       }
 
-      for (size_t ipf = 0; ipf < neutrino_pf.size(); ipf++) {
-        if (pfp_tracks_id[itr] == neutrino_pf[ipf].key()) {
-          _nu_matched_tracks++;
-          _matched_tracks[itr] = neutrino_pdg[ipf];
+      _shower_passed.push_back(pass_shower);
+
+      int pass_track = 0;
+
+      for (size_t itr = 0; itr < pfp_tracks_id.size(); itr++) {
+
+        for (size_t ipf = 0; ipf < neutrino_pf.size(); ipf++) {
+          if (pfp_tracks_id[itr] == neutrino_pf[ipf].key()) {
+            pass_track += 1;
+            if (inu == ipf_candidate) {
+              _nu_matched_tracks++;
+            }
+          }
         }
+
+        if (inu == ipf_candidate) {
+          for (size_t ipf = 0; ipf < cosmic_pf.size(); ipf++) {
+            if (pfp_tracks_id[itr] == cosmic_pf[ipf].key()) {
+              track_cr_found = true;
+            }
+          }
+        }
+
       }
 
-      std::cout << "[PandoraLEE] "
-                << "Track PFP " << pfp_tracks_id[itr] << std::endl;
-      std::cout << "[PandoraLEE] "
-                << "Neutrino? " << _nu_matched_tracks << std::endl;
-      std::cout << "[PandoraLEE] "
-                << "Cosmic? " << track_cr_found << std::endl;
+      _track_passed.push_back(pass_track);
+
     }
+
+    _n_primaries = _primary_indexes.size();
 
     if (
       !track_cr_found && _nu_matched_tracks == 0
       && !shower_cr_found && _nu_matched_showers == 0
-      && _category != k_dirt) {
+      && _category != k_dirt && _category != k_data) {
         _category = k_other;
         std::cout << "[PandoraLEE] "
         << "***NOT NEUTRINO NOR COSMIC***" << std::endl;
     }
 
-    if ((track_cr_found && _nu_matched_tracks > 0) || (shower_cr_found && _nu_matched_showers > 0)) {
+    if ((track_cr_found && _nu_matched_tracks > 0)
+    || (shower_cr_found && _nu_matched_showers > 0)) {
       _category = k_mixed;
       std::cout << "[PandoraLEE] "
                 << "***MIXED COSMIC/NEUTRINO***" << std::endl;
@@ -882,6 +854,8 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
     std::cout << "[PandoraLEE] "
               << "EVENT NOT PASSED" << std::endl;
   }
+
+
 
   myTTree->Fill();
   std::cout << "[PandoraLEE] "

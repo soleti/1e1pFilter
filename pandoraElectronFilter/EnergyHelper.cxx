@@ -289,7 +289,7 @@ void EnergyHelper::measureEnergy(size_t ipf, const art::Event &evt,
     std::cout << "[EnergyHelper] "
               << "SHOWER NOT AVAILABLE " << std::endl;
   }
-  
+
   try {
 
     art::FindManyP<recob::Track> tracks_per_pfparticle(pfparticle_handle, evt,

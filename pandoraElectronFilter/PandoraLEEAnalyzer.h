@@ -221,9 +221,6 @@ private:
   std::vector<double> _nu_daughters_endy;
   std::vector<double> _nu_daughters_endz;
 
-  std::vector<int> _matched_tracks;
-  std::vector<int> _matched_showers;
-
   double m_dQdxRectangleWidth;
   double m_dQdxRectangleLength;
 
