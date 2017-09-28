@@ -63,7 +63,9 @@ public:
   void measureEnergy(size_t ipf, const art::Event &evt, double &energy,
                      std::string _pfp_producer = "pandoraNu");
 
-  void dQdx(size_t pfp_id, const art::Event &evt, std::vector<double> &dqdx,
+  void dQdx(size_t pfp_id, const art::Event &evt,
+            std::vector<double> &dqdx,
+            std::vector<double> &dqdx_hits,
             double m_dQdxRectangleLength, double m_dQdxRectangleWidth,
             std::string _pfp_producer = "pandoraNu");
 

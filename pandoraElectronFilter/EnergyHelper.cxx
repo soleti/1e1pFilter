@@ -65,23 +65,32 @@ double EnergyHelper::trackEnergy(const art::Ptr<recob::Track> &track,
       evt.getValidHandle<std::vector<recob::Track>>(_pfp_producer);
   art::FindManyP<anab::Calorimetry> calo_track_ass(track_handle, evt,
                                                    "pandoraNucalo");
+
   const std::vector<art::Ptr<anab::Calorimetry>> calos =
       calo_track_ass.at(track->ID());
+
+
   double E = 0;
   double Eapprox = 0;
 
   for (size_t ical = 0; ical < calos.size(); ++ical) {
+
+
     if (E != 0)
       continue;
     if (!calos[ical])
       continue;
+
     if (!calos[ical]->PlaneID().isValid)
       continue;
+
     int planenum = calos[ical]->PlaneID().Plane;
+
     if (planenum < 0 || planenum > 2)
       continue;
     if (planenum != 2)
       continue; // Use informartion from collection plane only
+
 
     // Understand if the calo module flipped the track
     // double dqdx_start = (calos[ical]->dQdx())[0] + (calos[ical]->dQdx())[1] +
@@ -95,8 +104,10 @@ double EnergyHelper::trackEnergy(const art::Ptr<recob::Track> &track,
     double dedx = 0;
     double prevresrange = 0;
 
-    if (calos[ical]->ResidualRange()[0] > track->Length() / 2) {
-      prevresrange = track->Length();
+    if (calos[ical]->ResidualRange().size() > 0) {
+      if (calos[ical]->ResidualRange()[0] > track->Length() / 2) {
+        prevresrange = track->Length();
+      }
     }
 
     double currentresrange = 0;
@@ -105,13 +116,12 @@ double EnergyHelper::trackEnergy(const art::Ptr<recob::Track> &track,
       dedx = calos[ical]->dEdx()[iTrkHit];
       currentresrange = calos[ical]->ResidualRange()[iTrkHit];
       if (dedx > 0 && dedx < 10) {
-        // std::cout << "[PandoraLEE] " << dedx << "\t" << currentresrange <<
-        // "\t"<< prevresrange<<std::endl;
         mean += dedx;
         E += dedx * abs(prevresrange - currentresrange);
         prevresrange = currentresrange;
       }
     }
+
     // std::cout << "[PandoraLEE] " << "Length: " << track->Length() << "and
     // Energy approximation is " <<
     // mean/calos[ical]->dEdx().size()*track->Length()<< "MeV"<<std::endl;
@@ -120,8 +130,11 @@ double EnergyHelper::trackEnergy(const art::Ptr<recob::Track> &track,
   return Eapprox / 1000; // convert to GeV
 }
 
-void EnergyHelper::dQdx(size_t pfp_id, const art::Event &evt,
-                        std::vector<double> &dqdx, double m_dQdxRectangleLength,
+void EnergyHelper::dQdx(size_t pfp_id,
+                        const art::Event &evt,
+                        std::vector<double> &dqdx,
+                        std::vector<double> &dqdx_hits,
+                        double m_dQdxRectangleLength,
                         double m_dQdxRectangleWidth,
                         std::string _pfp_producer) {
 
@@ -232,6 +245,9 @@ void EnergyHelper::dQdx(size_t pfp_id, const art::Event &evt,
       if (is_within || first) {
         double q = hit->Integral() * _gain;
         dqdxs.push_back(q / pitch);
+        if (icl == 2) {
+          dqdx_hits.push_back(q / pitch);
+        }
       }
       first = false;
 
@@ -270,44 +286,56 @@ void EnergyHelper::dEdxFromdQdx(std::vector<double> &dedx,
 void EnergyHelper::measureEnergy(size_t ipf, const art::Event &evt,
                                  double &energy, std::string _pfp_producer) {
 
-  auto const &pfparticle_handle =
-      evt.getValidHandle<std::vector<recob::PFParticle>>(_pfp_producer);
-  auto const &pfparticles(*pfparticle_handle);
-
   try {
 
-    art::FindManyP<recob::Shower> showers_per_pfparticle(pfparticle_handle, evt,
-                                                       _pfp_producer);
-    std::vector<art::Ptr<recob::Shower>> showers = showers_per_pfparticle.at(ipf);
+    auto const &pfparticle_handle =
+    evt.getValidHandle<std::vector<recob::PFParticle>>(_pfp_producer);
+    auto const &pfparticles(*pfparticle_handle);
 
-    for (size_t ish = 0; ish < showers.size(); ish++) {
-      if (showerEnergy(showers[ish], evt) > 0) {
-        energy += showerEnergy(showers[ish], evt);
+
+    try {
+
+      art::FindManyP<recob::Shower> showers_per_pfparticle(pfparticle_handle, evt,
+        _pfp_producer);
+        std::vector<art::Ptr<recob::Shower>> showers = showers_per_pfparticle.at(ipf);
+
+        for (size_t ish = 0; ish < showers.size(); ish++) {
+          if (showerEnergy(showers[ish], evt) > 0) {
+            energy += showerEnergy(showers[ish], evt);
+          }
+        }
+
+      } catch (...) {
+        std::cout << "[EnergyHelper] "
+        << "SHOWER NOT AVAILABLE " << std::endl;
       }
+
+    try {
+
+        art::FindManyP<recob::Track> tracks_per_pfparticle(pfparticle_handle, evt,
+          _pfp_producer);
+        std::vector<art::Ptr<recob::Track>> tracks = tracks_per_pfparticle.at(ipf);
+        std::cout << "[EnergyHelper] before track" << std::endl;
+
+        for (size_t itr = 0; itr < tracks.size(); itr++) {
+          if (trackEnergy(tracks[itr], evt) > 0) {
+            energy += trackEnergy(tracks[itr], evt);
+          }
+        }
+
+        std::cout << "[EnergyHelper] after track" << std::endl;
+
+    } catch (...) {
+      std::cout << "[EnergyHelper] "
+      << "TRACK NOT AVAILABLE " << std::endl;
     }
+    for (auto const &pfdaughter : pfparticles[ipf].Daughters()) {
+      measureEnergy(pfdaughter, evt, energy, _pfp_producer);
+    }
+
   } catch (...) {
     std::cout << "[EnergyHelper] "
-              << "SHOWER NOT AVAILABLE " << std::endl;
-  }
-
-  try {
-
-    art::FindManyP<recob::Track> tracks_per_pfparticle(pfparticle_handle, evt,
-                                                     _pfp_producer);
-    std::vector<art::Ptr<recob::Track>> tracks = tracks_per_pfparticle.at(ipf);
-
-    for (size_t itr = 0; itr < tracks.size(); itr++) {
-      if (trackEnergy(tracks[itr], evt) > 0) {
-        energy += trackEnergy(tracks[itr], evt);
-      }
-    }
-  } catch (...) {
-    std::cout << "[EnergyHelper] "
-              << "TRACK NOT AVAILABLE " << std::endl;
-  }
-
-  for (auto const &pfdaughter : pfparticles[ipf].Daughters()) {
-    measureEnergy(pfdaughter, evt, energy, _pfp_producer);
+    << "PFParticles not available " << std::endl;
   }
 }
 
