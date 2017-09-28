@@ -162,10 +162,18 @@ private:
   std::vector<int> _shower_passed;
   std::vector<int> _primary_indexes;
 
+  std::vector<int> _matched_showers;
+  std::vector<int> _matched_tracks;
+  std::vector<std::string> _matched_showers_process;
+  std::vector<double> _matched_showers_energy;
+
   int _n_primaries;
   int _chosen_candidate;
 
   double _bnbweight;
+
+  std::vector<std::vector<double>> _dQdx_hits;
+  std::vector<std::vector<double>> _dEdx_hits;
 
   std::vector<std::vector<double>> _shower_dQdx;
   std::vector<std::vector<double>> _shower_dEdx;
@@ -243,9 +251,15 @@ private:
   */
   void categorizePFParticles(
     art::Event const &evt,
+    
     std::vector<int> &neutrino_pdg,
+    std::vector<std::string> &neutrino_process,
+    std::vector<double> &neutrino_energy,
     std::vector<art::Ptr<recob::PFParticle>> &neutrino_pf,
+
     std::vector<int> &cosmic_pdg,
+    std::vector<std::string> &cosmic_process,
+    std::vector<double> &cosmic_energy,
     std::vector<art::Ptr<recob::PFParticle>> &cosmic_pf);
 
 };
