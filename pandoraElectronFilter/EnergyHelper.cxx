@@ -161,8 +161,6 @@ void EnergyHelper::dQdx(size_t pfp_id,
                       shower_obj->Direction().Z());
 
   int correct = geoHelper.correct_direction(pfp_id, evt);
-  std::cout << "[dQdx] *****"
-            << "Correct direction? " << correct << std::endl;
 
   art::FindManyP<recob::Cluster> clusters_per_pfpart(pfparticle_handle, evt,
                                                      _pfp_producer);
