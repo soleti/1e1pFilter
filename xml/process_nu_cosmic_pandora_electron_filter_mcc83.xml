@@ -1,6 +1,6 @@
 <project name="bnb_nu_cosmic_pandora_electron_filter">
     <!--  Project size  -->
-    <numevents>300000</numevents>
+    <numevents>495000</numevents>
 
     <!--  Operating System  -->
     <os>SL6</os>
@@ -19,14 +19,14 @@
     <!--  Project stages  -->
     <stage name="filter">
         <fcl>run_PandoraLEEAnalyzer_nofidvol.fcl</fcl>
-        <outdir>/pnfs/uboone/scratch/users/srsoleti/v06_30_00/filter/bnb_nu_cosmic_pandora_electron_filter_6_42</outdir>
-        <logdir>/pnfs/uboone/scratch/users/srsoleti/v06_30_00/filter/bnb_nu_cosmic_pandora_electron_filter_6_42</logdir>
-        <workdir>/pnfs/uboone/scratch/users/srsoleti/work/v06_30_00/filter/bnb_nu_cosmic_pandora_electron_filter_6_42</workdir>
-        <inputlist>/uboone/app/users/srsoleti/v06_26_00_2/srcs/1e1pFilter/xml/6_42_nu_files.txt</inputlist>
+        <outdir>/pnfs/uboone/scratch/users/srsoleti/v06_30_00/filter/bnb_nu_cosmic_pandora_electron_filter_mcc83</outdir>
+        <logdir>/pnfs/uboone/scratch/users/srsoleti/v06_30_00/filter/bnb_nu_cosmic_pandora_electron_filter_mcc83</logdir>
+        <workdir>/pnfs/uboone/scratch/users/srsoleti/work/v06_30_00/filter/bnb_nu_cosmic_pandora_electron_filter_mcc83</workdir>
+        <inputdef>prodgenie_bnb_nu_cosmic_uboone_mcc8.3_reco2</inputdef>
         <!-- <output> -->
             <!-- bnb_nu_cosmic_pandora_electron_filter${PROCESS}_%tc_gen.root -->
         <!-- </output> -->
-        <numjobs>1200</numjobs>
+        <numjobs>1980</numjobs>
         <disk>70GB</disk>
         <memory>4096</memory>
         <maxfilesperjob>5</maxfilesperjob>
