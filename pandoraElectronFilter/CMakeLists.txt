@@ -1,6 +1,6 @@
 #include_directories( ${CMAKE_CURRENT_SOURCE_DIR} )
-
-link_libraries( -L$ENV{BOOST_LIB} -lboost_system -lboost_filesystem)
+set( ROOTLIB -L$ENV{ROOTSYS}/lib -lCore -lRIO -lNet -lHist -lGraf -lGraf3d -lGpad -lTree -lRint -lPostscript -lMatrix -lPhysics -lMathCore -lThread -pthread -lm -ldl)
+link_libraries( -L$ENV{BOOST_LIB} -lboost_system ${ROOTLIB})
 
 art_make(
           LIBRARY_NAME
@@ -14,14 +14,9 @@ art_make(
                         art_Framework_Core
                         art_Framework_Services_Registry
                         art_Framework_Principal
-                        #canvas_Persistency_Common
-                        #canvas_Utilities
-                        #canvas_Persistency_Provenance
-                        canvas
-                        art_Utilities 
-                        art_Persistency_Common 
-                        art_Persistency_Provenance 
-#                        uboone_SpaceCharge
+			art_Persistency_Common canvas_Persistency_Common
+			art_Persistency_Provenance canvas_Persistency_Provenance
+			art_Utilities canvas_Utilities
 #                        uboone_SpaceChargeServices_SpaceChargeServiceMicroBooNE_service
                         ${ART_FRAMEWORK_CORE}
                         ${ART_FRAMEWORK_IO_SOURCES}
@@ -36,7 +31,7 @@ art_make(
                         ${MF_UTILITIES}
                         ${FHICLCPP}
                         ${CETLIB}
-                        ${CETLIB_EXCEPT}
+                        ${CLHEP}
                         ${ROOT_GEOM}
                         ${ROOT_XMLIO}
                         ${ROOT_GDML}
@@ -55,15 +50,10 @@ art_make(
                         art_Framework_Core
                         art_Framework_Services_Registry
                         art_Framework_Principal
-                        art_Utilities 
-                        #canvas_Persistency_Common
-                        #canvas_Utilities
-                        #canvas_Persistency_Provenance
-                        canvas
-                        art_Utilities 
-                        art_Persistency_Common 
-                        art_Persistency_Provenance 
-                        ${ART_FRAMEWORK_CORE}
+                        art_Persistency_Common canvas_Persistency_Common
+			art_Persistency_Provenance canvas_Persistency_Provenance
+			art_Utilities canvas_Utilities
+			${ART_FRAMEWORK_CORE}
                         ${ART_FRAMEWORK_IO_SOURCES}
                         ${ART_FRAMEWORK_PRINCIPAL}
                         ${ART_FRAMEWORK_SERVICES_REGISTRY}
@@ -76,7 +66,7 @@ art_make(
                         ${MF_UTILITIES}
                         ${FHICLCPP}
                         ${CETLIB}
-                        ${CETLIB_EXCEPT}
+                        ${CLHEP}
                         ${ROOT_GEOM}
                         ${ROOT_XMLIO}
                         ${ROOT_GDML}

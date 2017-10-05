@@ -160,7 +160,7 @@ void EnergyHelper::dQdx(size_t pfp_id,
   TVector3 shower_dir(shower_obj->Direction().X(), shower_obj->Direction().Y(),
                       shower_obj->Direction().Z());
 
-  int correct = geoHelper.correct_direction(pfp_id, evt);
+  geoHelper.correct_direction(pfp_id, evt);
 
   art::FindManyP<recob::Cluster> clusters_per_pfpart(pfparticle_handle, evt,
                                                      _pfp_producer);

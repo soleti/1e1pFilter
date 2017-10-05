@@ -8,6 +8,7 @@
 ////////////////////////////////////////////////////////////////////////
 
 #include "PandoraLEEAnalyzer.h"
+#include "larevt/SpaceChargeServices/SpaceChargeService.h"
 
 lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
     : EDAnalyzer(pset) // ,
@@ -411,14 +412,18 @@ void lee::PandoraLEEAnalyzer::categorizePFParticles(
       if (mc_truth->Origin() == simb::kBeamNeutrino) {
         neutrino_pf.push_back(pf_par);
         neutrino_pdg.push_back(mc_par->PdgCode());
-        neutrino_process.push_back(mc_par->EndProcess());
+        if (mc_par->EndProcess() != NULL) {
+          neutrino_process.push_back(mc_par->EndProcess());
+        }
         neutrino_energy.push_back(mc_par->E());
       }
 
       if (mc_truth->Origin() == simb::kCosmicRay) {
         cosmic_pf.push_back(pf_par);
         cosmic_pdg.push_back(mc_par->PdgCode());
-        cosmic_process.push_back(mc_par->EndProcess());
+        if (mc_par->EndProcess() != NULL) {
+          cosmic_process.push_back(mc_par->EndProcess());
+        }
         cosmic_energy.push_back(mc_par->E());
       }
     }
@@ -493,7 +498,6 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
             _category = k_nc;
           }
 
-
           true_neutrino_vertex[0] = gen.GetNeutrino().Nu().Vx();
           true_neutrino_vertex[1] = gen.GetNeutrino().Nu().Vy();
           true_neutrino_vertex[2] = gen.GetNeutrino().Nu().Vz();
@@ -505,18 +509,22 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
 
           _interaction_type = gen.GetNeutrino().InteractionType();
 
-          std::string _env = std::getenv("UBOONE_DATA_DIR");
-          _env = _env + "/SpaceCharge/";
+          try {
+            auto const* SCE = lar::providerFrom<spacecharge::SpaceChargeService>();
+            if (SCE->GetPosOffsets(_true_vx, _true_vy, _true_vz).size() == 3) {
 
-          SpaceChargeMicroBooNE SCE =
-          SpaceChargeMicroBooNE(_env + "SCEoffsets_MicroBooNE_E273.root");
-
-          _true_vx_sce =
-          _true_vx - SCE.GetPosOffsets(_true_vx, _true_vy, _true_vz)[0] + 0.7;
-          _true_vy_sce =
-          _true_vy + SCE.GetPosOffsets(_true_vx, _true_vy, _true_vz)[1];
-          _true_vz_sce =
-          _true_vz + SCE.GetPosOffsets(_true_vx, _true_vy, _true_vz)[2];
+              _true_vx_sce =
+              _true_vx - SCE->GetPosOffsets(_true_vx, _true_vy, _true_vz)[0] + 0.7;
+              _true_vy_sce =
+              _true_vy + SCE->GetPosOffsets(_true_vx, _true_vy, _true_vz)[1];
+              _true_vz_sce =
+              _true_vz + SCE->GetPosOffsets(_true_vx, _true_vy, _true_vz)[2];
+            } else {
+              std::cout << "[PandoraLEE] " <<  "Space Charge service offset size < 3" << std::endl;
+            }
+          } catch (...) {
+            std::cout << "[PandoraLEE] " <<  "Space Charge service error" << std::endl;
+          }
 
           if (!geoHelper.isActive(true_neutrino_vertex)) {
             _category = k_dirt;
@@ -724,9 +732,9 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
       std::vector<double> dqdx(3, std::numeric_limits<double>::lowest());
       std::vector<double> dedx(3, std::numeric_limits<double>::lowest());
       std::vector<double> dqdx_hits_shower;
-
       _matched_showers.push_back(std::numeric_limits<int>::lowest());
       _matched_showers_process.push_back("");
+
       _matched_showers_energy.push_back(std::numeric_limits<double>::lowest());
 
       energyHelper.dQdx(pf_id, evt, dqdx, dqdx_hits_shower, m_dQdxRectangleLength,

@@ -70,4 +70,4 @@ physics: {
 }
 
 physics.analyzers.robertoana.isData: false
-
+services.SpaceCharge.EnableSimSpatialSCE: true

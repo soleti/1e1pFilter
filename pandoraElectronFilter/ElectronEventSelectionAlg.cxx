@@ -19,13 +19,13 @@ void ElectronEventSelectionAlg::clear() {
 }
 
 TVector3 ElectronEventSelectionAlg::spaceChargeTrueToReco(const TVector3 &xyz) {
-  auto const *sce = lar::providerFrom<spacecharge::SpaceChargeService>();
-  geo::Point_t point(xyz);
+  //auto const *sce = lar::providerFrom<spacecharge::SpaceChargeService>();
+  //geo::Point_t point(xyz);
   // auto correction = sce->GetPosOffsets(point);
   TVector3 correctedPoint(xyz);
-  correctedPoint.SetX(xyz.X() - sce->GetPosOffsets(point).X() + 0.7);
-  correctedPoint.SetX(xyz.Y() + sce->GetPosOffsets(point).Y());
-  correctedPoint.SetX(xyz.Z() + sce->GetPosOffsets(point).Z());
+  //correctedPoint.SetX(xyz.X() - sce->GetPosOffsets(point).X() + 0.7);
+  //correctedPoint.SetX(xyz.Y() + sce->GetPosOffsets(point).Y());
+ // correctedPoint.SetX(xyz.Z() + sce->GetPosOffsets(point).Z());
   return correctedPoint;
 }
 

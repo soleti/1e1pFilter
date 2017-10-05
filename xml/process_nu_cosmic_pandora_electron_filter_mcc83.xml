@@ -11,17 +11,17 @@
 
     <!--  Larsoft information  -->
     <larsoft>
-        <tag>v06_30_00</tag>
+        <tag>v06_26_01_07</tag>
         <qual>e10:prof</qual>
-        <local>/pnfs/uboone/scratch/users/srsoleti/v06_30_00.tar</local>
+        <local>/pnfs/uboone/scratch/users/srsoleti/v06_26_01_07.tar</local>
     </larsoft>
 
     <!--  Project stages  -->
     <stage name="filter">
         <fcl>run_PandoraLEEAnalyzer_nofidvol.fcl</fcl>
-        <outdir>/pnfs/uboone/scratch/users/srsoleti/v06_30_00/filter/bnb_nu_cosmic_pandora_electron_filter_mcc83</outdir>
-        <logdir>/pnfs/uboone/scratch/users/srsoleti/v06_30_00/filter/bnb_nu_cosmic_pandora_electron_filter_mcc83</logdir>
-        <workdir>/pnfs/uboone/scratch/users/srsoleti/work/v06_30_00/filter/bnb_nu_cosmic_pandora_electron_filter_mcc83</workdir>
+        <outdir>/pnfs/uboone/scratch/users/srsoleti/v06_26_01_07/filter/bnb_nu_cosmic_pandora_electron_filter_mcc83</outdir>
+        <logdir>/pnfs/uboone/scratch/users/srsoleti/v06_26_01_07/filter/bnb_nu_cosmic_pandora_electron_filter_mcc83</logdir>
+        <workdir>/pnfs/uboone/scratch/users/srsoleti/work/v06_26_01_07/filter/bnb_nu_cosmic_pandora_electron_filter_mcc83</workdir>
         <inputdef>prodgenie_bnb_nu_cosmic_uboone_mcc8.3_reco2</inputdef>
         <!-- <output> -->
             <!-- bnb_nu_cosmic_pandora_electron_filter${PROCESS}_%tc_gen.root -->
