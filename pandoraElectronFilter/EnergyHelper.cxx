@@ -243,7 +243,7 @@ void EnergyHelper::dQdx(size_t pfp_id,
       if (is_within || first) {
         double q = hit->Integral() * _gain;
         dqdxs.push_back(q / pitch);
-        if (icl == 2) {
+        if (clusters[icl]->Plane().Plane == 2) {
           dqdx_hits.push_back(q / pitch);
         }
       }
@@ -259,6 +259,7 @@ void EnergyHelper::dQdx(size_t pfp_id,
     std::nth_element(dqdxs.begin(), dqdxs.begin() + n, dqdxs.end());
     if (n > 0) {
       std::cout << "[dQdx] Plane dQdx " << clusters[icl]->Plane().Plane << " "
+                << icl << " "
                 << dqdxs[n] << " " << dqdxs[n] * (23. / 1e6) / 0.62
                 << std::endl;
 
