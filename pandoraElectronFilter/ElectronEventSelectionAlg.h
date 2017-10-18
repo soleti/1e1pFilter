@@ -209,6 +209,7 @@ namespace lee {
 
     double m_fractionsigmaflashwidth;
     double m_absoluteflashdist;
+      double m_isCosmicInTime;
 
     std::string _pfp_producer = "pandoraNu";
 

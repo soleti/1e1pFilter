@@ -110,6 +110,7 @@ private:
   int _interaction_type;
 
   bool m_isData;
+  bool m_isCosmicInTime;
   bool m_printDebug;
 
   const int k_cosmic = 1;
