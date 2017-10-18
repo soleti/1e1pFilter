@@ -44,6 +44,8 @@ void ElectronEventSelectionAlg::reconfigure(fhicl::ParameterSet const &p) {
   m_fidvolZstart = p.get<double>("fidvolZstart", 10);
   m_fidvolZend = p.get<double>("fidvolZend", 50);
 
+  m_isCosmicInTime = p.get<bool>("isCosmicInTime", false);
+
   geoHelper.setFiducialVolumeCuts(m_fidvolXstart, m_fidvolXend, m_fidvolYstart,
                                   m_fidvolYend, m_fidvolZstart, m_fidvolZend);
 
@@ -74,23 +76,28 @@ bool ElectronEventSelectionAlg::opticalfilter(
 
   // Run the calculation of charge center:
   int pass_index = -1;
+  std::cout << "[ElectronEventSelectionAlg] " << "The optical handle size " <<
+  optical_handle->size() << std::endl;
+
   for (unsigned int ifl = 0; ifl < optical_handle->size(); ++ifl) {
     recob::OpFlash const &flash = optical_handle->at(ifl);
+    std::cout << "[ElectronEventSelectionAlg] " << flash.Time() << std::endl;
     if ((flash.Time() > 4.8 || flash.Time() < 3.2))
       continue;
     bool sigma =
         (flash.ZCenter() + flash.ZWidth() / par1) >
             _this_center_of_charge.Z() &&
         (flash.ZCenter() - flash.ZWidth() / par1) < _this_center_of_charge.Z();
+
     bool absolute =
         std::abs(flash.ZCenter() - _this_center_of_charge.Z()) < par2;
-    // std::cout << "[ElectronEventSelectionAlg] " << "The flash time is " <<
-    // flash.Time()
-    //           << ", Zcentre: " << flash.ZCenter()
-    //           << " and the Zwidth: " << flash.ZWidth()
-    //           << std::endl;
-    // std::cout << "[ElectronEventSelectionAlg] " << "Z Center of charge is "
-    // << _this_center_of_charge.Z() << std::endl;
+    std::cout << "[ElectronEventSelectionAlg] " << "The flash time is " <<
+    flash.Time()
+              << ", Zcentre: " << flash.ZCenter()
+              << " and the Zwidth: " << flash.ZWidth()
+              << std::endl;
+    std::cout << "[ElectronEventSelectionAlg] " << "Z Center of charge is "
+    << _this_center_of_charge.Z() << std::endl;
     if (sigma || absolute) {
       pass = true;
       pass_index = ifl;
