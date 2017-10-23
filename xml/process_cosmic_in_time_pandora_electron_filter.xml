@@ -1,6 +1,6 @@
 <project name="cosmic_intime_pandora_electron_filter">
     <!--  Project size  -->
-    <numevents>240000</numevents>
+    <numevents>960000</numevents>
 
     <!--  Operating System  -->
     <os>SL6</os>
@@ -27,7 +27,7 @@
         <!-- <output> -->
             <!-- bnb_nu_cosmic_pandora_electron_filter${PROCESS}_%tc_gen.root -->
         <!-- </output> -->
-        <numjobs>960</numjobs>
+        <numjobs>3840</numjobs>
         <disk>70GB</disk>
         <memory>4096</memory>
         <maxfilesperjob>5</maxfilesperjob>

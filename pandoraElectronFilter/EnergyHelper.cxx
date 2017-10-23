@@ -314,7 +314,6 @@ void EnergyHelper::measureEnergy(size_t ipf, const art::Event &evt,
         art::FindManyP<recob::Track> tracks_per_pfparticle(pfparticle_handle, evt,
           _pfp_producer);
         std::vector<art::Ptr<recob::Track>> tracks = tracks_per_pfparticle.at(ipf);
-        std::cout << "[EnergyHelper] before track" << std::endl;
 
         for (size_t itr = 0; itr < tracks.size(); itr++) {
           if (trackEnergy(tracks[itr], evt) > 0) {
@@ -322,7 +321,6 @@ void EnergyHelper::measureEnergy(size_t ipf, const art::Event &evt,
           }
         }
 
-        std::cout << "[EnergyHelper] after track" << std::endl;
 
     } catch (...) {
       std::cout << "[EnergyHelper] "
