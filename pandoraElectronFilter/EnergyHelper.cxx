@@ -130,6 +130,72 @@ double EnergyHelper::trackEnergy(const art::Ptr<recob::Track> &track,
   return Eapprox / 1000; // convert to GeV
 }
 
+void EnergyHelper::nHits(size_t pfp_id,
+                         const art::Event &evt,
+                         std::vector< int > &nHits,
+                         std::string _pfp_producer) {
+
+  auto const &pfparticle_handle =
+     evt.getValidHandle<std::vector<recob::PFParticle>>(_pfp_producer);
+  auto const &cluster_handle =
+     evt.getValidHandle<std::vector<recob::Cluster>>(_pfp_producer);
+
+  art::FindManyP<recob::Cluster> clusters_per_pfpart(pfparticle_handle, evt, _pfp_producer);
+
+  std::vector<art::Ptr<recob::Cluster>> clusters = clusters_per_pfpart.at(pfp_id);
+  nHits.resize(3);
+
+  art::FindManyP<recob::Hit> hits_per_clusters(cluster_handle, evt, _pfp_producer);
+
+  for (size_t icl = 0; icl < clusters.size(); icl++) {
+    nHits[clusters[icl]->Plane().Plane] = hits_per_clusters.at(clusters[icl].key()).size();
+  }
+}
+
+void EnergyHelper::PCA(size_t pfp_id,
+                       const art::Event &evt,
+                       std::vector<std::vector <double>> &pca_planes,
+                       std::string _pfp_producer) {
+
+  auto const &pfparticle_handle =
+      evt.getValidHandle<std::vector<recob::PFParticle>>(_pfp_producer);
+  auto const &cluster_handle =
+      evt.getValidHandle<std::vector<recob::Cluster>>(_pfp_producer);
+
+  art::FindManyP<recob::Cluster> clusters_per_pfpart(pfparticle_handle, evt, _pfp_producer);
+
+  std::vector<art::Ptr<recob::Cluster>> clusters = clusters_per_pfpart.at(pfp_id);
+
+  art::FindManyP<recob::Hit> hits_per_clusters(cluster_handle, evt, _pfp_producer);
+  detinfo::DetectorProperties const *detprop =
+      lar::providerFrom<detinfo::DetectorPropertiesService>();
+
+  double drift = detprop->DriftVelocity() * 1e-3;
+  double fromTickToNs = 4.8 / detprop->ReadOutWindowSize() * 1e6;
+  double wireSpacing = 0.3;
+
+  for (size_t icl = 0; icl < clusters.size(); icl++) {
+    TPrincipal fPrincipal(2,"D");
+
+    std::vector<art::Ptr<recob::Hit>> hits = hits_per_clusters.at(clusters[icl].key());
+
+    for (auto &hit : hits) {
+      double data[2];
+      double w = hit->WireID().Wire * wireSpacing;
+      double t = fromTickToNs * drift * hit->PeakTime();
+      data[0] = w;
+      data[1] = t;
+      fPrincipal.AddRow(data);
+    }
+
+    fPrincipal.MakePrincipals();
+    pca_planes[clusters[icl]->Plane().Plane][0] = (*fPrincipal.GetEigenValues())[0];
+    pca_planes[clusters[icl]->Plane().Plane][1] = (*fPrincipal.GetEigenValues())[1];
+
+  }
+
+}
+
 void EnergyHelper::dQdx(size_t pfp_id,
                         const art::Event &evt,
                         std::vector<double> &dqdx,
@@ -171,7 +237,6 @@ void EnergyHelper::dQdx(size_t pfp_id,
       clusters_per_pfpart.at(pfp_id);
 
   double drift = detprop->DriftVelocity() * 1e-3;
-  std::cout << drift << std::endl;
   std::cout << "[dQdx] Clusters size " << clusters.size() << std::endl;
 
   for (size_t icl = 0; icl < clusters.size(); icl++) {

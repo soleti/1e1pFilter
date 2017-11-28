@@ -165,6 +165,18 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
   myTTree->Branch("matched_showers_energy", "std::vector< double >",
                 &_matched_showers_energy);
 
+  myTTree->Branch("shower_pca", "std::vector< double >",
+                  &_shower_pca);
+
+  myTTree->Branch("shower_nhits", "std::vector< std::vector<int> >",
+                  &_shower_nhits);
+
+  myTTree->Branch("track_pca", "std::vector< double >",
+                  &_track_pca);
+
+  myTTree->Branch("track_nhits", "std::vector< std::vector<int> >",
+                  &_track_nhits);
+
   this->reconfigure(pset);
 }
 
@@ -258,6 +270,10 @@ void lee::PandoraLEEAnalyzer::endSubRun(const art::SubRun &sr) {
 void lee::PandoraLEEAnalyzer::clear() {
   _interaction_type = std::numeric_limits<int>::lowest();
 
+  _shower_pca.clear();
+  _track_pca.clear();
+  _shower_nhits.clear();
+  _track_nhits.clear();
   _matched_tracks.clear();
   _matched_showers.clear();
   _matched_showers_process.clear();
@@ -507,26 +523,30 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
 
     // nu_e flux must be corrected by event weight
 
-    art::InputTag eventweight_tag("eventweight");
+    try {
+      art::InputTag eventweight_tag("eventweight");
+      auto const &eventweights_handle =
+          evt.getValidHandle<std::vector<evwgh::MCEventWeight>>(eventweight_tag);
+      auto const &eventweights(*eventweights_handle);
 
-    auto const &eventweights_handle =
-        evt.getValidHandle<std::vector<evwgh::MCEventWeight>>(eventweight_tag);
-    auto const &eventweights(*eventweights_handle);
+      if (eventweights.size() > 0) {
 
-    if (eventweights.size() > 0) {
+        for (auto last : eventweights.at(0).fWeight) {
+          if (last.first.find("bnbcorrection") != std::string::npos) {
 
-      for (auto last : eventweights.at(0).fWeight) {
-        if (last.first.find("bnbcorrection") != std::string::npos) {
-
-          if (!std::isfinite(last.second.at(0))) {
-            _bnbweight = 1;
-          } else {
-            _bnbweight = last.second.at(0);
+            if (!std::isfinite(last.second.at(0))) {
+              _bnbweight = 1;
+            } else {
+              _bnbweight = last.second.at(0);
+            }
           }
         }
-      }
 
-    } else {
+      } else {
+        _bnbweight = 1;
+      }
+    } catch (...) {
+      std::cout << "[PandoraLEE] No MCEventWeight data product" << std::endl;
       _bnbweight = 1;
     }
 
@@ -767,6 +787,30 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
 
       _track_theta.push_back(track_obj->Theta());
       _track_phi.push_back(track_obj->Phi());
+
+
+      std::vector< std::vector<double> > pca;
+
+      pca.resize(3, std::vector< double > (2));
+      std::vector<int> nHits;
+
+      energyHelper.nHits(pf_id, evt, nHits);
+      energyHelper.PCA(pf_id, evt, pca);
+
+      double weighted_pca = 0;
+      int total_hits = 0;
+      for (size_t i = 0; i < nHits.size(); i++) {
+        weighted_pca += nHits[i]*pca[i][0];
+        total_hits += nHits[i];
+      }
+
+      weighted_pca /= total_hits;
+      _track_pca.push_back(weighted_pca);
+      _track_nhits.push_back(nHits);
+
+
+      std::cout << "[PCA] Track " << pca[2][0] << " " << pca[2][1] << std::endl;
+      std::cout << "[nHits] " << nHits[2] << std::endl;
     }
 
     std::vector<size_t> pfp_showers_id;
@@ -791,6 +835,27 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
       _matched_showers_process.push_back("");
 
       _matched_showers_energy.push_back(std::numeric_limits<double>::lowest());
+
+      std::vector< std::vector<double> > pca;
+
+      pca.resize(3, std::vector< double > (2));
+      std::vector<int> nHits;
+
+      energyHelper.nHits(pf_id, evt, nHits);
+      energyHelper.PCA(pf_id, evt, pca);
+
+      double weighted_pca = 0;
+      int total_hits = 0;
+      for (size_t i = 0; i < nHits.size(); i++) {
+        weighted_pca += nHits[i]*pca[i][0];
+        total_hits += nHits[i];
+      }
+
+      weighted_pca /= total_hits;
+      _shower_pca.push_back(weighted_pca);
+      _shower_nhits.push_back(nHits);
+      std::cout << "[PCA] Shower " << pca[2][0] << " " << pca[2][1] << std::endl;
+      std::cout << "[nHits] " << nHits[2] << std::endl;
 
       energyHelper.dQdx(pf_id, evt, dqdx, dqdx_hits_shower, m_dQdxRectangleLength,
                         m_dQdxRectangleWidth);

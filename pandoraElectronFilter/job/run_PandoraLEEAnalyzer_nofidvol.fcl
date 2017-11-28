@@ -69,5 +69,6 @@ physics: {
 
 }
 
+source.inputCommands:        [ "keep *_*_*_*", "drop *_opfiltercommon__McRecoStage1" ]
 physics.analyzers.robertoana.isData: false
 services.SpaceCharge.EnableSimSpatialSCE: true

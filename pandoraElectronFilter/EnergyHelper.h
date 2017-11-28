@@ -22,6 +22,7 @@
 #include "canvas/Persistency/Common/FindManyP.h"
 #include "canvas/Persistency/Common/FindOneP.h"
 #include "lardata/DetectorInfoServices/DetectorPropertiesService.h"
+#include "TPrincipal.h"
 
 namespace lee {
 
@@ -70,7 +71,15 @@ public:
             std::string _pfp_producer = "pandoraNu");
 
   void dEdxFromdQdx(std::vector<double> &dedx, std::vector<double> &dqdx);
+  void PCA(size_t pfp_id,
+           const art::Event &evt,
+           std::vector<std::vector <double>> &pca_planes,
+           std::string _pfp_producer = "pandoraNu");
 
+  void nHits(size_t pfp_id,
+                           const art::Event &evt,
+                           std::vector< int > &nHits,
+                           std::string _pfp_producer = "pandoraNu");
 private:
   double _data_gain = 240;
   double _mc_gain = 200;

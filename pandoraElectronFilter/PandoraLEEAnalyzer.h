@@ -230,6 +230,12 @@ private:
   std::vector<double> _nu_daughters_endy;
   std::vector<double> _nu_daughters_endz;
 
+
+  std::vector<double> _shower_pca;
+  std::vector<double> _track_pca;
+
+  std::vector<std::vector<int>> _shower_nhits;
+  std::vector<std::vector<int>> _track_nhits;
   double m_dQdxRectangleWidth;
   double m_dQdxRectangleLength;
 
@@ -252,7 +258,7 @@ private:
   */
   void categorizePFParticles(
     art::Event const &evt,
-    
+
     std::vector<int> &neutrino_pdg,
     std::vector<std::string> &neutrino_process,
     std::vector<double> &neutrino_energy,

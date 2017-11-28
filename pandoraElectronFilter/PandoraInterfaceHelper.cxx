@@ -146,7 +146,7 @@ void PandoraInterfaceHelper::get_daughter_showers(
   //___________________________________________________________________________________________________
   void PandoraInterfaceHelper::GetRecoToTrueMatches(lar_pandora::PFParticlesToMCParticles &matchedParticles)
   {
-    bool _debug = true;
+    bool _debug = false;
 
     if (!_configured) {
       std::cout << "Call to " << __PRETTY_FUNCTION__ << " whitout having done configuration. Abort." << std::endl;
@@ -218,7 +218,7 @@ void PandoraInterfaceHelper::GetRecoToTrueMatches(
     lar_pandora::MCParticlesToPFParticles &matchedParticles,
     lar_pandora::MCParticlesToHits &matchedParticleHits) {
 
-  bool _debug = true;
+  bool _debug = false;
 
   // --- Collect hits
   lar_pandora::HitVector hitVector;
