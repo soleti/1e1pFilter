@@ -128,8 +128,10 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt) {
 
   // Get the list of primary pfparticles that are also neutrinos (numu or nue)
   for (size_t _i_pfp = 0; _i_pfp < pfparticle_handle->size(); _i_pfp++) {
-    if (lar_pandora::LArPandoraHelper::IsNeutrino(art::Ptr<recob::PFParticle>(pfparticle_handle, _i_pfp))) {
-      _primary_indexes.push_back(_i_pfp);
+    if ((abs(pfparticle_handle->at(_i_pfp).PdgCode()) == 12 ||
+              abs(pfparticle_handle->at(_i_pfp).PdgCode()) == 14) &&
+              pfparticle_handle->at(_i_pfp).IsPrimary()) {
+                 _primary_indexes.push_back(_i_pfp);
     }
   }
 

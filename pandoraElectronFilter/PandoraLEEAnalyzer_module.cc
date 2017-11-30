@@ -390,6 +390,9 @@ void lee::PandoraLEEAnalyzer::clear() {
   _bnbweight = std::numeric_limits<int>::lowest();
 }
 
+
+
+
 void lee::PandoraLEEAnalyzer::categorizePFParticles(
   art::Event const &evt,
   std::vector<int> &neutrino_pdg,
@@ -404,13 +407,14 @@ void lee::PandoraLEEAnalyzer::categorizePFParticles(
 
   lar_pandora::PFParticlesToMCParticles matchedParticles;
 
+
+
   pandoraHelper.Configure(evt, _pfp_producer, _spacepointLabel,
-    _hitfinderLabel, _geantModuleLabel);
+    _hitfinderLabel, _geantModuleLabel, _mcpHitAssLabel);
   pandoraHelper.GetRecoToTrueMatches(matchedParticles);
-
-  art::ServiceHandle<cheat::BackTracker> bt;
-
   std::cout << "[PandoraLEE] Matched size " << matchedParticles.size () << std::endl;
+
+  // art::ServiceHandle<cheat::BackTracker> bt;
 
   for (lar_pandora::PFParticlesToMCParticles::const_iterator
     iter = matchedParticles.begin(),
@@ -420,8 +424,10 @@ void lee::PandoraLEEAnalyzer::categorizePFParticles(
     art::Ptr<simb::MCParticle> mc_par = iter->second; // The MCParticle
     art::Ptr<recob::PFParticle> pf_par = iter->first; // The matched PFParticle
     std::cout << "[PandoraLEE] PdgCode " << mc_par->PdgCode() << std::endl;
-    const art::Ptr<simb::MCTruth> mc_truth =
-    bt->TrackIDToMCTruth(mc_par->TrackId());
+
+    const auto mc_truth =
+    pandoraHelper.TrackIDToMCTruth(evt, "largeant", mc_par->TrackId());
+
     std::cout << "[PandoraLEE] Origin " <<  mc_truth->Origin() << std::endl;
     if (mc_truth->Origin() == simb::kBeamNeutrino) {
       neutrino_pf.push_back(pf_par);
@@ -442,63 +448,6 @@ void lee::PandoraLEEAnalyzer::categorizePFParticles(
     }
   }
 }
-// }
-//
-// void lee::PandoraLEEAnalyzer::categorizePFParticles(
-//   art::Event const &evt,
-//   std::vector<int> &neutrino_pdg,
-//   std::vector<std::string> &neutrino_process,
-//   std::vector<double> &neutrino_energy,
-//   std::vector<art::Ptr<recob::PFParticle>> &neutrino_pf,
-//
-//   std::vector<int> &cosmic_pdg,
-//   std::vector<std::string> &cosmic_process,
-//   std::vector<double> &cosmic_energy,
-//   std::vector<art::Ptr<recob::PFParticle>> &cosmic_pf) {
-//
-//     lar_pandora::MCParticlesToPFParticles
-//         matchedParticles; // This is a map: MCParticle to matched PFParticle
-//     lar_pandora::MCParticlesToHits matchedParticleHits;
-//
-//     // --- Do the matching
-//     pandoraHelper.GetRecoToTrueMatches(evt, _pfp_producer, _spacepointLabel,
-//       _geantModuleLabel, _hitfinderLabel,
-//       matchedParticles, matchedParticleHits);
-//
-//     art::ServiceHandle<cheat::BackTracker> bt;
-//
-//     for (lar_pandora::MCParticlesToPFParticles::const_iterator
-//       iter1 = matchedParticles.begin(),
-//       iterEnd1 = matchedParticles.end();
-//       iter1 != iterEnd1; ++iter1) {
-//
-//       art::Ptr<simb::MCParticle> mc_par = iter1->first; // The MCParticle
-//       art::Ptr<recob::PFParticle> pf_par =
-//       iter1->second; // The matched PFParticle
-//
-//       const art::Ptr<simb::MCTruth> mc_truth =
-//       bt->TrackIDToMCTruth(mc_par->TrackId());
-//
-//       if (mc_truth->Origin() == simb::kBeamNeutrino) {
-//         neutrino_pf.push_back(pf_par);
-//         neutrino_pdg.push_back(mc_par->PdgCode());
-//         if (mc_par->EndProcess() != NULL) {
-//           neutrino_process.push_back(mc_par->EndProcess());
-//         }
-//         neutrino_energy.push_back(mc_par->E());
-//       }
-//
-//       if (mc_truth->Origin() == simb::kCosmicRay) {
-//         cosmic_pf.push_back(pf_par);
-//         cosmic_pdg.push_back(mc_par->PdgCode());
-//         if (mc_par->EndProcess() != NULL) {
-//           cosmic_process.push_back(mc_par->EndProcess());
-//         }
-//         cosmic_energy.push_back(mc_par->E());
-//       }
-//     }
-//
-// }
 
 void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
   clear();

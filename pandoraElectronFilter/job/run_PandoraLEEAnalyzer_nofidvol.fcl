@@ -57,7 +57,7 @@ physics: {
           NeutrinoFlashMatch,
           T0TrackTaggerCosmicpandoraNu, T0TrackTaggerBeampandoraNu, decisiontreeid ]
 
-  path0 : [  robertoana, UBXSec, decisiontreeidana ]
+  path0 : [  robertoana,  decisiontreeidana ]
 
   #path1 : [  comma separated list of module labels of analyzer or output modules  ]
   #path2 : [  comma separated list of module labels of analyzer or output modules  ]

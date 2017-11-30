@@ -16,7 +16,6 @@
 #include "art/Framework/Principal/Run.h"
 #include "art/Framework/Principal/SubRun.h"
 #include "fhiclcpp/ParameterSet.h"
-#include "larsim/MCCheater/BackTracker.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
 
 // uncomment the lines below as you use these objects
@@ -40,7 +39,6 @@
 #include "lardataobj/RecoBase/Shower.h"
 #include "lardataobj/RecoBase/Track.h"
 #include "lardataobj/RecoBase/Vertex.h"
-#include "larpandora/LArPandoraInterface/LArPandoraHelper.h"
 #include "nusimdata/SimulationBase/MCParticle.h"
 #include "nusimdata/SimulationBase/MCTruth.h"
 #include "uboone/EventWeight/MCEventWeight.h"
@@ -49,7 +47,6 @@
 #include "art/Framework/Services/Optional/TFileService.h"
 
 #include "ElectronEventSelectionAlg.h"
-#include "larpandora/LArPandoraInterface/LArPandoraHelper.h"
 
 #include "EnergyHelper.h"
 #include "GeometryHelper.h"
@@ -84,6 +81,7 @@ private:
   std::string _pfp_producer = "pandoraNu";
   std::string _spacepointLabel = "pandoraNu";
   std::string _mctruthLabel = "generator";
+  std::string _mcpHitAssLabel = "pandoraCosmicHitRemoval";
 
   std::vector<double> _predict_p;
   std::vector<double> _predict_mu;

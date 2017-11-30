@@ -16,10 +16,10 @@
 #include "lardataobj/RecoBase/SpacePoint.h"
 #include "lardataobj/RecoBase/Hit.h"
 #include "larpandora/LArPandoraInterface/LArPandoraHelper.h"
-#include "larsim/MCCheater/BackTracker.h"
 
 #include "nusimdata/SimulationBase/MCParticle.h"
 #include "nusimdata/SimulationBase/MCTruth.h"
+#include "lardataobj/AnalysisBase/BackTrackerMatchingData.h"
 
 namespace lar_pandora {
   typedef std::map<art::Ptr<recob::PFParticle>, art::Ptr<simb::MCParticle>> PFParticlesToMCParticles;
@@ -67,40 +67,7 @@ public:
       const art::Event &evt,
       std::string _pfp_producer = "pandoraNu");
 
-  /**
-  *  @brief Perform matching between true and reconstructed particles
-  *
-  *  @param recoParticlesToHits the mapping from reconstructed particles to hits
-  *  @param trueHitsToParticles the mapping from hits to true particles
-  *  @param matchedParticles the output matches between reconstructed and true
-  * particles
-  *  @param matchedHits the output matches between reconstructed particles and
-  * hits
-  *  @param recoVeto the veto list for reconstructed particles
-  *  @param trueVeto the veto list for true particles
-  */
-  void GetRecoToTrueMatches(
-      const lar_pandora::PFParticlesToHits &recoParticlesToHits,
-      const lar_pandora::HitsToMCParticles &trueHitsToParticles,
-      lar_pandora::MCParticlesToPFParticles &matchedParticles,
-      lar_pandora::MCParticlesToHits &matchedHits,
-      std::string _pfp_producer = "pandoraNu");
 
-  void GetRecoToTrueMatches(
-      const lar_pandora::PFParticlesToHits &recoParticlesToHits,
-      const lar_pandora::HitsToMCParticles &trueHitsToParticles,
-      lar_pandora::MCParticlesToPFParticles &matchedParticles,
-      lar_pandora::MCParticlesToHits &matchedHits, PFParticleSet &recoVeto,
-      MCParticleSet &trueVeto, bool _recursiveMatching,
-      std::string _pfp_producer = "pandoraNu");
-
-  void
-  GetRecoToTrueMatches(art::Event const &e, std::string _pfp_producer,
-                       std::string _spacepointLabel,
-                       std::string _hitfinderLabel,
-                       std::string _geantModuleLabel,
-                       lar_pandora::MCParticlesToPFParticles &matchedParticles,
-                       lar_pandora::MCParticlesToHits &matchedHits);
 
   void get_daughter_tracks(std::vector<size_t> pf_ids, const art::Event &evt,
                            std::vector<art::Ptr<recob::Track>> &tracks,
@@ -121,7 +88,7 @@ public:
      *  @param _hitfinder_producer the Hit producer label
      *  @param _geant_producer The Geant4 producer label
      */
-    void Configure(art::Event const & e, std::string _pfp_producer, std::string _spacepoint_producer, std::string _hitfinder_producer, std::string _geant_producer);
+
 
     /**
     *  @brief Returns matching between true and reconstructed particles
@@ -129,6 +96,15 @@ public:
     *  @param matchedParticles the output matches between reconstructed and true particles
     */
    void GetRecoToTrueMatches(lar_pandora::PFParticlesToMCParticles & matchedParticles);
+
+   void Configure(art::Event const & e,
+                              std::string _pfp_producer,
+                              std::string _spacepoint_producer,
+                              std::string _hitfinder_producer,
+                              std::string _geant_producer,
+                              std::string _hit_mcp_producer);
+
+    art::Ptr<simb::MCTruth> TrackIDToMCTruth(art::Event const & e, std::string _geant_producer, int geant_track_id);
  protected:
 
    lar_pandora::HitsToMCParticles _hit_to_mcps_map; ///< A map from recon hits to MCParticles
