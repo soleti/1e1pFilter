@@ -6,5 +6,5 @@ There are two FCL files, one for data (`run_PandoraLEEAnalyzer_data.fcl`) and on
 
 ## Requirements
 
-- `uboonecode v06_30_00` or higher
+- `uboonecode v06_26_01_10` (MCC8.6)
 - [XGBoost](http://xgboost.readthedocs.io/en/latest/). Follow the instructions in [DocDB 10685](https://microboone-docdb.fnal.gov/cgi-bin/private/ShowDocument?docid=10685).
