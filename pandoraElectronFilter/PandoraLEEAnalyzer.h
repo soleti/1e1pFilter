@@ -42,6 +42,7 @@
 #include "nusimdata/SimulationBase/MCParticle.h"
 #include "nusimdata/SimulationBase/MCTruth.h"
 #include "uboone/EventWeight/MCEventWeight.h"
+#include "larevt/SpaceChargeServices/SpaceChargeService.h"
 
 #include "TEfficiency.h"
 #include "art/Framework/Services/Optional/TFileService.h"
@@ -51,7 +52,6 @@
 #include "EnergyHelper.h"
 #include "GeometryHelper.h"
 
-#include "SpaceChargeMicroBooNE.h"
 #include "larcore/Geometry/WireGeo.h"
 #include "lardata/DetectorInfoServices/DetectorPropertiesService.h"
 
@@ -81,7 +81,7 @@ private:
   std::string _pfp_producer = "pandoraNu";
   std::string _spacepointLabel = "pandoraNu";
   std::string _mctruthLabel = "generator";
-  std::string _mcpHitAssLabel = "pandoraCosmicHitRemoval";
+  std::string _mcpHitAssLabel = "crHitRemovalTruthMatch";
 
   std::vector<double> _predict_p;
   std::vector<double> _predict_mu;
@@ -110,7 +110,7 @@ private:
   bool m_isData;
   bool m_isCosmicInTime;
   bool m_printDebug;
-
+  bool m_isOverlaidSample;
   const int k_cosmic = 1;
   const int k_nu_e = 2;
   const int k_nu_mu = 3;

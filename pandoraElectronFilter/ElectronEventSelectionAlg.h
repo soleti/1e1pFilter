@@ -30,7 +30,6 @@
 #include "lardataobj/RecoBase/Hit.h"
 #include "lardataobj/RecoBase/OpFlash.h"
 
-#include "uboone/SpaceChargeServices/SpaceChargeServiceMicroBooNE.h"
 
 #include "GeometryHelper.h"
 #include "PandoraInterfaceHelper.h"
@@ -80,14 +79,6 @@ namespace lee {
     */
     bool opticalfilter(size_t ipf, const std::vector<recob::PFParticle> & pfparticles, TVector3 _this_center_of_charge, int & _selected_flash, const art::Event & evt);
 
-    
-    /**
-    * @brief Return the true coordinates corrected by the space-charge effect
-    *
-    * @param xyz TVector3 of the true position
-    * @return TVector3 of the space-charge corrected position
-    */
-    TVector3 spaceChargeTrueToReco(const TVector3 & xyz);
 
     /**
     * @brief Reset internal variables
@@ -205,11 +196,8 @@ namespace lee {
     double m_fidvolZstart;
     double m_fidvolZend;
 
-    double m_trackLength;
-
     double m_fractionsigmaflashwidth;
     double m_absoluteflashdist;
-      double m_isCosmicInTime;
 
     std::string _pfp_producer = "pandoraNu";
 

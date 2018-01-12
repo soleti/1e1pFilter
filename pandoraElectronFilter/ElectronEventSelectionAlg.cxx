@@ -18,22 +18,11 @@ void ElectronEventSelectionAlg::clear() {
   _pfp_id_tracks_from_primary.clear();
 }
 
-TVector3 ElectronEventSelectionAlg::spaceChargeTrueToReco(const TVector3 &xyz) {
-  //auto const *sce = lar::providerFrom<spacecharge::SpaceChargeService>();
-  //geo::Point_t point(xyz);
-  // auto correction = sce->GetPosOffsets(point);
-  TVector3 correctedPoint(xyz);
-  //correctedPoint.SetX(xyz.X() - sce->GetPosOffsets(point).X() + 0.7);
-  //correctedPoint.SetX(xyz.Y() + sce->GetPosOffsets(point).Y());
- // correctedPoint.SetX(xyz.Z() + sce->GetPosOffsets(point).Z());
-  return correctedPoint;
-}
+
 
 void ElectronEventSelectionAlg::reconfigure(fhicl::ParameterSet const &p) {
   // Implementation of optional member function here.
   m_nTracks = p.get<int>("nTracks", 1);
-
-  m_trackLength = p.get<int>("trackLength", 100);
 
   m_fidvolXstart = p.get<double>("fidvolXstart", 10);
   m_fidvolXend = p.get<double>("fidvolXend", 10);
@@ -43,8 +32,6 @@ void ElectronEventSelectionAlg::reconfigure(fhicl::ParameterSet const &p) {
 
   m_fidvolZstart = p.get<double>("fidvolZstart", 10);
   m_fidvolZend = p.get<double>("fidvolZend", 50);
-
-  m_isCosmicInTime = p.get<bool>("isCosmicInTime", false);
 
   geoHelper.setFiducialVolumeCuts(m_fidvolXstart, m_fidvolXend, m_fidvolYstart,
                                   m_fidvolYend, m_fidvolZstart, m_fidvolZend);

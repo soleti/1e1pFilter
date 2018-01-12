@@ -1,4 +1,4 @@
-////////////////////////////////////////////////////////////////////////
+ ////////////////////////////////////////////////////////////////////////
 // Class:       PandoraLEEAnalyzer
 // Module Type: analyzer
 // File:        PandoraLEEAnalyzer_module.cc
@@ -8,7 +8,6 @@
 ////////////////////////////////////////////////////////////////////////
 
 #include "PandoraLEEAnalyzer.h"
-#include "larevt/SpaceChargeServices/SpaceChargeService.h"
 
 lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
     : EDAnalyzer(pset) // ,
@@ -407,12 +406,15 @@ void lee::PandoraLEEAnalyzer::categorizePFParticles(
 
   lar_pandora::PFParticlesToMCParticles matchedParticles;
 
+  std::cout << "[PandoraLEE] Before configure " << std::endl;
 
 
   pandoraHelper.Configure(evt, _pfp_producer, _spacepointLabel,
     _hitfinderLabel, _geantModuleLabel, _mcpHitAssLabel);
+    std::cout << "[PandoraLEE] Before GetRecoToTrueMatches " << std::endl;
+
   pandoraHelper.GetRecoToTrueMatches(matchedParticles);
-  std::cout << "[PandoraLEE] Matched size " << matchedParticles.size () << std::endl;
+  std::cout << "[PandoraLEE] Matched size " << matchedParticles.size() << std::endl;
 
   // art::ServiceHandle<cheat::BackTracker> bt;
 
@@ -466,8 +468,8 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
 
   _category = 0;
   std::vector<double> true_neutrino_vertex(3);
-
-  if (!evt.isRealData()) {
+  std::cout << "Real data " << evt.isRealData() << std::endl;
+  if (!evt.isRealData() || m_isOverlaidSample) {
     _gain = 200;
 
     // nu_e flux must be corrected by event weight
@@ -507,9 +509,11 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
     std::vector<simb::MCParticle> nu_mcparticles;
 
     bool there_is_a_neutrino = false;
-
+    std::cout << "Generator size " << generator.size() << std::endl;
     if (generator.size() > 0) {
       for (auto &gen: generator) {
+        std::cout << "Generator origin " << gen.Origin() << std::endl;
+
         if (gen.Origin() == simb::kBeamNeutrino) {
           there_is_a_neutrino = true;
           _nu_pdg = gen.GetNeutrino().Nu().PdgCode();
@@ -612,11 +616,14 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
   std::vector<std::string> cosmic_process;
   std::vector<double> cosmic_energy;
 
-  if (!evt.isRealData() && !m_isCosmicInTime) {
+  if ((!evt.isRealData() || m_isOverlaidSample) && !m_isCosmicInTime) {
+    std::cout << "[PandoraLEE] "
+              << "Before categorize "<< std::endl;
     categorizePFParticles(evt,
       neutrino_pdg, neutrino_process, neutrino_energy, neutrino_pf,
       cosmic_pdg, cosmic_process, cosmic_energy, cosmic_pf);
-
+      std::cout << "[PandoraLEE] "
+                << "After categorize "<< std::endl;
     _n_matched = neutrino_pf.size();
   }
 
@@ -997,6 +1004,7 @@ void lee::PandoraLEEAnalyzer::reconfigure(fhicl::ParameterSet const &pset) {
 
   m_isData = pset.get<bool>("isData", false);
   m_isCosmicInTime = pset.get<bool>("isCosmicInTime", false);
+  m_isOverlaidSample = pset.get<bool>("isOverlaidSample", false);
 
   m_dQdxRectangleWidth = pset.get<double>("dQdxRectangleWidth", 1);
   m_dQdxRectangleLength = pset.get<double>("dQdxRectangleLength", 4);

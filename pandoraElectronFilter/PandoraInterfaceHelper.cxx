@@ -63,14 +63,19 @@ void PandoraInterfaceHelper::Configure(art::Event const & e,
 
   lar_pandora::LArPandoraHelper::CollectPFParticles(e, _pfp_producer, recoParticleVector);
   lar_pandora::LArPandoraHelper::SelectNeutrinoPFParticles(recoParticleVector, recoNeutrinoVector);
+  std::cout << "[McPfpMatch] Before Build " << std::endl;
+try {
   lar_pandora::LArPandoraHelper::BuildPFParticleHitMaps(e,
                                                         _pfp_producer,
-                                                        _spacepoint_producer,
+                                                      _spacepoint_producer,
                                                         pfp_to_hits_map,
                                                         recoHitsToParticles,
                                                         daughterMode,
                                                         true); // Use clusters to go from pfp to hits
-
+} catch (...) {
+  std::cout <<"Build error" << std::endl;
+}
+_verbose = true;
   if (_verbose) {
     std::cout << "[McPfpMatch] RecoNeutrinos: " << recoNeutrinoVector.size() << std::endl;
     std::cout << "[McPfpMatch] RecoParticles: " << recoParticleVector.size() << std::endl;
@@ -122,6 +127,7 @@ void PandoraInterfaceHelper::Configure(art::Event const & e,
       }
 
       if (best_match_id > -1) {
+        try {
 
         const art::Ptr<simb::MCParticle> thisParticle = mcp_v.at(best_match_id);
         const art::Ptr<simb::MCParticle> primaryParticle(lar_pandora::LArPandoraHelper::GetFinalStateMCParticle(particleMap, thisParticle));
@@ -134,7 +140,8 @@ void PandoraInterfaceHelper::Configure(art::Event const & e,
           continue;
 
         hit_to_mcps_map[hit] = selectedParticle;
-
+      } catch (cet::exception &e) {
+      }
         //const auto mct = UBXSecHelper::TrackIDToMCTruth(e, "largeant", selectedParticle->TrackId());
         //if (mct->Origin() == simb::kBeamNeutrino && selectedParticle->PdgCode() == 13 && selectedParticle->Mother() == 0) {
           //std::cout << "Muon from neutrino ass to hit " << hit->PeakTime() << ", "<< hit->WireID () << std::endl;
@@ -234,7 +241,7 @@ void PandoraInterfaceHelper::get_daughter_showers(
       {
         const art::Ptr<simb::MCParticle> trueParticle = mIter->first;
 
-        if (_debug) std::cout << "[PandoraInterfaceHelper::GetRecoToTrueMatches] \t >>> Match found with MCParticle with PDG " << trueParticle->PdgCode() << std::endl;
+        std::cout << "[PandoraInterfaceHelper::GetRecoToTrueMatches] \t >>> Match found with MCParticle with PDG " << trueParticle->PdgCode() << std::endl;
 
         // Emplace into the output map
         matchedParticles[recoParticle] = trueParticle;
