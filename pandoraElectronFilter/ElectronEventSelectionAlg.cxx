@@ -62,13 +62,15 @@ void ElectronEventSelectionAlg::reconfigure(fhicl::ParameterSet const &p) {
   m_fractionsigmaflashwidth = p.get<double>("fractionsigmaflashwidth", 2.0);
   m_absoluteflashdist = p.get<double>("absoluteflashdist", 50.0);
 
-  m_startbeamtime  = p.get<double>("startbeamtime",3.2);
-  m_endbeamtime    = p.get<double>("endbeamtime"  ,4.8);
-  m_PE_threshold   = p.get<double>("PE_threshold" ,30.);
-  m_cut_zwidth     = p.get<double>("cut_zwidth"   ,105);
-  m_cut_sigzwidth  = p.get<double>("cut_sigzwidth",1.0);
-  m_cut_ywidth     = p.get<double>("cut_ywidth"   ,95.);
-  m_cut_sigywidth  = p.get<double>("cut_sigywidth",2.2);
+  m_startbeamtime     = p.get<double>("startbeamtime",3.2);
+  m_endbeamtime       = p.get<double>("endbeamtime"  ,4.8);
+  m_PE_threshold      = p.get<double>("PE_threshold" ,50.);
+  m_cut_zwidth        = p.get<double>("cut_zwidth"   ,105);
+  m_cut_sigzwidth     = p.get<double>("cut_sigzwidth",1.0);
+  m_cut_ywidth        = p.get<double>("cut_ywidth"   ,95.);
+  m_cut_sigywidth     = p.get<double>("cut_sigywidth",2.2);
+  m_charge_light_ratio= p.get<double>("charge_light_ratio",3.0);
+
   m_flashmatching = p.get<bool>("Flashmatching"       , true);
   m_FM_all        = p.get<bool>("Flashmatching_first" , false);
 
