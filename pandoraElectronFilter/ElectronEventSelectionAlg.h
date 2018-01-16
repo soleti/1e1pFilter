@@ -20,7 +20,6 @@
 #include "canvas/Persistency/Common/FindManyP.h"
 #include "canvas/Utilities/InputTag.h"
 
-
 #include "lardataobj/RecoBase/PFParticle.h"
 #include "lardataobj/RecoBase/Vertex.h"
 #include "lardataobj/RecoBase/Track.h"
@@ -30,6 +29,14 @@
 #include "lardataobj/RecoBase/Hit.h"
 #include "lardataobj/RecoBase/OpFlash.h"
 
+//#include "uboone/SpaceChargeServices/SpaceChargeServiceMicroBooNE.h"
+#include "larevt/SpaceChargeServices/SpaceChargeService.h"
+
+#include "larcore/Geometry/Geometry.h"
+#include "uboone/LLSelectionTool/OpT0Finder/Base/OpT0FinderTypes.h"
+#include "uboone/LLSelectionTool/OpT0Finder/Algorithms/LightCharge.h"
+#include "uboone/LLSelectionTool/OpT0Finder/Algorithms/PhotonLibHypothesis.h"
+#include "uboone/LLSelectionTool/OpT0Finder/Base/FlashMatchManager.h"
 
 #include "GeometryHelper.h"
 #include "PandoraInterfaceHelper.h"
@@ -66,19 +73,48 @@ namespace lee {
 
 
 
-
     /**
     * @brief Checks if there is a flash within the 3.2-4.8 ms window and compatible with the center of charge
     *
-    * @param ipf Index of the PFParticle
-    * @param pfparticles PFParticles handle
-    * @param _this_center_of_charge Position of the center of charge
-    * @param _selected_flash index of the selected flash
+    * @param std::vector<size_t> pfplist : list of primary neutrino candidates that need to be tested
     * @param evt art Event
-    * @return True or false
+    * @return -1 if not passed, otherwise index of the flash
     */
-    bool opticalfilter(size_t ipf, const std::vector<recob::PFParticle> & pfparticles, TVector3 _this_center_of_charge, int & _selected_flash, const art::Event & evt);
+    const std::map<size_t, int > opticalfilter(const art::Event & evt,
+                                               const std::vector<size_t> &pfplist,
+                                               const art::ValidHandle<std::vector<recob::PFParticle>> pfparticle_handle);
 
+    /**
+    * @brief Checks if there is a flash within the flash_window_start - flash_window_end window with enough PE.
+    * and compatible with the center of charge, the best one is selected using flashmatching
+    *
+    * @param std::vector<size_t> pfplist : list of primary neutrino candidates that need to be tested
+    * @param evt art Event
+    * @return -1 if not passed, otherwise index of the flash is returned
+    */
+    const std::map<size_t, int > flashBasedSelection(const art::Event & evt,
+                                                     const std::vector<size_t> &pfplist,
+                                                     const art::ValidHandle<std::vector<recob::PFParticle>> pfparticle_handle);
+
+    /**
+	* @brief Creates a photon cluster for a neutrino pfp hierarchy
+	* PFParticle
+	*
+	* @param evt art Event
+	* @param pfplist list of pfp indices
+	* @return flashana::QCluster_t object containing the photons
+	*/
+    const flashana::QCluster_t collect3DHits(
+		const art::Event &evt,
+		const std::vector<size_t> &pfplist);
+
+    /**
+    * @brief Return the true coordinates corrected by the space-charge effect
+    *
+    * @param xyz TVector3 of the true position
+    * @return TVector3 of the space-charge corrected position
+    */
+    TVector3 spaceChargeTrueToReco(const TVector3 & xyz);
 
     /**
     * @brief Reset internal variables
@@ -164,6 +200,29 @@ namespace lee {
     const std::map<size_t,  std::vector<size_t> > &
     get_pfp_id_tracks_from_primary() const {return _pfp_id_tracks_from_primary;}
 
+    /**
+    * @brief Return the list of total PE of the flashes
+    * @details [long description]
+    * @return [description]
+    */
+    const std::vector<double> &
+    get_flash_PE() const {return _flash_PE;}
+
+    /**
+    * @brief Return the list of times of the flashes
+    * @details [long description]
+    * @return [description]
+    */
+    const std::vector<double> &
+    get_flash_time() const {return _flash_time;}
+
+
+    const double & get_flash_x() const {return _flash_x;}
+
+
+
+    const double & get_TPC_x() const {return _TPC_x;}
+
 
   protected:
 
@@ -182,6 +241,12 @@ namespace lee {
     std::map<size_t, int> _n_tracks;
     std::map<size_t, std::vector < size_t > > _pfp_id_tracks_from_primary;
 
+    std::vector<double> _flash_PE;
+    std::vector<double> _flash_time;
+
+    double _TPC_x;
+    double _flash_x;
+
 
   protected:
 
@@ -199,6 +264,22 @@ namespace lee {
     double m_fractionsigmaflashwidth;
     double m_absoluteflashdist;
 
+    double m_startbeamtime;
+    double m_endbeamtime;
+    double m_PE_threshold;
+
+    // Prematching cuts
+    double m_cut_zwidth;
+    double m_cut_sigzwidth;
+    double m_cut_ywidth;
+    double m_cut_sigywidth;
+
+    bool m_flashmatching;
+    bool m_FM_all;
+    double m_isCosmicInTime;
+
+    std::map<unsigned short, double> m_ly_map;
+
     std::string _pfp_producer = "pandoraNu";
 
     std::string fOpticalFlashFinderLabel;
@@ -209,6 +290,8 @@ namespace lee {
     // Helper class for dealing with pandora heirarchy:
     PandoraInterfaceHelper pandoraHelper;
 
+    flashana::FlashMatchManager m_mgr;
+    art::ServiceHandle<geo::Geometry> m_geo;
   };
 
 } // lee

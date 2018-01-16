@@ -322,6 +322,7 @@ TVector3 PandoraInterfaceHelper::calculateChargeCenter(
   double totalweight = 0;
   std::vector<double> chargecenter;
   chargecenter.resize(3);
+  double min_x_sps_temp = 9999; //random big value that will be overwritten
 
   // Loop over the pfparticles, get their space points, and compute the weighted
   // average:
@@ -335,6 +336,12 @@ TVector3 PandoraInterfaceHelper::calculateChargeCenter(
     // Loop over the spacepoints and get the associated hits:
     for (auto &_sps : spcpnts) {
       auto xyz = _sps->XYZ();
+
+      if(xyz[0]>0 && xyz[0]<min_x_sps_temp)
+      {
+          min_x_sps_temp=xyz[0];
+      }
+
       std::vector<art::Ptr<recob::Hit>> hits = hits_per_spcpnts.at(_sps.key());
       // Add the hits to the weighted average, if they are collection hits:
       for (auto &hit : hits) {
@@ -367,12 +374,18 @@ TVector3 PandoraInterfaceHelper::calculateChargeCenter(
 
   // Store the data:
   TVector3 _center_of_charge;
-  _center_of_charge.SetX(chargecenter[0]);
+  //_center_of_charge.SetX(chargecenter[0]);
+  // IMPORTANT:
+  // This function is necessary for optical selection.
+  // Flashatching is returning the extimated minimal x position,
+  // not the center. Therefore, also here teh minimum is returned and not the center.
+  _center_of_charge.SetX(min_x_sps_temp);
   _center_of_charge.SetY(chargecenter[1]);
   _center_of_charge.SetZ(chargecenter[2]);
 
   return _center_of_charge;
 }
+
 
 } // namespace lee
 

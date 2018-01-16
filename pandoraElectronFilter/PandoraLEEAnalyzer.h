@@ -42,7 +42,7 @@
 #include "nusimdata/SimulationBase/MCParticle.h"
 #include "nusimdata/SimulationBase/MCTruth.h"
 #include "uboone/EventWeight/MCEventWeight.h"
-#include "larevt/SpaceChargeServices/SpaceChargeService.h"
+// #include "larevt/SpaceChargeServices/SpaceChargeService.h" Included before, put ifdef statement around this file
 
 #include "TEfficiency.h"
 #include "art/Framework/Services/Optional/TFileService.h"
@@ -138,6 +138,11 @@ private:
   double _true_vy_sce;
   double _true_vz_sce;
 
+  std::vector<double> _true_shower_x_sce;
+  std::vector<double> _true_shower_y_sce;
+  std::vector<double> _true_shower_z_sce;
+  std::vector<int> _true_shower_pdg;
+
   int _nu_matched_tracks;
   int _nu_matched_showers;
 
@@ -160,6 +165,8 @@ private:
   std::vector<int> _track_passed;
   std::vector<int> _shower_passed;
   std::vector<int> _primary_indexes;
+  std::vector<int> _number_tracks;
+  std::vector<int> _number_showers;
 
   std::vector<int> _matched_showers;
   std::vector<int> _matched_tracks;
@@ -171,13 +178,26 @@ private:
 
   double _bnbweight;
 
-  std::vector<std::vector<double>> _dQdx_hits;
-  std::vector<std::vector<double>> _dEdx_hits;
+  std::vector<std::vector<double>> _shower_dQdx_hits;
+  std::vector<std::vector<double>> _shower_dEdx_hits;
 
   std::vector<std::vector<double>> _shower_dQdx;
   std::vector<std::vector<double>> _shower_dEdx;
 
+  std::vector<std::vector<double>> _track_dQdx_hits;
+  std::vector<std::vector<double>> _track_dEdx_hits;
+
+  std::vector<std::vector<double>> _track_dQdx;
+  std::vector<std::vector<double>> _track_dEdx;
+
+  std::vector<int> _nu_track_ids;
+  std::vector<int> _nu_shower_ids;
+
+  std::vector<std::vector<int>> _nu_track_daughters;
+  std::vector<std::vector<int>> _nu_shower_daughters;
+
   std::vector<double> _shower_open_angle;
+  std::vector<double> _shower_length;
   std::vector<double> _shower_dir_x;
   std::vector<double> _shower_dir_y;
   std::vector<double> _shower_dir_z;
@@ -228,6 +248,11 @@ private:
   std::vector<double> _nu_daughters_endy;
   std::vector<double> _nu_daughters_endz;
 
+  std::vector<double> _flash_PE;
+  std::vector<double> _flash_time;
+
+  double _TPC_x;
+  double _flash_x;
 
   std::vector<double> _shower_pca;
   std::vector<double> _track_pca;
@@ -242,6 +267,12 @@ private:
   void clear();
   art::Ptr<recob::Track>
   get_longest_track(std::vector<art::Ptr<recob::Track>> &tracks);
+
+  /**
+  * @brief Conversion between two different types of vectors
+  */
+  std::vector<int> vectorCast(std::vector<long unsigned int> vec_size_t);
+
   art::Ptr<recob::Shower>
   get_most_energetic_shower(std::vector<art::Ptr<recob::Shower>> &showers);
   /**
