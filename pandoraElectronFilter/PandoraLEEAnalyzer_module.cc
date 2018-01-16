@@ -828,26 +828,16 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
       _shower_dQdx.push_back(dqdx);
       _shower_dEdx.push_back(dedx);
 
-      int direction = geoHelper.correct_direction(pf_id, evt);
       art::FindOneP<recob::Shower> shower_per_pfpart(pfparticle_handle, evt,
                                                      _pfp_producer);
       auto const &shower_obj = shower_per_pfpart.at(pf_id);
 
-      TVector3 correct_dir(direction * shower_obj->Direction().X(),
-                           direction * shower_obj->Direction().Y(),
-                           direction * shower_obj->Direction().Z());
-
-      _shower_dir_x.push_back(correct_dir.X());
-      _shower_dir_y.push_back(correct_dir.Y());
-      _shower_dir_z.push_back(correct_dir.Z());
+      _shower_dir_x.push_back(shower_obj->Direction().X());
+      _shower_dir_y.push_back(shower_obj->Direction().Y());
+      _shower_dir_z.push_back(shower_obj->Direction().Z());
 
       _shower_open_angle.push_back(shower_obj->OpenAngle());
 
-      std::vector<double> correct_dir_v;
-      correct_dir_v.resize(3);
-      correct_dir_v[0] = correct_dir.X();
-      correct_dir_v[1] = correct_dir.Y();
-      correct_dir_v[2] = correct_dir.Z();
       double shower_length = shower_obj->Length();
 
       std::vector<double> start_point;
@@ -857,7 +847,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
       for (int ix = 0; ix < 3; ix++) {
         start_point[ix] = shower_obj->ShowerStart()[ix];
         end_point[ix] =
-            shower_obj->ShowerStart()[ix] + shower_length * correct_dir_v[ix];
+            shower_obj->ShowerStart()[ix] + shower_length;
       }
 
       _shower_is_fiducial.push_back(int(geoHelper.isFiducial(start_point) &&
@@ -867,8 +857,8 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
       _shower_start_y.push_back(shower_obj->ShowerStart().Y());
       _shower_start_z.push_back(shower_obj->ShowerStart().Z());
 
-      _shower_phi.push_back(correct_dir.Phi());
-      _shower_theta.push_back(correct_dir.Theta());
+      _shower_phi.push_back(shower_obj->Direction().Phi());
+      _shower_theta.push_back(shower_obj->Direction().Theta());
 
       _shower_energy.push_back(energyHelper.showerEnergy(shower_obj, evt));
 
