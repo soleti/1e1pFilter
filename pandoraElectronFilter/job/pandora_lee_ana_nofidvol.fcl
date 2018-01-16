@@ -8,7 +8,6 @@ lee_pandora_analyzer:
     ElectronSelectionAlg:       @local::lee_electron_alg
 
     PrintDebug:                 false
-    trackLength:                100
     fidvolXstart:               0
     fidvolXstart:               0
     fidvolYstart:               0

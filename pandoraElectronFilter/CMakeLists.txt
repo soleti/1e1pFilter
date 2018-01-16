@@ -39,6 +39,10 @@ art_make(
                         ${SIMULATIONBASE}
                    	larsim_MCCheater_BackTracker_service
 
+                        uboonecode_uboone_SelectionTool_OpT0FinderBase
+                        uboonecode_uboone_SelectionTool_OpT0FinderAlgorithms
+                        uboonecode_uboone_BasicTool_GeoAlgo
+                        uboone_UBFlashFinder
           MODULE_LIBRARIES
                         ElectronFilter
                         larpandora_LArPandoraInterface
@@ -72,6 +76,11 @@ art_make(
                         ${ROOT_GDML}
                         ${ROOT_BASIC_LIB_LIST}
                         ${SIMULATIONBASE}
+
+                        uboonecode_uboone_BasicTool_GeoAlgo
+                        uboonecode_uboone_SelectionTool_OpT0FinderBase
+                        uboonecode_uboone_SelectionTool_OpT0FinderAlgorithms
+                        uboone_UBFlashFinder
 )
 
 add_subdirectory(job)

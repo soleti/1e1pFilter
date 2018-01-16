@@ -1,15 +1,6 @@
 
-#include "pandora_lee_ana.fcl"
-#include "decisiontreeidana.fcl"
+
 #include "decisiontreeid.fcl"
-
-
-#include "neutrinomcflash.fcl"
-#include "T0RecoAnodeCathodePiercing.fcl"
-#include "ubflashfinder.fcl"
-#include "neutrinoflashmatch.fcl"
-#include "cosmicflashmatch.fcl"
-#include "ubxsec.fcl"
 #include "pandora_lee_ana_common.fcl"
 
 lee_electron_alg: {
@@ -21,6 +12,8 @@ lee_electron_alg: {
     fidvolYend:                 0
     fidvolZstart:               0
     fidvolZend:                 0
+    isCosmicInTime:             true
+
 }
 
 lee_pandora_analyzer:
@@ -28,9 +21,7 @@ lee_pandora_analyzer:
     module_type:                "PandoraLEEAnalyzer"
     ElectronSelectionAlg:       @local::lee_electron_alg
     PrintDebug:                 false
-    isData:                     true
 }
-
 
 
 
@@ -38,37 +29,32 @@ physics: {
 
   producers : {
      # ParameterSets for zero or more producer modules
-     NeutrinoFlashMatchData    : @local::NeutrinoFlashMatch
-     T0TrackTaggerCosmicpandoraNuData : @local::T0RecoAnodeCathodePiercing_data_loose
-     T0TrackTaggerBeampandoraNuData   : @local::T0RecoAnodeCathodePiercing_data
      decisiontreeid: @local::DecisionTreeID
+
   }
   analyzers: {
      # ParameterSets for zero or more analyzer modules
      robertoana:  @local::lee_pandora_analyzer
-     UBXSec: @local::UBXSec
-     decisiontreeidana: @local::DecisionTreeIDAna
-  }
 
+}
   filters : {
      # ParameterSets for zero or more filter modules
   }
-  reco: [ NeutrinoFlashMatchData,
-         T0TrackTaggerCosmicpandoraNuData,
-         T0TrackTaggerBeampandoraNuData, decisiontreeid ]
+  reco: [decisiontreeid ]
 
-  path0 : [  robertoana, UBXSec, decisiontreeidana ]
+  path0 : [  robertoana ]
 
   #path1 : [  comma separated list of module labels of analyzer or output modules  ]
   #path2 : [  comma separated list of module labels of analyzer or output modules  ]
   #path3 : [  comma separated list of module labels of analyzer or output modules  ]
 
   #here, just a shorthand: could have done ana: [ robertoana ] then end_paths: [ ana ]
-  trigger_paths: [ reco  ]
+  trigger_paths: [ reco]
   end_paths: [ path0 ]
 
 }
 
-physics.analyzers.UBXSec.UseGENIEInfo:                          false
-physics.analyzers.UBXSec.ACPTProducer:                          "T0TrackTaggerCosmicpandoraNuData"
-physics.analyzers.UBXSec.NeutrinoFlashMatchProducer:            "NeutrinoFlashMatchData"
+physics.analyzers.robertoana.isCosmicInTime: true
+physics.analyzers.robertoana.isData: false
+source.inputCommands:        [ "keep *_*_*_*", "drop *_opfiltercommon__McRecoStage1" ]
+services.SpaceCharge.EnableSimSpatialSCE: true

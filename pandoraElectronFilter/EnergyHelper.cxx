@@ -219,14 +219,31 @@ void EnergyHelper::dQdx(size_t pfp_id,
   auto const &cluster_handle =
       evt.getValidHandle<std::vector<recob::Cluster>>(_pfp_producer);
 
-  art::FindOneP<recob::Shower> shower_per_pfpart(pfparticle_handle, evt,
-                                                 _pfp_producer);
-  auto const &shower_obj = shower_per_pfpart.at(pfp_id);
 
-  TVector3 shower_dir(shower_obj->Direction().X(), shower_obj->Direction().Y(),
-                      shower_obj->Direction().Z());
+  TVector3 pfp_dir;
 
-  geoHelper.correct_direction(pfp_id, evt);
+  //For a shower
+  if(pfparticle_handle->at(pfp_id).PdgCode()==11){
+    art::FindOneP<recob::Shower> shower_per_pfpart(pfparticle_handle, evt, _pfp_producer);
+    auto const &shower_obj = shower_per_pfpart.at(pfp_id);
+
+    pfp_dir.SetX(shower_obj->Direction().X());
+    pfp_dir.SetY(shower_obj->Direction().Y());
+    pfp_dir.SetZ(shower_obj->Direction().Z());
+
+    pfp_dir*=geoHelper.correct_direction(pfp_id, evt);
+  }
+  // For a track
+  else{
+    art::FindOneP<recob::Track> track_per_pfpart(pfparticle_handle, evt, _pfp_producer);
+    auto const &track_obj = track_per_pfpart.at(pfp_id);
+
+    pfp_dir.SetX(track_obj->StartDirection().X());
+    pfp_dir.SetY(track_obj->StartDirection().Y());
+    pfp_dir.SetZ(track_obj->StartDirection().Z());
+  }
+
+  // geoHelper.correct_direction(pfp_id, evt); Not needed anymore
 
   art::FindManyP<recob::Cluster> clusters_per_pfpart(pfparticle_handle, evt,
                                                      _pfp_producer);
@@ -298,7 +315,7 @@ void EnergyHelper::dQdx(size_t pfp_id,
 
 
       double pitch =
-          geoHelper.getPitch(shower_dir, clusters[icl]->Plane().Plane);
+          geoHelper.getPitch(pfp_dir, clusters[icl]->Plane().Plane);
 
       bool is_within = geoHelper.isInside(hit_pos, points);
 
