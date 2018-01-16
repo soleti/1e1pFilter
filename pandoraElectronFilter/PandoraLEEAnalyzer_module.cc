@@ -989,8 +989,6 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
       _shower_length.push_back(shower_length);
       std::cout<< "RecoShowerLength: " << shower_length << std::endl;
 
-      double shower_length = shower_obj->Length();
-
       std::vector<double> start_point;
       std::vector<double> end_point;
       start_point.resize(3);
