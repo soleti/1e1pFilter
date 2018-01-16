@@ -12,6 +12,31 @@
 #include "ubxsec.fcl"
 #include "pandora_lee_ana_common.fcl"
 
+lee_electron_alg: {
+    nTracks:                    1
+    trackLength:                100
+    fidvolXstart:               0
+    fidvolXend:                 0
+    fidvolYstart:               0
+    fidvolYend:                 0
+    fidvolZstart:               0
+    fidvolZend:                 0
+
+    # 1. Flash cuts
+    startbeamtime:               3.3 # 3.2 for nue mc, 3.3 for on beam, 3.65 for off beam and mc intime
+    endbeamtime:                 4.9 # 4.8 for nue mc, 4.9 for on beam, 5.25 for off beam and mc intime
+}
+
+lee_pandora_analyzer:
+{
+    module_type:                "PandoraLEEAnalyzer"
+    ElectronSelectionAlg:       @local::lee_electron_alg
+    PrintDebug:                 false
+    isData:                     true
+}
+
+
+
 
 physics: {
 
@@ -48,7 +73,6 @@ physics: {
 
 }
 
-physics.analyzers.robertoana.isData: true
 physics.analyzers.UBXSec.UseGENIEInfo:                          false
 physics.analyzers.UBXSec.ACPTProducer:                          "T0TrackTaggerCosmicpandoraNuData"
 physics.analyzers.UBXSec.NeutrinoFlashMatchProducer:            "NeutrinoFlashMatchData"

@@ -5,7 +5,6 @@
 
 lee_electron_alg: {
     nTracks:                    1
-    trackLength:                100
     fidvolXstart:               0
     fidvolXend:                 0
     fidvolYstart:               0

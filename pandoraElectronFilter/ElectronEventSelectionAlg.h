@@ -273,6 +273,7 @@ namespace lee {
     double m_cut_sigzwidth;
     double m_cut_ywidth;
     double m_cut_sigywidth;
+    double m_charge_light_ratio;
 
     bool m_flashmatching;
     bool m_FM_all;
