@@ -32,6 +32,7 @@
 //#include "uboone/SpaceChargeServices/SpaceChargeServiceMicroBooNE.h"
 #include "larevt/SpaceChargeServices/SpaceChargeService.h"
 
+#include "fhiclcpp/ParameterSet.h"
 #include "larcore/Geometry/Geometry.h"
 #include "uboone/LLSelectionTool/OpT0Finder/Base/OpT0FinderTypes.h"
 #include "uboone/LLSelectionTool/OpT0Finder/Algorithms/LightCharge.h"

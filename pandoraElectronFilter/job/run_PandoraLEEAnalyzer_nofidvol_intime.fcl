@@ -10,21 +10,11 @@
 #include "cosmicflashmatch.fcl"
 #include "ubxsec.fcl"
 #include "pandora_lee_ana_common.fcl"
+#include "lee_selection_alg.fcl"
 
-lee_electron_alg: {
-    nTracks:                    1
-    fidvolXstart:               0
-    fidvolXend:                 0
-    fidvolYstart:               0
-    fidvolYend:                 0
-    fidvolZstart:               0
-    fidvolZend:                 0
-    isCosmicInTime:             true
+lee_electron_alg.startbeamtime: 3.65
+lee_electron_alg.endbeamtime: 5.25
 
-    # 1. Flash cuts
-    startbeamtime:               3.65 # 3.2 for nue mc, 3.3 for on beam, 3.65 for off beam and mc intime
-    endbeamtime:                 5.25 # 4.8 for nue mc, 4.9 for on beam, 5.25 for off beam and mc intime
-}
 
 lee_pandora_analyzer:
 {
