@@ -150,13 +150,6 @@ namespace lee {
     const std::map<size_t, bool> & get_neutrino_candidate_passed() const {return _neutrino_candidate_passed;}
 
     /**
-    * @brief Return the calculated center of charge, as indexed by the pfparticle id number (it's a map)
-    * @details [long description]
-    * @return [description]
-    */
-    const std::map<size_t, TVector3> & get_center_of_charge() const {return _center_of_charge;}
-
-    /**
     * @brief Return the index of the flash matched with the pfparticle
     * @details [long description]
     * @return [description]
@@ -234,7 +227,6 @@ namespace lee {
     size_t _n_neutrino_candidates;
     std::vector<size_t> _primary_indexes;
     std::map<size_t, bool> _neutrino_candidate_passed;
-    std::map<size_t, TVector3> _center_of_charge;
     std::map<size_t, int > _op_flash_indexes;
     std::map<size_t, TVector3> _neutrino_vertex;
     std::map<size_t, int> _n_showers;

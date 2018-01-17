@@ -3,16 +3,17 @@
 
 #include "ElectronEventSelectionAlg.h"
 
-namespace lee {
+namespace lee
+{
 
-void ElectronEventSelectionAlg::clear() {
+void ElectronEventSelectionAlg::clear()
+{
   _n_neutrino_candidates = 0.0;
-  _TPC_x   = std::numeric_limits<double>::lowest();
+  _TPC_x = std::numeric_limits<double>::lowest();
   _flash_x = std::numeric_limits<double>::lowest();
 
   _primary_indexes.clear();
   _neutrino_candidate_passed.clear();
-  _center_of_charge.clear();
   _op_flash_indexes.clear();
   _neutrino_vertex.clear();
   _n_showers.clear();
@@ -21,29 +22,38 @@ void ElectronEventSelectionAlg::clear() {
   _pfp_id_tracks_from_primary.clear();
   _flash_PE.clear();
   _flash_time.clear();
-
 }
 
-TVector3 ElectronEventSelectionAlg::spaceChargeTrueToReco(const TVector3 &xyz) {
+TVector3 ElectronEventSelectionAlg::spaceChargeTrueToReco(const TVector3 &xyz)
+{
 
   TVector3 correctedPoint(xyz);
-   try {
-    auto const* SCE = lar::providerFrom<spacecharge::SpaceChargeService>();
-    if (SCE->GetPosOffsets( xyz.X(),xyz.Y(), xyz.Z() ).size() == 3) {
-      correctedPoint.SetX(   xyz.X()- SCE->GetPosOffsets(xyz.X(),xyz.Y(), xyz.Z())[0]+0.7 );
-      correctedPoint.SetX(   xyz.Y()+ SCE->GetPosOffsets(xyz.X(),xyz.Y(), xyz.Z())[1]);
-      correctedPoint.SetX(   xyz.Z()+ SCE->GetPosOffsets(xyz.X(),xyz.Y(), xyz.Z())[2]);
-    } else {
-      std::cout << "[PandoraLEE] " <<  "Space Charge service offset size not 3" << std::endl;
+  try
+  {
+    auto const *SCE = lar::providerFrom<spacecharge::SpaceChargeService>();
+    if (SCE->GetPosOffsets(xyz.X(), xyz.Y(), xyz.Z()).size() == 3)
+    {
+      correctedPoint.SetX(xyz.X() - SCE->GetPosOffsets(xyz.X(), xyz.Y(), xyz.Z())[0] + 0.7);
+      correctedPoint.SetX(xyz.Y() + SCE->GetPosOffsets(xyz.X(), xyz.Y(), xyz.Z())[1]);
+      correctedPoint.SetX(xyz.Z() + SCE->GetPosOffsets(xyz.X(), xyz.Y(), xyz.Z())[2]);
     }
-  } catch (...) {
-    std::cout << "[PandoraLEE] " <<  "Space Charge service error" << std::endl;
+    else
+    {
+      std::cout << "[PandoraLEE] "
+                << "Space Charge service offset size not 3" << std::endl;
+    }
+  }
+  catch (...)
+  {
+    std::cout << "[PandoraLEE] "
+              << "Space Charge service error" << std::endl;
   }
 
   return correctedPoint;
 }
 
-void ElectronEventSelectionAlg::reconfigure(fhicl::ParameterSet const &p) {
+void ElectronEventSelectionAlg::reconfigure(fhicl::ParameterSet const &p)
+{
   // Implementation of optional member function here.
   m_nTracks = p.get<int>("nTracks", 1);
 
@@ -62,299 +72,310 @@ void ElectronEventSelectionAlg::reconfigure(fhicl::ParameterSet const &p) {
   m_fractionsigmaflashwidth = p.get<double>("fractionsigmaflashwidth", 2.0);
   m_absoluteflashdist = p.get<double>("absoluteflashdist", 50.0);
 
-  m_startbeamtime     = p.get<double>("startbeamtime",3.2);
-  m_endbeamtime       = p.get<double>("endbeamtime"  ,4.8);
-  m_PE_threshold      = p.get<double>("PE_threshold" ,50.);
-  m_cut_zwidth        = p.get<double>("cut_zwidth"   ,105);
-  m_cut_sigzwidth     = p.get<double>("cut_sigzwidth",1.0);
-  m_cut_ywidth        = p.get<double>("cut_ywidth"   ,95.);
-  m_cut_sigywidth     = p.get<double>("cut_sigywidth",2.2);
-  m_charge_light_ratio= p.get<double>("charge_light_ratio",3.0);
+  m_startbeamtime = p.get<double>("startbeamtime", 3.2);
+  m_endbeamtime = p.get<double>("endbeamtime", 4.8);
+  m_PE_threshold = p.get<double>("PE_threshold", 50.);
+  m_cut_zwidth = p.get<double>("cut_zwidth", 105);
+  m_cut_sigzwidth = p.get<double>("cut_sigzwidth", 1.0);
+  m_cut_ywidth = p.get<double>("cut_ywidth", 95.);
+  m_cut_sigywidth = p.get<double>("cut_sigywidth", 2.2);
+  m_charge_light_ratio = p.get<double>("charge_light_ratio", 3.0);
 
-  m_flashmatching = p.get<bool>("Flashmatching"       , true);
-  m_FM_all        = p.get<bool>("Flashmatching_first" , false);
+  m_flashmatching = p.get<bool>("Flashmatching", true);
+  m_FM_all = p.get<bool>("Flashmatching_first", false);
 
   m_isCosmicInTime = p.get<bool>("isCosmicInTime", false);
   m_mgr.Configure(p.get<flashana::Config_t>("FlashMatchConfig"));
   fOpticalFlashFinderLabel = p.get<std::string>("OpticalFlashFinderLabel", "simpleFlashBeam");
 }
 
-
-const std::map<size_t, int >  ElectronEventSelectionAlg::flashBasedSelection(const art::Event & evt,
-                                                                             const std::vector<size_t> &pfplist,
-                                                                             const art::ValidHandle<std::vector<recob::PFParticle>> pfparticle_handle)
+const std::map<size_t, int> ElectronEventSelectionAlg::flashBasedSelection(const art::Event &evt,
+                                                                           const std::vector<size_t> &pfplist,
+                                                                           const art::ValidHandle<std::vector<recob::PFParticle>> pfparticle_handle)
 {
-    // All initializations
-    std::vector<double> ChargeCenter;
-    std::vector<flashana::QCluster_t> qcvec;
-    std::vector<unsigned int> PFPIDvector; //links the pfp indices to the qvec indices.
-    std::vector<double> chargexvector;
-    std::vector<flashana::FlashMatch_t> matchvec;
-    std::vector<double> scorevector;
-    std::vector<double> TPC_x_vector;
-    std::vector<unsigned int> TPCIDvector; //links the qvec indices to the matched ones, matched ones are score ordered already
+  // All initializations
+  std::vector<double> ChargeCenter;
+  std::vector<flashana::QCluster_t> qcvec;
+  std::vector<unsigned int> PFPIDvector; //links the pfp indices to the qvec indices.
+  std::vector<double> chargexvector;
+  std::vector<flashana::FlashMatch_t> matchvec;
+  std::vector<double> scorevector;
+  std::vector<double> TPC_x_vector;
+  std::vector<unsigned int> TPCIDvector; //links the qvec indices to the matched ones, matched ones are score ordered already
 
-    size_t chosen_index = -1;
-    std::map<size_t, int > result;
+  size_t chosen_index = -1;
+  std::map<size_t, int> result;
 
+  //Select the flash with the biggest PE inside the window
 
-    //Select the flash with the biggest PE inside the window
+  art::InputTag optical_tag{fOpticalFlashFinderLabel};
+  auto const &optical_handle = evt.getValidHandle<std::vector<recob::OpFlash>>(optical_tag);
 
-    art::InputTag optical_tag{fOpticalFlashFinderLabel};
-    auto const &optical_handle = evt.getValidHandle<std::vector<recob::OpFlash>>(optical_tag);
+  int maxIndex = -1;
+  double maxPE = 0;
+  for (unsigned int ifl = 0; ifl < optical_handle->size(); ++ifl)
+  {
+    recob::OpFlash const &flash = optical_handle->at(ifl);
+    _flash_PE.push_back(flash.TotalPE());
+    _flash_time.push_back(flash.Time());
 
-    int maxIndex = -1;
-    double maxPE = 0;
-    for (unsigned int ifl = 0; ifl < optical_handle->size(); ++ifl)
+    if ((flash.Time() < m_endbeamtime && flash.Time() > m_startbeamtime))
     {
-        recob::OpFlash const &flash = optical_handle->at(ifl);
-        _flash_PE.push_back(flash.TotalPE());
-        _flash_time.push_back(flash.Time());
-
-        if ((flash.Time() < m_endbeamtime && flash.Time() > m_startbeamtime))
-        {
-            double thisPE = flash.TotalPE() ;
-            if(thisPE>maxPE)
-            {
-              maxPE=thisPE;
-              maxIndex=ifl;
-            }
-        }
+      double thisPE = flash.TotalPE();
+      if (thisPE > maxPE)
+      {
+        maxPE = thisPE;
+        maxIndex = ifl;
+      }
     }
-    if(maxIndex == -1 || maxPE< m_PE_threshold)
+  }
+  if (maxIndex == -1 || maxPE < m_PE_threshold)
+  {
+    std::cout << "[ElectronEventSelectionAlg] "
+              << "No flash in event within window and over " << m_PE_threshold << "PE!" << std::endl;
+  }
+
+  // Else means we have a good flash
+  else
+  {
+
+    // Store what I want to know about the flash
+    recob::OpFlash const &flash = optical_handle->at(maxIndex);
+    ::flashana::Flash_t f;
+    f.x = f.x_err = 0;
+    f.y = flash.YCenter();
+    f.z = flash.ZCenter();
+    f.y_err = flash.YWidth();
+    f.z_err = flash.ZWidth();
+    f.pe_v.resize(m_geo->NOpDets());
+    f.pe_err_v.resize(m_geo->NOpDets());
+    f.time = flash.Time();
+    for (unsigned int ipmt = 0; ipmt < m_geo->NOpDets(); ++ipmt)
     {
-       std::cout << "[ElectronEventSelectionAlg] " << "No flash in event within window and over " << m_PE_threshold << "PE!" << std::endl;
+      unsigned int opdet = m_geo->OpDetFromOpChannel(ipmt);
+      f.pe_v[opdet] = flash.PE(ipmt);
+      f.pe_err_v[opdet] = sqrt(flash.PE(ipmt));
     }
 
-    // Else means we have a good flash
-    else{
+    // Loop over the neutrino candidates to do prematching cuts
+    art::FindOneP<recob::Vertex> vertex_per_pfpart(pfparticle_handle, evt, _pfp_producer);
 
-        // Store what I want to know about the flash
-        recob::OpFlash const &flash = optical_handle->at(maxIndex);
-        ::flashana::Flash_t f;
-        f.x = f.x_err = 0;
-        f.y = flash.YCenter();
-        f.z = flash.ZCenter();
-        f.y_err = flash.YWidth();
-        f.z_err = flash.ZWidth();
-        f.pe_v.resize(m_geo->NOpDets());
-        f.pe_err_v.resize(m_geo->NOpDets());
-        f.time = flash.Time();
-        for(unsigned int ipmt=0; ipmt<m_geo->NOpDets() ; ++ipmt)
-        {
-            unsigned int opdet = m_geo->OpDetFromOpChannel(ipmt);
-            f.pe_v[opdet] = flash.PE(ipmt);
-            f.pe_err_v[opdet] = sqrt(flash.PE(ipmt));
-        }
+    for (size_t pfpindex : pfplist)
+    {
+      ChargeCenter = pandoraHelper.calculateChargeCenter(pfpindex, pfparticle_handle, evt);
 
+      // candidates that fail the prematching cuts do not need to be passed to the manager
+      bool prematching_cuts;
 
-        // Loop over the neutrino candidates to do prematching cuts
-        art::FindOneP< recob::Vertex > vertex_per_pfpart(pfparticle_handle, evt, _pfp_producer);
+      prematching_cuts = (m_cut_zwidth > std::abs(ChargeCenter[2] - f.z)) && // Cut in Z direction
+                         (m_cut_sigzwidth > std::abs(ChargeCenter[2] - f.z) / f.z_err) &&
+                         (m_cut_ywidth > std::abs(ChargeCenter[1] - f.y)) && // Cut in Y direction
+                         (m_cut_sigywidth > std::abs(ChargeCenter[1] - f.y) / f.y_err) &&
+                         (m_charge_light_ratio < std::abs(ChargeCenter[3] / maxPE));
 
-        for(size_t pfpindex : pfplist)
-        {
-            ChargeCenter = pandoraHelper.calculateChargeCenter(pfpindex,pfparticle_handle,evt);
+      if (prematching_cuts)
+      {
+        std::vector<size_t> daughters;
+        pandoraHelper.traversePFParticleTree(pfparticle_handle, pfpindex, daughters);
+        qcvec.emplace_back(collect3DHits(evt, daughters));
+        PFPIDvector.emplace_back(pfpindex);
+        chargexvector.emplace_back(ChargeCenter[0]);
+        std::cout << "[ElectronEventSelectionAlg] "
+                  << "Neutrino candidate " << pfpindex << " passed (prematching cuts)." << std::endl;
+      }
+      else
+      {
+        std::cout << "[ElectronEventSelectionAlg] "
+                  << "Neutrino candidate " << pfpindex << " rejected (prematching cuts)." << std::endl;
+      }
+    } // Loop over the list of neutrino candidates
 
-            // candidates that fail the prematching cuts do not need to be passed to the manager
-            bool prematching_cuts;
-
-            prematching_cuts = (m_cut_zwidth    > std::abs(ChargeCenter[2]-f.z)   ) &&  // Cut in Z direction
-                       (m_cut_sigzwidth > std::abs(ChargeCenter[2]-f.z)/f.z_err   ) &&
-                       (m_cut_ywidth    > std::abs(ChargeCenter[1]-f.y)           ) &&  // Cut in Y direction
-                       (m_cut_sigywidth > std::abs(ChargeCenter[1]-f.y)/f.y_err   ) &&
-                       (m_charge_light_ratio < std::abs(ChargeCenter[3]/maxPE)    ) ;
-
-            if(prematching_cuts)
-            {
-              std::vector<size_t> daughters;
-              pandoraHelper.traversePFParticleTree(pfparticle_handle, pfpindex, daughters);
-              qcvec.emplace_back(collect3DHits(evt,daughters));
-              PFPIDvector.emplace_back(pfpindex);
-              chargexvector.emplace_back(ChargeCenter[0]);
-              std::cout << "[ElectronEventSelectionAlg] " << "Neutrino candidate " << pfpindex << " passed (prematching cuts)." << std::endl;
-            }
-            else
-            {
-              std::cout << "[ElectronEventSelectionAlg] " << "Neutrino candidate " << pfpindex << " rejected (prematching cuts)." << std::endl;
-            }
-        } // Loop over the list of neutrino candidates
-
-
-// If there are no postmatching cuts and one remaining candidate, don't run the matching!
-        if(qcvec.size() ==0 )
-        {
-          std::cout << "[ElectronEventSelectionAlg] " << "All neutrino candidate rejected (prematching cuts)." << std::endl;
-        }
-
-        //  Commented out for now to force flashmatching to make sure x-values are calculated.
-
-        //else if(m_cut_xwidth==0 && m_cut_scorePE==0 && qcvec.size() ==1 )
-        //{
-        //  std::cout << "[ElectronEventSelectionAlg] " << "Candidate "<< PFPIDvector[0] <<"passed optical selection!" << std::endl;
-        //  chosen_index = PFPIDvector[0];
-        //}
-        else{ // Else run flashmatching in the remaining cases
-            ::flashana::Flash_t flashRecoCopy = f;
-            m_mgr.Reset();
-            m_mgr.Emplace(std::move(flashRecoCopy));
-            for (auto cluster : qcvec)
-            {
-                flashana::QCluster_t clusterCopy = cluster;
-                m_mgr.Emplace(std::move(clusterCopy));
-            }
-
-            matchvec = m_mgr.Match();
-
-            if(matchvec.size()==0)
-            {
-                std::cout << "[ElectronEventSelectionAlg] " << "Flashmatchmanager unable to match!" << std::endl;
-            }
-            else{ // Else means we have a match
-                bool postmatchingcuts;
-                for(auto match :matchvec)
-                {
-                    //Postmatching cuts.
-                    if(2. * m_geo->DetHalfWidth()  < chargexvector[match.tpc_id] ){
-                        std::cout << "[ElectronEventSelectionAlg] " << "The x-position of the TPC object is outside the detector!" << std::endl;
-                    }
-                    else{
-                        postmatchingcuts = true;
-
-                        if(postmatchingcuts){
-                          scorevector.emplace_back(match.score);
-                          TPC_x_vector.emplace_back(match.tpc_point.x);
-                          TPCIDvector.emplace_back(match.tpc_id);
-                        }
-                    }
-                } // loop over matches
-                if(scorevector.size()==0){
-                    std::cout << "[ElectronEventSelectionAlg] " << "No candidates passed the postmatching cuts!" << std::endl;
-                }
-                else{
-                    chosen_index=PFPIDvector[TPCIDvector[0]];
-
-                    _TPC_x    = chargexvector[TPCIDvector[0]];
-                    _flash_x  = TPC_x_vector[0];
-                    std::cout << "[ElectronEventSelectionAlg] " << "Candidate "<< PFPIDvector[TPCIDvector[0]] 
-                                                                <<"passed optical selection! TPC_X: " << _TPC_x << " flash_x "<< _flash_x << std::endl;
-
-                }
-            } // Else means we have a match
-
-
-        } // Else run flashmatching in the remaining cases
-
-
-    } // Else means we have a good flash
-
-    for(unsigned int i = 0; i<pfplist.size();i++ ){
-        if(pfplist[i]==chosen_index){
-            result[pfplist[i]]=maxIndex; //MaxIndex is the index corresponding to the flash
-        }
-        else{
-            result[pfplist[i]]=-1;
-        }
+    // If there are no postmatching cuts and one remaining candidate, don't run the matching!
+    if (qcvec.size() == 0)
+    {
+      std::cout << "[ElectronEventSelectionAlg] "
+                << "All neutrino candidate rejected (prematching cuts)." << std::endl;
     }
-    return result;
+
+    //  Commented out for now to force flashmatching to make sure x-values are calculated.
+
+    //else if(m_cut_xwidth==0 && m_cut_scorePE==0 && qcvec.size() ==1 )
+    //{
+    //  std::cout << "[ElectronEventSelectionAlg] " << "Candidate "<< PFPIDvector[0] <<"passed optical selection!" << std::endl;
+    //  chosen_index = PFPIDvector[0];
+    //}
+    else
+    { // Else run flashmatching in the remaining cases
+      ::flashana::Flash_t flashRecoCopy = f;
+      m_mgr.Reset();
+      m_mgr.Emplace(std::move(flashRecoCopy));
+      for (auto cluster : qcvec)
+      {
+        flashana::QCluster_t clusterCopy = cluster;
+        m_mgr.Emplace(std::move(clusterCopy));
+      }
+
+      matchvec = m_mgr.Match();
+
+      if (matchvec.size() == 0)
+      {
+        std::cout << "[ElectronEventSelectionAlg] "
+                  << "Flashmatchmanager unable to match!" << std::endl;
+      }
+      else
+      { // Else means we have a match
+        bool postmatchingcuts;
+        for (auto match : matchvec)
+        {
+          //Postmatching cuts.
+          if (2. * m_geo->DetHalfWidth() < chargexvector[match.tpc_id])
+          {
+            std::cout << "[ElectronEventSelectionAlg] "
+                      << "The x-position of the TPC object is outside the detector!" << std::endl;
+          }
+          else
+          {
+            postmatchingcuts = true;
+
+            if (postmatchingcuts)
+            {
+              scorevector.emplace_back(match.score);
+              TPC_x_vector.emplace_back(match.tpc_point.x);
+              TPCIDvector.emplace_back(match.tpc_id);
+            }
+          }
+        } // loop over matches
+        if (scorevector.size() == 0)
+        {
+          std::cout << "[ElectronEventSelectionAlg] "
+                    << "No candidates passed the postmatching cuts!" << std::endl;
+        }
+        else
+        {
+          chosen_index = PFPIDvector[TPCIDvector[0]];
+
+          _TPC_x = chargexvector[TPCIDvector[0]];
+          _flash_x = TPC_x_vector[0];
+          std::cout << "[ElectronEventSelectionAlg] "
+                    << "Candidate " << PFPIDvector[TPCIDvector[0]]
+                    << "passed optical selection! TPC_X: " << _TPC_x << " flash_x " << _flash_x << std::endl;
+        }
+      } // Else means we have a match
+
+    } // Else run flashmatching in the remaining cases
+
+  } // Else means we have a good flash
+
+  for (unsigned int i = 0; i < pfplist.size(); i++)
+  {
+    if (pfplist[i] == chosen_index)
+    {
+      result[pfplist[i]] = maxIndex; //MaxIndex is the index corresponding to the flash
+    }
+    else
+    {
+      result[pfplist[i]] = -1;
+    }
+  }
+  return result;
 } // End of flashbased selection function
 
-
 const flashana::QCluster_t ElectronEventSelectionAlg::collect3DHits(
-		const art::Event &evt,
-		const std::vector<size_t> &pfplist)
- {
-
- 	flashana::QCluster_t cluster;
-
- 	auto const& pfparticle_handle = evt.getValidHandle< std::vector< recob::PFParticle > >(_pfp_producer);
-	auto const& spacepoint_handle = evt.getValidHandle<std::vector<recob::SpacePoint>>(_pfp_producer);
-
-	art::FindManyP<recob::SpacePoint > spcpnts_per_pfpart   ( pfparticle_handle , evt, _pfp_producer );
-	art::FindManyP<recob::Hit > hits_per_spcpnts            ( spacepoint_handle , evt, _pfp_producer );
-
-	for(auto & pfpindex : pfplist)
-	{
-		unsigned short pdgcode   = pfparticle_handle->at(pfpindex).PdgCode();
-	    double lycoef = m_ly_map[pdgcode];
-
-	    std::vector<flashana::Hit3D_t> hitlist;
-	    std::vector<art::Ptr < recob::SpacePoint > > spcpnts = spcpnts_per_pfpart.at(pfpindex);
-
-	    // Loop over the spacepoints and get the associated hits:
-	    for (auto & _sps : spcpnts)
-	    {
-	        std::vector<art::Ptr<recob::Hit> > hits = hits_per_spcpnts.at(_sps.key());
-	        // Add the hits to the weighted average, if they are collection hits:
-	        for (auto & hit : hits)
-	        {
-	            if (hit->View() == geo::kZ)
-	            {
-	                // Collection hits only
-	                auto xyz = _sps->XYZ();
-	                flashana::Hit3D_t hit3D; //Collection plane hits
-	                hit3D.x = xyz[0];
-	                hit3D.y = xyz[1];
-	                hit3D.z = xyz[2];
-	                hit3D.plane = 2 ;
-	                double q = hit->Integral();
-
-                    //q*=lycoef;
-                    hit3D.q = q;
-
-	                hitlist.emplace_back(hit3D);
-	            }
-	        }
-	    }
-    	cluster+= ((flashana::LightCharge*)(m_mgr.GetCustomAlgo("LightCharge")))->FlashHypothesisCharge(hitlist, lycoef);
-	}
-	return cluster;
-}
-
-
-
-const std::map<size_t, int > ElectronEventSelectionAlg::opticalfilter(const art::Event & evt,
-                                                                      const std::vector<size_t> &pfplist,
-                                                                      const art::ValidHandle<std::vector<recob::PFParticle>> pfparticle_handle)
+    const art::Event &evt,
+    const std::vector<size_t> &pfplist)
 {
-    // All initializations
-    std::vector<double> ChargeCenter;
-    std::map<size_t, int > result;
 
-    art::InputTag optical_tag{fOpticalFlashFinderLabel};
-    auto const &optical_handle = evt.getValidHandle<std::vector<recob::OpFlash>>(optical_tag);
+  flashana::QCluster_t cluster;
 
+  auto const &pfparticle_handle = evt.getValidHandle<std::vector<recob::PFParticle>>(_pfp_producer);
+  auto const &spacepoint_handle = evt.getValidHandle<std::vector<recob::SpacePoint>>(_pfp_producer);
 
-    // Loop over pfp neutrino candidates and flashes.
-    for(size_t pfp_i : pfplist){
-        result[pfp_i]=-1;
-        for (unsigned int ifl = 0; ifl < optical_handle->size(); ++ifl) {
-            recob::OpFlash const &flash = optical_handle->at(ifl);
-            _flash_PE.push_back(flash.TotalPE());
-            _flash_time.push_back(flash.Time());
+  art::FindManyP<recob::SpacePoint> spcpnts_per_pfpart(pfparticle_handle, evt, _pfp_producer);
+  art::FindManyP<recob::Hit> hits_per_spcpnts(spacepoint_handle, evt, _pfp_producer);
 
-            // Request flash in time window
-            if ((flash.Time() < m_endbeamtime && flash.Time() > m_startbeamtime)){
+  for (auto &pfpindex : pfplist)
+  {
+    unsigned short pdgcode = pfparticle_handle->at(pfpindex).PdgCode();
+    double lycoef = m_ly_map[pdgcode];
 
-                ChargeCenter = pandoraHelper.calculateChargeCenter(pfp_i,pfparticle_handle,evt);
+    std::vector<flashana::Hit3D_t> hitlist;
+    std::vector<art::Ptr<recob::SpacePoint>> spcpnts = spcpnts_per_pfpart.at(pfpindex);
 
-                // Cut on the z position
-                double absolute =  std::abs(flash.ZCenter() - ChargeCenter[2]);
-                double sigma    =  absolute/flash.ZWidth();
-                std::cout << "z_diff: "  << absolute << " sigma: " << sigma << std::endl;
+    // Loop over the spacepoints and get the associated hits:
+    for (auto &_sps : spcpnts)
+    {
+      std::vector<art::Ptr<recob::Hit>> hits = hits_per_spcpnts.at(_sps.key());
+      // Add the hits to the weighted average, if they are collection hits:
+      for (auto &hit : hits)
+      {
+        if (hit->View() == geo::kZ)
+        {
+          // Collection hits only
+          auto xyz = _sps->XYZ();
+          flashana::Hit3D_t hit3D; //Collection plane hits
+          hit3D.x = xyz[0];
+          hit3D.y = xyz[1];
+          hit3D.z = xyz[2];
+          hit3D.plane = 2;
+          double q = hit->Integral();
 
-                if( absolute < m_absoluteflashdist || sigma < 1./m_fractionsigmaflashwidth){
-                    result[pfp_i]=ifl;
-                    std::cout << "candidate " << pfp_i << " passed opt cut with flash " << ifl << std::endl;
-                }
-            }
+          //q*=lycoef;
+          hit3D.q = q;
 
+          hitlist.emplace_back(hit3D);
         }
+      }
     }
-    return result;
+    cluster += ((flashana::LightCharge *)(m_mgr.GetCustomAlgo("LightCharge")))->FlashHypothesisCharge(hitlist, lycoef);
+  }
+  return cluster;
 }
 
+const std::map<size_t, int> ElectronEventSelectionAlg::opticalfilter(const art::Event &evt,
+                                                                     const std::vector<size_t> &pfplist,
+                                                                     const art::ValidHandle<std::vector<recob::PFParticle>> pfparticle_handle)
+{
+  // All initializations
+  std::vector<double> ChargeCenter;
+  std::map<size_t, int> result;
 
-bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt) {
+  art::InputTag optical_tag{fOpticalFlashFinderLabel};
+  auto const &optical_handle = evt.getValidHandle<std::vector<recob::OpFlash>>(optical_tag);
+
+  // Loop over pfp neutrino candidates and flashes.
+  for (size_t pfp_i : pfplist)
+  {
+    result[pfp_i] = -1;
+    for (unsigned int ifl = 0; ifl < optical_handle->size(); ++ifl)
+    {
+      recob::OpFlash const &flash = optical_handle->at(ifl);
+      _flash_PE.push_back(flash.TotalPE());
+      _flash_time.push_back(flash.Time());
+
+      // Request flash in time window
+      if ((flash.Time() < m_endbeamtime && flash.Time() > m_startbeamtime))
+      {
+
+        ChargeCenter = pandoraHelper.calculateChargeCenter(pfp_i, pfparticle_handle, evt);
+
+        // Cut on the z position
+        double absolute = std::abs(flash.ZCenter() - ChargeCenter[2]);
+        double sigma = absolute / flash.ZWidth();
+        std::cout << "z_diff: " << absolute << " sigma: " << sigma << std::endl;
+
+        if (absolute < m_absoluteflashdist || sigma < 1. / m_fractionsigmaflashwidth)
+        {
+          result[pfp_i] = ifl;
+          std::cout << "candidate " << pfp_i << " passed opt cut with flash " << ifl << std::endl;
+        }
+      }
+    }
+  }
+  return result;
+}
+
+bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt)
+{
 
   clear();
 
@@ -362,25 +383,28 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt) {
   auto const &pfparticle_handle =
       evt.getValidHandle<std::vector<recob::PFParticle>>(_pfp_producer);
 
-
   // Are there any pfparticles?
-  if (pfparticle_handle->size() == 0) {
+  if (pfparticle_handle->size() == 0)
+  {
     std::cout << "[ElectronEventSelectionAlg] "
               << "NO RECO DATA PRODUCTS" << std::endl;
     return false;
   }
 
   // Get the list of primary pfparticles that are also neutrinos (numu or nue)
-  for (size_t _i_pfp = 0; _i_pfp < pfparticle_handle->size(); _i_pfp++) {
+  for (size_t _i_pfp = 0; _i_pfp < pfparticle_handle->size(); _i_pfp++)
+  {
     if ((abs(pfparticle_handle->at(_i_pfp).PdgCode()) == 12 ||
-              abs(pfparticle_handle->at(_i_pfp).PdgCode()) == 14) &&
-              pfparticle_handle->at(_i_pfp).IsPrimary()) {
-                 _primary_indexes.push_back(_i_pfp);
+         abs(pfparticle_handle->at(_i_pfp).PdgCode()) == 14) &&
+        pfparticle_handle->at(_i_pfp).IsPrimary())
+    {
+      _primary_indexes.push_back(_i_pfp);
     }
   }
 
   // If there are no particles flagged as primary, return false
-  if (_primary_indexes.size() == 0) {
+  if (_primary_indexes.size() == 0)
+  {
     return false;
   }
 
@@ -394,7 +418,8 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt) {
   art::FindOneP<recob::Vertex> vertex_per_pfpart(pfparticle_handle, evt,
                                                  _pfp_producer);
 
-  for (auto &_i_primary : _primary_indexes) {
+  for (auto &_i_primary : _primary_indexes)
+  {
     unsigned int numDaughters = pfparticle_handle->at(_i_primary).NumDaughters();
     std::cout << "[ElectronEventSelectionAlg] "
               << "Primary PDG " << pfparticle_handle->at(_i_primary).PdgCode()
@@ -404,7 +429,6 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt) {
               << numDaughters << std::endl;
 
     _neutrino_candidate_passed[_i_primary] = true;
-    _center_of_charge[_i_primary] = TVector3(0, 0, 0);
     //_op_flash_indexes[_i_primary] = 0;
     _neutrino_vertex[_i_primary] = TVector3(0, 0, 0);
     _n_showers[_i_primary] = 0;
@@ -412,11 +436,11 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt) {
     _n_tracks[_i_primary] = 0;
     _pfp_id_tracks_from_primary[_i_primary] = std::vector<size_t>();
 
-
     // Get the neutrino vertex and check if it's fiducial:
     std::vector<double> neutrino_vertex;
     neutrino_vertex.resize(3);
-    try {
+    try
+    {
       auto const &neutrino_vertex_obj = vertex_per_pfpart.at(_i_primary);
       neutrino_vertex_obj->XYZ(
           &neutrino_vertex[0]); // PFParticle neutrino vertex coordinates
@@ -426,17 +450,18 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt) {
       _neutrino_vertex.at(_i_primary).SetY(neutrino_vertex[1]);
       _neutrino_vertex.at(_i_primary).SetZ(neutrino_vertex[2]);
 
-      if (!geoHelper.isFiducial(_neutrino_vertex.at(_i_primary))) {
+      if (!geoHelper.isFiducial(_neutrino_vertex.at(_i_primary)))
+      {
         _neutrino_candidate_passed[_i_primary] = false;
         std::cout << "[ElectronEventSelectionAlg] "
                   << "Neutrino vertex not within fiducial volume" << std::endl;
-
       }
-    } catch (...) {
+    }
+    catch (...)
+    {
       std::cout << "[ElectronEventSelectionAlg] "
                 << "NO VERTEX AVAILABLE " << std::endl;
       _neutrino_candidate_passed[_i_primary] = false;
-
     }
 
     // Loop over the neutrino daughters and check if there is a shower and a
@@ -444,123 +469,121 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt) {
     int showers = 0;
     int tracks = 0;
 
-
     std::vector<size_t> daughters_id;
     pandoraHelper.traversePFParticleTree(pfparticle_handle, _i_primary, daughters_id);
 
-    for (auto const &pfdaughter : daughters_id) {
+    for (auto const &pfdaughter : daughters_id)
+    {
       std::cout << "[ElectronEventSelectionAlg] "
-                << "Daughter ID: " << pfdaughter <<" PDG "
+                << "Daughter ID: " << pfdaughter << " PDG "
                 << pfparticle_handle->at(pfdaughter).PdgCode() << std::endl;
 
-      if (pfparticle_handle->at(pfdaughter).PdgCode() == 11) {
-        try {
+      if (pfparticle_handle->at(pfdaughter).PdgCode() == 11)
+      {
+        try
+        {
           art::FindOneP<recob::Shower> shower_per_pfpart(pfparticle_handle, evt,
                                                          _pfp_producer);
           auto const &shower_obj = shower_per_pfpart.at(pfdaughter);
+          std::cout << "[DEBUG Shower]" << shower_obj->Length() << std::endl;
 
-          bool contained_shower = false;
-          std::vector<double> start_point;
-          std::vector<double> end_point;
-          start_point.resize(3);
-          end_point.resize(3);
-
-          double shower_length = shower_obj->Length();
-          for (int ix = 0; ix < 3; ix++) {
-            start_point[ix] = shower_obj->ShowerStart()[ix];
-            end_point[ix] = shower_obj->ShowerStart()[ix] +
-                            shower_length * shower_obj->Direction()[ix];
-          }
-
-          contained_shower = geoHelper.isFiducial(start_point) && geoHelper.isFiducial(end_point);
-          if (contained_shower || !contained_shower) {
-            _pfp_id_showers_from_primary[_i_primary].push_back(pfdaughter);
-            showers++;
-          }        
-          
-        } catch (...) {
+          _pfp_id_showers_from_primary[_i_primary].push_back(pfdaughter);
+          showers++;
+        }
+        catch (...)
+        {
           std::cout << "[ElectronEventSelectionAlg] "
                     << "NO SHOWERS AVAILABLE" << std::endl;
         }
       }
 
-      if (pfparticle_handle->at(pfdaughter).PdgCode() == 13) {
-        try {
+      if (pfparticle_handle->at(pfdaughter).PdgCode() == 13)
+      {
+        try
+        {
 
-          art::FindOneP<recob::Track> track_per_pfpart(pfparticle_handle, evt,_pfp_producer);
+          art::FindOneP<recob::Track> track_per_pfpart(pfparticle_handle, evt, _pfp_producer);
           auto const &track_obj = track_per_pfpart.at(pfdaughter);
-          std::cout<< "[DEBUG Track]" << track_obj->Length() << std::endl;
+          std::cout << "[DEBUG Track]" << track_obj->Length() << std::endl;
 
           _pfp_id_tracks_from_primary[_i_primary].push_back(pfdaughter);
           tracks++;
-
-
-        } catch (...) {
+        }
+        catch (...)
+        {
           std::cout << "[ElectronEventSelectionAlg] "
                     << "NO TRACKS AVAILABLE" << std::endl;
         }
-        // h_track_length->Fill(track_obj->Length());
       }
 
       std::cout << "[ElectronEventSelectionAlg] "
                 << "Showers tracks " << showers << " " << tracks << std::endl;
+    }
+    _n_tracks[_i_primary] = tracks;
+    _n_showers[_i_primary] = showers;
 
-      }
-      _n_tracks[_i_primary] = tracks;
-      _n_showers[_i_primary] = showers;
-
-      if (showers < 1 || tracks < m_nTracks || numDaughters < 2 ) {
-        _neutrino_candidate_passed[_i_primary] = false;
+    if (showers < 1 || tracks < m_nTracks || numDaughters < 2)
+    {
+      _neutrino_candidate_passed[_i_primary] = false;
 
     } // end for pfparticle daughters
-
   }
 
-  
-  std::map<size_t, int > optical_map;
+  std::map<size_t, int> optical_map;
   std::vector<size_t> pfplist;
 
-  if(m_FM_all){
+  if (m_FM_all)
+  {
     // Do flashmatching for all candidates
-    pfplist =  _primary_indexes;
+    pfplist = _primary_indexes;
   }
-  else{
-     // Fill PFPlist with particles that passed the track shower and fiducial cut requirements.
+  else
+  {
+    // Fill PFPlist with particles that passed the track shower and fiducial cut requirements.
 
-    for (auto val : _neutrino_candidate_passed) {
-      if (val.second) {
+    for (auto val : _neutrino_candidate_passed)
+    {
+      if (val.second)
+      {
         pfplist.push_back(val.first);
       }
-      else{
-        optical_map[val.first]=-1;
+      else
+      {
+        optical_map[val.first] = -1;
       }
     }
   }
-  
 
-  if(pfplist.size()>0){
-    if(m_flashmatching){
-      _op_flash_indexes = flashBasedSelection(evt,pfplist,pfparticle_handle);
+  if (pfplist.size() > 0)
+  {
+    if (m_flashmatching)
+    {
+      _op_flash_indexes = flashBasedSelection(evt, pfplist, pfparticle_handle);
     }
-    else{
-      _op_flash_indexes = opticalfilter(evt,pfplist,pfparticle_handle);
+    else
+    {
+      _op_flash_indexes = opticalfilter(evt, pfplist, pfparticle_handle);
     }
   }
 
-  _op_flash_indexes.insert(optical_map.begin(),optical_map.end());
-  
+  _op_flash_indexes.insert(optical_map.begin(), optical_map.end());
 
-  for (auto& val : _neutrino_candidate_passed) {
-    if (val.second) {
-      if(_op_flash_indexes[val.first]<0){
-        val.second=false;
+  for (auto &val : _neutrino_candidate_passed)
+  {
+    if (val.second)
+    {
+      if (_op_flash_indexes[val.first] < 0)
+      {
+        val.second = false;
       }
     }
   }
 
   // Last, determine if any primary particles passed:
-  for (auto val : _neutrino_candidate_passed) {
-    if (val.second) {
+  for (auto val : _neutrino_candidate_passed)
+  {
+    if (val.second)
+    {
       std::cout << "[ElectronEventSelectionAlg] "
                 << "EVENT SELECTED" << std::endl;
       return true;
