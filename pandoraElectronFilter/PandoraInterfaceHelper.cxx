@@ -297,7 +297,7 @@ art::Ptr<simb::MCTruth> PandoraInterfaceHelper::TrackIDToMCTruth(art::Event cons
 
 // Method to calculate the total the center for a parent particle (index of
 // neutrino pfp)
-TVector3 PandoraInterfaceHelper::calculateChargeCenter(
+std::vector<double> PandoraInterfaceHelper::calculateChargeCenter(
     size_t top_particle_index,
     const art::ValidHandle<std::vector<recob::PFParticle>> pfparticles,
     const art::Event &evt,
@@ -373,15 +373,16 @@ TVector3 PandoraInterfaceHelper::calculateChargeCenter(
   chargecenter[2] /= totalweight;
 
   // Store the data:
-  TVector3 _center_of_charge;
+  std::vector<double> _center_of_charge(4,0);
   //_center_of_charge.SetX(chargecenter[0]);
   // IMPORTANT:
   // This function is necessary for optical selection.
   // Flashatching is returning the extimated minimal x position,
   // not the center. Therefore, also here teh minimum is returned and not the center.
-  _center_of_charge.SetX(min_x_sps_temp);
-  _center_of_charge.SetY(chargecenter[1]);
-  _center_of_charge.SetZ(chargecenter[2]);
+  _center_of_charge[0]=min_x_sps_temp;
+  _center_of_charge[1]=chargecenter[1];
+  _center_of_charge[2]=chargecenter[2];
+  _center_of_charge[3]=totalweight;
 
   return _center_of_charge;
 }

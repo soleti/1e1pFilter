@@ -21,11 +21,13 @@
 #include "nusimdata/SimulationBase/MCTruth.h"
 #include "lardataobj/AnalysisBase/BackTrackerMatchingData.h"
 
-namespace lar_pandora {
-  typedef std::map<art::Ptr<recob::PFParticle>, art::Ptr<simb::MCParticle>> PFParticlesToMCParticles;
+namespace lar_pandora
+{
+typedef std::map<art::Ptr<recob::PFParticle>, art::Ptr<simb::MCParticle>> PFParticlesToMCParticles;
 }
 
-namespace lee {
+namespace lee
+{
 
 typedef std::map<art::Ptr<recob::PFParticle>, unsigned int>
     RecoParticleToNMatchedHits;
@@ -34,52 +36,49 @@ typedef std::map<art::Ptr<simb::MCParticle>, RecoParticleToNMatchedHits>
 typedef std::set<art::Ptr<recob::PFParticle>> PFParticleSet;
 typedef std::set<art::Ptr<simb::MCParticle>> MCParticleSet;
 
-class PandoraInterfaceHelper : public HelperBase {
-public:
-  PandoraInterfaceHelper();
-  ~PandoraInterfaceHelper(){}
+class PandoraInterfaceHelper : public HelperBase
+{
+  public:
+    PandoraInterfaceHelper();
+    ~PandoraInterfaceHelper() {}
 
-
-  /**
+    /**
   * @brief Travers the tree of the daughters of a PFParticle
   *
   * @param pfparticles PFParticles handle
   * @param top_index Index of the parent
   * @param unordered_daugthers Vector of PFParticles daughters
   */
-  void traversePFParticleTree(
-      const art::ValidHandle<std::vector<recob::PFParticle>> pfparticles,
-      size_t top_index, std::vector<size_t> &unordered_daugthers,
-      std::string _pfp_producer = "pandoraNu");
+    void traversePFParticleTree(
+        const art::ValidHandle<std::vector<recob::PFParticle>> pfparticles,
+        size_t top_index, std::vector<size_t> &unordered_daugthers,
+        std::string _pfp_producer = "pandoraNu");
 
-  /**
+    /**
    * @brief Measures the three-dimensional center of the deposited charge for a
    * PFParticle
    *
    * @param ipf Index of the PFParticle
    * @param pfparticles PFParticles handle
    * @param evt art Event
-   * @return TVector3 of the charge center
+   * @return vector with: lowest x_sps, center in y, z, and total deposited charge on the collection plane.
    */
-  TVector3 calculateChargeCenter(
-      size_t ipf,
-      const art::ValidHandle<std::vector<recob::PFParticle>> pfparticles,
-      const art::Event &evt,
-      std::string _pfp_producer = "pandoraNu");
+    std::vector<double> calculateChargeCenter(
+        size_t ipf,
+        const art::ValidHandle<std::vector<recob::PFParticle>> pfparticles,
+        const art::Event &evt,
+        std::string _pfp_producer = "pandoraNu");
 
+    void get_daughter_tracks(std::vector<size_t> pf_ids, const art::Event &evt,
+                             std::vector<art::Ptr<recob::Track>> &tracks,
+                             std::string _pfp_producer = "pandoraNu");
 
-
-  void get_daughter_tracks(std::vector<size_t> pf_ids, const art::Event &evt,
-                           std::vector<art::Ptr<recob::Track>> &tracks,
-                           std::string _pfp_producer = "pandoraNu");
-
-  void get_daughter_showers(std::vector<size_t> pf_ids, const art::Event &evt,
-                            std::vector<art::Ptr<recob::Shower>> &showers,
-                            std::string _pfp_producer = "pandoraNu");
-
+    void get_daughter_showers(std::vector<size_t> pf_ids, const art::Event &evt,
+                              std::vector<art::Ptr<recob::Shower>> &showers,
+                              std::string _pfp_producer = "pandoraNu");
 
     /// Configure function parameters
-     /**
+    /**
      *  @brief Configure function parameters (call this function first)
      *
      *  @param e the art::Event
@@ -89,33 +88,30 @@ public:
      *  @param _geant_producer The Geant4 producer label
      */
 
-
     /**
     *  @brief Returns matching between true and reconstructed particles
     *
     *  @param matchedParticles the output matches between reconstructed and true particles
     */
-   void GetRecoToTrueMatches(lar_pandora::PFParticlesToMCParticles & matchedParticles);
+    void GetRecoToTrueMatches(lar_pandora::PFParticlesToMCParticles &matchedParticles);
 
-   void Configure(art::Event const & e,
-                              std::string _pfp_producer,
-                              std::string _spacepoint_producer,
-                              std::string _hitfinder_producer,
-                              std::string _geant_producer,
-                              std::string _hit_mcp_producer);
+    void Configure(art::Event const &e,
+                   std::string _pfp_producer,
+                   std::string _spacepoint_producer,
+                   std::string _hitfinder_producer,
+                   std::string _geant_producer,
+                   std::string _hit_mcp_producer);
 
-    art::Ptr<simb::MCTruth> TrackIDToMCTruth(art::Event const & e, std::string _geant_producer, int geant_track_id);
- protected:
+    art::Ptr<simb::MCTruth> TrackIDToMCTruth(art::Event const &e, std::string _geant_producer, int geant_track_id);
 
-   lar_pandora::HitsToMCParticles _hit_to_mcps_map; ///< A map from recon hits to MCParticles
-   lar_pandora::PFParticlesToHits _pfp_to_hits_map; ///< A map from PFParticles to recon hits
- private:
+  protected:
+    lar_pandora::HitsToMCParticles _hit_to_mcps_map; ///< A map from recon hits to MCParticles
+    lar_pandora::PFParticlesToHits _pfp_to_hits_map; ///< A map from PFParticles to recon hits
+  private:
+    bool _configured = false;
 
-   bool _configured = false;
-
-   bool _debug      = false;
-   bool _verbose    = false;
-
+    bool _debug = false;
+    bool _verbose = false;
 };
 }
 

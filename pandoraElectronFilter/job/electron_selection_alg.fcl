@@ -32,10 +32,6 @@ lee_electron_alg: {
     cut_sigywidth:               2.1
     charge_light_ratio:          3.0
 
-    # 3. Post-matching cuts (put these to zero to discard them)
-    cut_xwidth:                  0   #150
-    cut_scorePE:                 0   #5.0
-
     # Configuration of the flashmatchmanager
     FlashMatchConfig: @local::flashmatch_config
 }

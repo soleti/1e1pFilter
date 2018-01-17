@@ -5,8 +5,11 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
-#include <math.h>
 
+#ifndef PANDORA_LEE_H
+#define PANDORA_LEE_H
+
+#include <math.h>
 #include <fstream>
 
 #include "art/Framework/Core/EDAnalyzer.h"
@@ -42,7 +45,7 @@
 #include "nusimdata/SimulationBase/MCParticle.h"
 #include "nusimdata/SimulationBase/MCTruth.h"
 #include "uboone/EventWeight/MCEventWeight.h"
-// #include "larevt/SpaceChargeServices/SpaceChargeService.h" Included before, put ifdef statement around this file
+#include "larevt/SpaceChargeServices/SpaceChargeService.h" 
 
 #include "TEfficiency.h"
 #include "art/Framework/Services/Optional/TFileService.h"
@@ -301,3 +304,6 @@ private:
 };
 
 }
+
+#endif // PANDORA_LEE_H
+

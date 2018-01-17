@@ -85,7 +85,7 @@ const std::map<size_t, int >  ElectronEventSelectionAlg::flashBasedSelection(con
                                                                              const art::ValidHandle<std::vector<recob::PFParticle>> pfparticle_handle)
 {
     // All initializations
-    TVector3 ChargeCenter;
+    std::vector<double> ChargeCenter;
     std::vector<flashana::QCluster_t> qcvec;
     std::vector<unsigned int> PFPIDvector; //links the pfp indices to the qvec indices.
     std::vector<double> chargexvector;
@@ -158,10 +158,11 @@ const std::map<size_t, int >  ElectronEventSelectionAlg::flashBasedSelection(con
             // candidates that fail the prematching cuts do not need to be passed to the manager
             bool prematching_cuts;
 
-            prematching_cuts = (m_cut_zwidth    > std::abs(ChargeCenter.Z()-f.z)   ) &&  // Cut in Z direction
-                       (m_cut_sigzwidth > std::abs(ChargeCenter.Z()-f.z)/f.z_err   ) &&
-                       (m_cut_ywidth    > std::abs(ChargeCenter.Y()-f.y)           ) &&  // Cut in Y direction
-                       (m_cut_sigywidth > std::abs(ChargeCenter.Y()-f.y)/f.y_err)  ;
+            prematching_cuts = (m_cut_zwidth    > std::abs(ChargeCenter[2]-f.z)   ) &&  // Cut in Z direction
+                       (m_cut_sigzwidth > std::abs(ChargeCenter[2]-f.z)/f.z_err   ) &&
+                       (m_cut_ywidth    > std::abs(ChargeCenter[1]-f.y)           ) &&  // Cut in Y direction
+                       (m_cut_sigywidth > std::abs(ChargeCenter[1]-f.y)/f.y_err   ) &&
+                       (m_charge_light_ratio < std::abs(ChargeCenter[3]/maxPE)    ) ;
 
             if(prematching_cuts)
             {
@@ -169,7 +170,7 @@ const std::map<size_t, int >  ElectronEventSelectionAlg::flashBasedSelection(con
               pandoraHelper.traversePFParticleTree(pfparticle_handle, pfpindex, daughters);
               qcvec.emplace_back(collect3DHits(evt,daughters));
               PFPIDvector.emplace_back(pfpindex);
-              chargexvector.emplace_back(ChargeCenter.X());
+              chargexvector.emplace_back(ChargeCenter[0]);
               std::cout << "[ElectronEventSelectionAlg] " << "Neutrino candidate " << pfpindex << " passed (prematching cuts)." << std::endl;
             }
             else
@@ -316,7 +317,7 @@ const std::map<size_t, int > ElectronEventSelectionAlg::opticalfilter(const art:
                                                                       const art::ValidHandle<std::vector<recob::PFParticle>> pfparticle_handle)
 {
     // All initializations
-    TVector3 ChargeCenter;
+    std::vector<double> ChargeCenter;
     std::map<size_t, int > result;
 
     art::InputTag optical_tag{fOpticalFlashFinderLabel};
@@ -337,7 +338,7 @@ const std::map<size_t, int > ElectronEventSelectionAlg::opticalfilter(const art:
                 ChargeCenter = pandoraHelper.calculateChargeCenter(pfp_i,pfparticle_handle,evt);
 
                 // Cut on the z position
-                double absolute =  std::abs(flash.ZCenter() - ChargeCenter.Z());
+                double absolute =  std::abs(flash.ZCenter() - ChargeCenter[2]);
                 double sigma    =  absolute/flash.ZWidth();
                 std::cout << "z_diff: "  << absolute << " sigma: " << sigma << std::endl;
 
