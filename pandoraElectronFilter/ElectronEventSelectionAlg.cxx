@@ -82,7 +82,7 @@ void ElectronEventSelectionAlg::reconfigure(fhicl::ParameterSet const &p)
   m_charge_light_ratio = p.get<double>("charge_light_ratio", 3.0);
 
   m_flashmatching = p.get<bool>("Flashmatching", true);
-  m_FM_all = p.get<bool>("Flashmatching_first", false);
+  m_FM_all = p.get<bool>("Flashmatching_first", true);
 
   m_isCosmicInTime = p.get<bool>("isCosmicInTime", false);
   m_mgr.Configure(p.get<flashana::Config_t>("FlashMatchConfig"));
@@ -464,10 +464,12 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt)
       _neutrino_candidate_passed[_i_primary] = false;
     }
 
-    // Loop over the neutrino daughters and check if there is a shower and a
+        // Loop over the neutrino daughters and check if there is a shower and a
     // track
-    int showers = 0;
+    int showers = 0;                // number of showers in the hierarchy of the pfp neutrino candidate.
     int tracks = 0;
+    int shower_daughters =0;        // number of showers that are direct daughters of the pfp neutrino candidate.
+    int track_daughters =0;
 
     std::vector<size_t> daughters_id;
     pandoraHelper.traversePFParticleTree(pfparticle_handle, _i_primary, daughters_id);
@@ -485,8 +487,11 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt)
           art::FindOneP<recob::Shower> shower_per_pfpart(pfparticle_handle, evt,
                                                          _pfp_producer);
           auto const &shower_obj = shower_per_pfpart.at(pfdaughter);
-          std::cout << "[DEBUG Shower]" << shower_obj->Length() << std::endl;
-
+          std::cerr << "Shower found with length "<< shower_obj->Length() << std::endl;
+          if(pfparticle_handle->at(pfdaughter).Parent()==_i_primary)
+          {
+            shower_daughters++;
+          }
           _pfp_id_showers_from_primary[_i_primary].push_back(pfdaughter);
           showers++;
         }
@@ -504,8 +509,11 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt)
 
           art::FindOneP<recob::Track> track_per_pfpart(pfparticle_handle, evt, _pfp_producer);
           auto const &track_obj = track_per_pfpart.at(pfdaughter);
-          std::cout << "[DEBUG Track]" << track_obj->Length() << std::endl;
-
+          std::cerr << "Shower found with length"<< track_obj->Length() << std::endl;
+          if(pfparticle_handle->at(pfdaughter).Parent()==_i_primary)
+          {
+            track_daughters++;
+          }
           _pfp_id_tracks_from_primary[_i_primary].push_back(pfdaughter);
           tracks++;
         }
@@ -522,11 +530,22 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt)
     _n_tracks[_i_primary] = tracks;
     _n_showers[_i_primary] = showers;
 
-    if (showers < 1 || tracks < m_nTracks || numDaughters < 2)
-    {
+    // Cut on the topology to select 1e Np like signal
+    // Np: at least N direct track daughters
+    // 1e: at least one direct shower or 1 direct track daughter with a shower connected to it
+    if (track_daughters < m_nTracks){  
+      // There are less direct daughter tracks than we want protons, FAIL                   
       _neutrino_candidate_passed[_i_primary] = false;
-
-    } // end for pfparticle daughters
+    }
+    if (showers==0){
+      // There are no showers in the complete hierarchy, FAIL (this is probably where we lose LEE efficiency)
+      _neutrino_candidate_passed[_i_primary] = false;
+    }
+    if (shower_daughters==0 && showers==1 && track_daughters < (m_nTracks+1) ){
+      // There are no direct showers, but there is one shower in the hierarchy, this means we require N+1 direct tracks, otherwise, FAIL
+      _neutrino_candidate_passed[_i_primary] = false;
+    }
+    // Else, the pfp neutrino candidate passes the required topology!
   }
 
   std::map<size_t, int> optical_map;
