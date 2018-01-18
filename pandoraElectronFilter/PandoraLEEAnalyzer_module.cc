@@ -128,7 +128,8 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
   myTTree->Branch("shower_phi", "std::vector< double >", &_shower_phi);
 
   myTTree->Branch("shower_energy", "std::vector< double >", &_shower_energy);
-  myTTree->Branch("track_energy", "std::vector< double >", &_track_energy);
+  myTTree->Branch("track_energy_dedx", "std::vector< double >", &_track_energy_dedx);
+  myTTree->Branch("track_energy_hits", "std::vector< double >", &_track_energy_hits);
 
   myTTree->Branch("track_dir_x", "std::vector< double >", &_track_dir_x);
   myTTree->Branch("track_dir_y", "std::vector< double >", &_track_dir_y);
@@ -380,7 +381,8 @@ _nu_shower_daughters.clear();
   _track_phi.clear();
 
   _shower_energy.clear();
-  _track_energy.clear();
+  _track_energy_dedx.clear();
+  _track_energy_hits.clear();
 
   _track_length.clear();
   _track_id.clear();
@@ -874,7 +876,9 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
       _track_is_fiducial.push_back(int(geoHelper.isFiducial(start_point) &&
                                        geoHelper.isFiducial(end_point)));
 
-      _track_energy.push_back(energyHelper.trackEnergy_dedx(track_obj, evt));
+      _track_energy_dedx.push_back(energyHelper.trackEnergy_dedx(track_obj, evt));
+      _track_energy_hits.push_back(energyHelper.trackEnergy_hits(track_obj, evt));
+
       _track_length.push_back(track_obj->Length());
       _track_id.push_back(track_obj->ID());
       _track_dir_x.push_back(track_obj->StartDirection().X());

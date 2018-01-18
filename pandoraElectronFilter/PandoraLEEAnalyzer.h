@@ -234,7 +234,8 @@ private:
   std::vector<double> _track_length;
   std::vector<double> _track_id;
 
-  std::vector<double> _track_energy;
+  std::vector<double> _track_energy_dedx;
+  std::vector<double> _track_energy_hits;
 
   std::vector<int> _nu_daughters_pdg;
   std::vector<double> _nu_daughters_E;
