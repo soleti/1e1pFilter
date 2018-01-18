@@ -37,7 +37,7 @@ public:
    * @param[in]  track  The track
    * @param[in]  evt    The art::event
    *
-   * @return     Energy in units of [ TODO: units? ]
+   * @return     Energy in units of GeV
    */
   double trackEnergy_dedx(const art::Ptr<recob::Track> &track, const art::Event &evt,
                      std::string _pfp_producer = "pandoraNu");
@@ -48,7 +48,7 @@ public:
    * @param[in]  track  The track
    * @param[in]  evt    The art::event
    *
-   * @return     Energy in units of [ TODO: units? ]
+   * @return     Energy in units of GeV
    */
   double trackEnergy_hits(const art::Ptr<recob::Track> &track, const art::Event &evt,
                      std::string _pfp_producer = "pandoraNu");

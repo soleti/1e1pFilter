@@ -74,20 +74,16 @@ double EnergyHelper::trackEnergy_dedx(const art::Ptr<recob::Track> &track,
                                       const art::Event &evt,
                                       std::string _pfp_producer)
 {
-  auto const &track_handle =
-      evt.getValidHandle<std::vector<recob::Track>>(_pfp_producer);
-  art::FindManyP<anab::Calorimetry> calo_track_ass(track_handle, evt,
-                                                   "pandoraNucalo");
+  auto const &track_handle = evt.getValidHandle<std::vector<recob::Track>>(_pfp_producer);
+  art::FindManyP<anab::Calorimetry> calo_track_ass(track_handle, evt,"pandoraNucalo");
 
-  const std::vector<art::Ptr<anab::Calorimetry>> calos =
-      calo_track_ass.at(track->ID());
+  const std::vector<art::Ptr<anab::Calorimetry>> calos = calo_track_ass.at(track->ID());
 
   double E = 0;
   double Eapprox = 0;
 
   for (size_t ical = 0; ical < calos.size(); ++ical)
   {
-
     if (E != 0)
       continue;
     if (!calos[ical])
@@ -137,9 +133,8 @@ double EnergyHelper::trackEnergy_dedx(const art::Ptr<recob::Track> &track,
       }
     }
 
-    // std::cout << "[PandoraLEE] " << "Length: " << track->Length() << "and
-    // Energy approximation is " <<
-    // mean/calos[ical]->dEdx().size()*track->Length()<< "MeV"<<std::endl;
+    std::cout << "[PandoraLEE] " << "Length: " << track->Length() << "E_approx " << mean/calos[ical]->dEdx().size()*track->Length()<< "MeV, ";
+    std::cout << "E_range " << E << "MeV, E_kin " << calos[ical]->KineticEnergy()<< "MeV"<<std::endl;
     Eapprox = mean / calos[ical]->dEdx().size() * track->Length();
   }
   return Eapprox / 1000; // convert to GeV
