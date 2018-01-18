@@ -32,15 +32,27 @@ public:
   ~EnergyHelper() = default;
 
   /**
-   * @brief      Measure the energy of a track
+   * @brief      Measure the energy of a track using dedx
    *
    * @param[in]  track  The track
    * @param[in]  evt    The art::event
    *
    * @return     Energy in units of [ TODO: units? ]
    */
-  double trackEnergy(const art::Ptr<recob::Track> &track, const art::Event &evt,
+  double trackEnergy_dedx(const art::Ptr<recob::Track> &track, const art::Event &evt,
                      std::string _pfp_producer = "pandoraNu");
+
+    /**
+   * @brief      Measure the energy of a track using the shower method
+   *
+   * @param[in]  track  The track
+   * @param[in]  evt    The art::event
+   *
+   * @return     Energy in units of [ TODO: units? ]
+   */
+  double trackEnergy_hits(const art::Ptr<recob::Track> &track, const art::Event &evt,
+                     std::string _pfp_producer = "pandoraNu");
+
 
   /**
    * @brief      Measure the energy of a shower

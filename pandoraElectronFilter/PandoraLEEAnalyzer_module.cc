@@ -874,7 +874,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
       _track_is_fiducial.push_back(int(geoHelper.isFiducial(start_point) &&
                                        geoHelper.isFiducial(end_point)));
 
-      _track_energy.push_back(energyHelper.trackEnergy(track_obj, evt));
+      _track_energy.push_back(energyHelper.trackEnergy_dedx(track_obj, evt));
       _track_length.push_back(track_obj->Length());
       _track_id.push_back(track_obj->ID());
       _track_dir_x.push_back(track_obj->StartDirection().X());
