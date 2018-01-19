@@ -197,7 +197,12 @@ myTTree->Branch("track_dQdx", "std::vector< std::vector< double > >",
 
   myTTree->Branch("matched_tracks", "std::vector< int >",
                 &_matched_tracks);
-  myTTree->Branch("matched_showers", "std::vector< int >",
+  myTTree->Branch("matched_tracks_energy", "std::vector< double >",
+                &_matched_tracks_energy); 
+  myTTree->Branch("matched_tracks_process", "std::vector< std::string >",
+                &_matched_tracks_process);
+
+ myTTree->Branch("matched_showers", "std::vector< int >",
                 &_matched_showers);
   myTTree->Branch("matched_showers_process", "std::vector< std::string >",
                 &_matched_showers_process);
@@ -316,6 +321,9 @@ void lee::PandoraLEEAnalyzer::clear() {
   _shower_nhits.clear();
   _track_nhits.clear();
   _matched_tracks.clear();
+  _matched_tracks_process.clear();
+  _matched_tracks_energy.clear();
+
   _matched_showers.clear();
   _matched_showers_process.clear();
   _matched_showers_energy.clear();
@@ -838,6 +846,8 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
       auto const &track_obj = track_per_pfpart.at(pf_id);
 
       _matched_tracks.push_back(std::numeric_limits<int>::lowest());
+      _matched_tracks_process.push_back("");
+      _matched_tracks_energy.push_back(std::numeric_limits<double>::lowest());
 
       auto const &trackVecHandle =
           evt.getValidHandle<std::vector<recob::Track>>(_pfp_producer);
@@ -1063,8 +1073,6 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
               _matched_showers[ish] = cosmic_pdg[ipf];
               _matched_showers_process[ish] = cosmic_process[ipf];
               _matched_showers_energy[ish] = cosmic_energy[ipf];
-
-
             }
           }
         }
@@ -1083,7 +1091,9 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
             if (inu == ipf_candidate) {
               _nu_matched_tracks++;
               _matched_tracks[itr] = neutrino_pdg[ipf];
-            }
+              _matched_tracks_process[itr] = neutrino_process[ipf];
+              _matched_tracks_energy[itr] = neutrino_energy[ipf]; 
+           }
           }
         }
 
@@ -1092,7 +1102,9 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
             if (pfp_tracks_id[itr] == cosmic_pf[ipf].key()) {
               track_cr_found = true;
               _matched_tracks[itr] = cosmic_pdg[ipf];
-            }
+              _matched_tracks_process[itr] = cosmic_process[ipf];
+              _matched_tracks_energy[itr] = cosmic_energy[ipf];
+             }
           }
         }
 

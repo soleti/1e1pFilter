@@ -173,6 +173,10 @@ private:
 
   std::vector<int> _matched_showers;
   std::vector<int> _matched_tracks;
+
+  std::vector<std::string> _matched_tracks_process;
+  std::vector<double> _matched_tracks_energy;
+
   std::vector<std::string> _matched_showers_process;
   std::vector<double> _matched_showers_energy;
 
