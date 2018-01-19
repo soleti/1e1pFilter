@@ -6,7 +6,9 @@
 namespace lee
 {
 
-double EnergyHelper::energyFromHits(recob::PFParticle const &pfparticle,
+void EnergyHelper::energyFromHits(recob::PFParticle const &pfparticle,
+                                    std::vector<int>    &nHits,
+                                    std::vector<double> &pfenergy,
                                     const art::Event &evt,
                                     std::string _pfp_producer)
 {
@@ -28,8 +30,9 @@ double EnergyHelper::energyFromHits(recob::PFParticle const &pfparticle,
         _gain = _mc_gain;
       }
 
-  double energy[3] = {0, 0, 0};
-  int n_hits[3] = {0, 0, 0};
+  nHits.resize(3);
+  pfenergy.resize(3);
+
   for (size_t icl = 0; icl < clusters.size(); icl++)
   {
     art::FindManyP<recob::Hit> hit_cluster_ass(cluster_handle, evt,
@@ -43,15 +46,10 @@ double EnergyHelper::energyFromHits(recob::PFParticle const &pfparticle,
       if (plane_nr > 2 || plane_nr < 0)
         continue;
 
-      energy[plane_nr] += hits[ihit]->Integral() * _gain[plane_nr] * work_function / recombination_factor;
-      n_hits[plane_nr] ++;
+      pfenergy[plane_nr] += hits[ihit]->Integral() * _gain[plane_nr] * work_function / recombination_factor /1000; // convert MeV to GeV
+      nHits[plane_nr] ++;
     }
   }
-
-  const int n = sizeof(n_hits) / sizeof(int);
-
-  // Return the energy of the plane with the most hits (C++ does nor have argmax)
-  return energy[std::distance(n_hits, std::max_element(n_hits, n_hits + n))] /1000; // convert to GeV
 }
 
 
@@ -65,7 +63,7 @@ double EnergyHelper::trackEnergy_dedx(const art::Ptr<recob::Track> &track,
   const std::vector<art::Ptr<anab::Calorimetry>> calos = calo_track_ass.at(track->ID());
 
   double E = 0;
-  double Eapprox = 0;
+
 
   for (size_t ical = 0; ical < calos.size(); ++ical)
   {
@@ -83,46 +81,9 @@ double EnergyHelper::trackEnergy_dedx(const art::Ptr<recob::Track> &track,
       continue;
     if (planenum != 2)
       continue; // Use informartion from collection plane only
-
-    // Understand if the calo module flipped the track
-    // double dqdx_start = (calos[ical]->dQdx())[0] + (calos[ical]->dQdx())[1] +
-    // (calos[ical]->dQdx())[2];
-    // double dqdx_end   = (calos[ical]->dQdx())[calos[ical]->dQdx().size()-1] +
-    // (calos[ical]->dQdx())[calos[ical]->dQdx().size()-2] +
-    // (calos[ical]->dQdx())[calos[ical]->dQdx().size()-3];
-    // bool caloFlippedTrack = dqdx_start < dqdx_end;
-
-    double mean = 0;
-    double dedx = 0;
-    double prevresrange = 0;
-
-    if (calos[ical]->ResidualRange().size() > 0)
-    {
-      if (calos[ical]->ResidualRange()[0] > track->Length() / 2)
-      {
-        prevresrange = track->Length();
-      }
-    }
-
-    double currentresrange = 0;
-
-    for (size_t iTrkHit = 0; iTrkHit < calos[ical]->dEdx().size(); ++iTrkHit)
-    {
-      dedx = calos[ical]->dEdx()[iTrkHit];
-      currentresrange = calos[ical]->ResidualRange()[iTrkHit];
-      if (dedx > 0 && dedx < 10)
-      {
-        mean += dedx;
-        E += dedx * abs(prevresrange - currentresrange);
-        prevresrange = currentresrange;
-      }
-    }
-
-    std::cout << "[PandoraLEE] " << "Length: " << track->Length() << "E_approx " << mean/calos[ical]->dEdx().size()*track->Length()<< "MeV, ";
-    std::cout << "E_range " << E << "MeV, E_kin " << calos[ical]->KineticEnergy()<< "MeV"<<std::endl;
-    Eapprox = mean / calos[ical]->dEdx().size() * track->Length();
+    E=calos[ical]->KineticEnergy() / 1000;  // convert to GeV
   }
-  return Eapprox / 1000; // convert to GeV
+  return E;
 }
 
 void EnergyHelper::nHits(size_t pfp_id,

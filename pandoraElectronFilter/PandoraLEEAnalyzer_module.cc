@@ -22,7 +22,8 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
   myPOTTTree = tfs->make<TTree>("pot", "POT Tree");
 
   myTTree->Branch("category", &_category, "category/i");
-  myTTree->Branch("E", &_energy, "E/d");
+  myTTree->Branch("reconstructed_energy", "std::vector< double >",&_energy);
+
   myTTree->Branch("n_tracks", &_n_tracks, "n_tracks/i");
   myTTree->Branch("n_showers", &_n_showers, "n_showers/i");
   myTTree->Branch("vx", &_vx, "vx/d");
@@ -337,12 +338,10 @@ void lee::PandoraLEEAnalyzer::clear() {
   _shower_dQdx.clear();
   _shower_dEdx.clear();
 
-
-
-_nu_track_ids.clear();
-_nu_shower_ids.clear();
-_nu_track_daughters.clear();
-_nu_shower_daughters.clear();
+  _nu_track_ids.clear();
+  _nu_shower_ids.clear();
+  _nu_track_daughters.clear();
+  _nu_shower_daughters.clear();
 
   _shower_start_x.clear();
   _shower_start_y.clear();
@@ -402,7 +401,7 @@ _nu_shower_daughters.clear();
   _chosen_candidate = std::numeric_limits<int>::lowest();
   _n_primaries = 0;
 
-  _energy = std::numeric_limits<double>::lowest();
+  _energy.clear();
 
   _true_nu_is_fiducial = std::numeric_limits<int>::lowest();
   _nu_energy = std::numeric_limits<double>::lowest();
@@ -778,7 +777,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
               << "Neutrino candidate " << ipf_candidate << std::endl;
     _chosen_candidate = ipf_candidate;
 
-    _energy = 0; //Total reconstructed energy, will be filled for tracks and showers.
+    _energy.resize(3,0); //Total reconstructed energy for three planes, will be filled for tracks and showers.
 
     art::FindOneP<recob::Vertex> vertex_per_pfpart(pfparticle_handle, evt,
                                                    _pfp_producer);
@@ -876,8 +875,11 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
       _track_is_fiducial.push_back(int(geoHelper.isFiducial(start_point) &&
                                        geoHelper.isFiducial(end_point)));
       
-      double this_energy = energyHelper.energyFromHits(pfparticle, evt);
-      _energy += this_energy;
+      std::vector<double> this_energy; 
+      std::vector<int> this_nhits; 
+      energyHelper.energyFromHits(pfparticle,this_nhits,this_energy, evt);
+
+      std::transform (_energy.begin(), _energy.end(), this_energy.begin(), this_energy.begin(), std::plus<double>());
       _track_energy_hits.push_back(this_energy);
       // Alternative way to calculate the energy using dedx.
       _track_energy_dedx.push_back(energyHelper.trackEnergy_dedx(track_obj, evt));
@@ -902,27 +904,23 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
 
 
       std::vector< std::vector<double> > pca;
-
       pca.resize(3, std::vector< double > (2));
-      std::vector<int> nHits;
 
-      energyHelper.nHits(pf_id, evt, nHits);
       energyHelper.PCA(pf_id, evt, pca);
 
       double weighted_pca = 0;
       int total_hits = 0;
-      for (size_t i = 0; i < nHits.size(); i++) {
-        weighted_pca += nHits[i]*pca[i][0];
-        total_hits += nHits[i];
+      for (size_t i = 0; i < this_nhits.size(); i++) {
+        weighted_pca += this_nhits[i]*pca[i][0];
+        total_hits += this_nhits[i];
       }
 
       weighted_pca /= total_hits;
       _track_pca.push_back(weighted_pca);
-      _track_nhits.push_back(nHits);
+      _track_nhits.push_back(this_nhits);
 
 
       std::cout << "[PCA] Track " << pca[2][0] << " " << pca[2][1] << std::endl;
-      std::cout << "[nHits] " << nHits[2] << std::endl;
     }
 
     try {
@@ -948,27 +946,6 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
       _matched_showers_process.push_back("");
 
       _matched_showers_energy.push_back(std::numeric_limits<double>::lowest());
-
-      std::vector< std::vector<double> > pca;
-
-      pca.resize(3, std::vector< double > (2));
-      std::vector<int> nHits;
-
-      energyHelper.nHits(pf_id, evt, nHits);
-      energyHelper.PCA(pf_id, evt, pca);
-
-      double weighted_pca = 0;
-      int total_hits = 0;
-      for (size_t i = 0; i < nHits.size(); i++) {
-        weighted_pca += nHits[i]*pca[i][0];
-        total_hits += nHits[i];
-      }
-
-      weighted_pca /= total_hits;
-      _shower_pca.push_back(weighted_pca);
-      _shower_nhits.push_back(nHits);
-      std::cout << "[PCA] Shower " << pca[2][0] << " " << pca[2][1] << std::endl;
-      std::cout << "[nHits] " << nHits[2] << std::endl;
 
       energyHelper.dQdx(pf_id, evt, dqdx, dqdx_hits_shower, m_dQdxRectangleLength,
                         m_dQdxRectangleWidth);
@@ -1018,9 +995,30 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
       _shower_phi.push_back(shower_obj->Direction().Phi());
       _shower_theta.push_back(shower_obj->Direction().Theta());
 
-      double this_energy = energyHelper.energyFromHits(pfparticle, evt);
-      _energy += this_energy;
+      std::vector<double> this_energy; 
+      std::vector<int> this_nhits; 
+      energyHelper.energyFromHits(pfparticle,this_nhits,this_energy, evt);
+
+      std::transform (_energy.begin(), _energy.end(), this_energy.begin(), this_energy.begin(), std::plus<double>());
       _shower_energy.push_back(this_energy);
+
+      std::vector< std::vector<double> > pca;
+      pca.resize(3, std::vector< double > (2));
+
+      energyHelper.PCA(pf_id, evt, pca);
+
+      double weighted_pca = 0;
+      int total_hits = 0;
+      for (size_t i = 0; i < this_nhits.size(); i++) {
+        weighted_pca += this_nhits[i]*pca[i][0];
+        total_hits += this_nhits[i];
+      }
+
+      weighted_pca /= total_hits;
+      _shower_pca.push_back(weighted_pca);
+      _shower_nhits.push_back(this_nhits);
+      //std::cout << "[PCA] Shower " << pca[2][0] << " " << pca[2][1] << std::endl;
+
 
     }
 

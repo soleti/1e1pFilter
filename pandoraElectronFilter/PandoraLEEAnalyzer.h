@@ -122,7 +122,7 @@ private:
   const int k_data = 6;
   const int k_other = 0;
   const int k_mixed = 7;
-  double _energy;
+  std::vector<double> _energy;
   int _true_nu_is_fiducial;
   double _nu_energy;
 
@@ -212,7 +212,7 @@ private:
   std::vector<double> _shower_theta;
   std::vector<double> _shower_phi;
 
-  std::vector<double> _shower_energy;
+  std::vector<std::vector<double>> _shower_energy;
 
   std::vector<double> _track_dir_x;
   std::vector<double> _track_dir_y;
@@ -235,7 +235,7 @@ private:
   std::vector<double> _track_id;
 
   std::vector<double> _track_energy_dedx;
-  std::vector<double> _track_energy_hits;
+  std::vector<std::vector<double>> _track_energy_hits;
 
   std::vector<int> _nu_daughters_pdg;
   std::vector<double> _nu_daughters_E;

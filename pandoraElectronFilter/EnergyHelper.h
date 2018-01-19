@@ -50,9 +50,11 @@ public:
    *
    * @return     Energy in units of GeV
    */
-  double energyFromHits(recob::PFParticle const & pfparticle,
-                      const art::Event &evt,
-                      std::string _pfp_producer = "pandoraNu");
+  void energyFromHits(recob::PFParticle const &pfparticle,
+                                    std::vector<int>    &nHits,
+                                    std::vector<double> &pfenergy,
+                                    const art::Event &evt,
+                                    std::string _pfp_producer = "pandoraNu");
 
   void dQdx(size_t pfp_id, const art::Event &evt,
             std::vector<double> &dqdx,
