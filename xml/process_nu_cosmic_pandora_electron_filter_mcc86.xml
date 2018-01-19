@@ -26,7 +26,7 @@
         <!-- <output> -->
             <!-- bnb_nu_cosmic_pandora_electron_filter${PROCESS}_%tc_gen.root -->
         <!-- </output> -->
-        <numjobs>962</numjobs>
+        <numjobs>1183</numjobs>
         <disk>16GB</disk>
         <memory>4096</memory>
         <maxfilesperjob>40</maxfilesperjob>
