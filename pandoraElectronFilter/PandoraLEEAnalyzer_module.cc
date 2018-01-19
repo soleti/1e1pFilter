@@ -128,9 +128,9 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
   myTTree->Branch("shower_theta", "std::vector< double >", &_shower_theta);
   myTTree->Branch("shower_phi", "std::vector< double >", &_shower_phi);
 
-  myTTree->Branch("shower_energy", "std::vector< double >", &_shower_energy);
+  myTTree->Branch("shower_energy", "std::vector< std::vector< double > >", &_shower_energy);
   myTTree->Branch("track_energy_dedx", "std::vector< double >", &_track_energy_dedx);
-  myTTree->Branch("track_energy_hits", "std::vector< double >", &_track_energy_hits);
+  myTTree->Branch("track_energy_hits", "std::vector< std::vector< double > >", &_track_energy_hits);
 
   myTTree->Branch("track_dir_x", "std::vector< double >", &_track_dir_x);
   myTTree->Branch("track_dir_y", "std::vector< double >", &_track_dir_y);
