@@ -42,39 +42,17 @@ public:
   double trackEnergy_dedx(const art::Ptr<recob::Track> &track, const art::Event &evt,
                      std::string _pfp_producer = "pandoraNu");
 
-    /**
-   * @brief      Measure the energy of a track using the shower method
-   *
-   * @param[in]  track  The track
-   * @param[in]  evt    The art::event
-   *
-   * @return     Energy in units of GeV
-   */
-  double trackEnergy_hits(const art::Ptr<recob::Track> &track, const art::Event &evt,
-                     std::string _pfp_producer = "pandoraNu");
-
-
   /**
-   * @brief      Measure the energy of a shower
+   * @brief      Measure the energy of a pfp_particle
    *
    * @param[in]  shower  The shower
    * @param[in]  evt     The art::event
    *
-   * @return     Energy in units of [ TODO: units? ]
+   * @return     Energy in units of GeV
    */
-  double showerEnergy(const art::Ptr<recob::Shower> &shower,
+  double energyFromHits(recob::PFParticle const & pfparticle,
                       const art::Event &evt,
                       std::string _pfp_producer = "pandoraNu");
-
-  /**
-   * @brief      Measure the energy of a pfparticle neutrino candidate
-   *
-   * @param[in]  ipf     The pfparticle ID
-   * @param[in]  evt     The art::event
-   * @param      energy  The energy
-   */
-  void measureEnergy(size_t ipf, const art::Event &evt, double &energy,
-                     std::string _pfp_producer = "pandoraNu");
 
   void dQdx(size_t pfp_id, const art::Event &evt,
             std::vector<double> &dqdx,
@@ -93,8 +71,14 @@ public:
                            std::vector< int > &nHits,
                            std::string _pfp_producer = "pandoraNu");
 private:
-  double _data_gain = 240;
-  double _mc_gain = 200;
+
+  std::vector<double> _data_gain = {239.5,239.5,239.5}; // Only measured of collection plane, David Caratelli
+  std::vector<double> _mc_gain   = {193.0,197.0,197.0}; // Plane 0, plane 1, plane 2
+  
+  // 23 work function (23 eV/e- in the argon)
+  // 0.62 recombination factor
+  double work_function = 23 / 1e6;
+  double recombination_factor = 0.62;
 
   GeometryHelper geoHelper;
 };

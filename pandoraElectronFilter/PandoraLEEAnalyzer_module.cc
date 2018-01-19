@@ -778,8 +778,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
               << "Neutrino candidate " << ipf_candidate << std::endl;
     _chosen_candidate = ipf_candidate;
 
-    _energy = 0;
-    energyHelper.measureEnergy(ipf_candidate, evt, _energy);
+    _energy = 0; //Total reconstructed energy, will be filled for tracks and showers.
 
     art::FindOneP<recob::Vertex> vertex_per_pfpart(pfparticle_handle, evt,
                                                    _pfp_producer);
@@ -814,8 +813,9 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
     for (auto &pf_id : _nu_track_ids) {
 
       std::cout << "[PandoraLEE] " << "pfp_track_id: " << pf_id << std::endl;
+      recob::PFParticle const &pfparticle = pfparticle_handle->at(pf_id);
 
-      _nu_track_daughters.push_back( vectorCast(pfparticle_handle->at(pf_id).Daughters()));
+      _nu_track_daughters.push_back( vectorCast(pfparticle.Daughters()));
 
       std::vector<double> dqdx(3, std::numeric_limits<double>::lowest());
       std::vector<double> dedx(3, std::numeric_limits<double>::lowest());
@@ -875,9 +875,13 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
 
       _track_is_fiducial.push_back(int(geoHelper.isFiducial(start_point) &&
                                        geoHelper.isFiducial(end_point)));
-
+      
+      double this_energy = energyHelper.energyFromHits(pfparticle, evt);
+      _energy += this_energy;
+      _track_energy_hits.push_back(this_energy);
+      // Alternative way to calculate the energy using dedx.
       _track_energy_dedx.push_back(energyHelper.trackEnergy_dedx(track_obj, evt));
-      _track_energy_hits.push_back(energyHelper.trackEnergy_hits(track_obj, evt));
+      
 
       _track_length.push_back(track_obj->Length());
       _track_id.push_back(track_obj->ID());
@@ -934,7 +938,8 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
 
     for (auto &pf_id : _nu_shower_ids) {
 
-      _nu_shower_daughters.push_back( vectorCast(pfparticle_handle->at(pf_id).Daughters()));
+      recob::PFParticle const &pfparticle = pfparticle_handle->at(pf_id);
+      _nu_shower_daughters.push_back( vectorCast(pfparticle.Daughters()));
 
       std::vector<double> dqdx(3, std::numeric_limits<double>::lowest());
       std::vector<double> dedx(3, std::numeric_limits<double>::lowest());
@@ -1013,7 +1018,9 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
       _shower_phi.push_back(shower_obj->Direction().Phi());
       _shower_theta.push_back(shower_obj->Direction().Theta());
 
-      _shower_energy.push_back(energyHelper.showerEnergy(shower_obj, evt));
+      double this_energy = energyHelper.energyFromHits(pfparticle, evt);
+      _energy += this_energy;
+      _shower_energy.push_back(this_energy);
 
     }
 

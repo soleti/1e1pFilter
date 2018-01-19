@@ -6,32 +6,27 @@
 namespace lee
 {
 
-double EnergyHelper::showerEnergy(const art::Ptr<recob::Shower> &shower,
-                                  const art::Event &evt,
-                                  std::string _pfp_producer)
+double EnergyHelper::energyFromHits(recob::PFParticle const &pfparticle,
+                                    const art::Event &evt,
+                                    std::string _pfp_producer)
 {
-  auto const &shower_handle =
-      evt.getValidHandle<std::vector<recob::Shower>>(_pfp_producer);
   auto const &pfparticle_handle =
       evt.getValidHandle<std::vector<recob::PFParticle>>(_pfp_producer);
   auto const &cluster_handle =
       evt.getValidHandle<std::vector<recob::Cluster>>(_pfp_producer);
 
-  double _gain;
-  if (evt.isRealData())
-    _gain = _data_gain;
-  else
-    _gain = _mc_gain;
-
-  art::FindOneP<recob::PFParticle> pfparticle_shower_ass(shower_handle, evt,
-                                                         _pfp_producer);
-  const art::Ptr<recob::PFParticle> pfparticle =
-      pfparticle_shower_ass.at(shower.key());
-
   art::FindManyP<recob::Cluster> cluster_pfparticle_ass(pfparticle_handle, evt,
                                                         _pfp_producer);
   std::vector<art::Ptr<recob::Cluster>> clusters =
-      cluster_pfparticle_ass.at(pfparticle.key());
+      cluster_pfparticle_ass.at(pfparticle.Self());
+
+      std::vector<double> _gain;
+      if (evt.isRealData()){
+        _gain = _data_gain;
+      }  
+      else{
+        _gain = _mc_gain;
+      }
 
   double energy[3] = {0, 0, 0};
   int n_hits[3] = {0, 0, 0};
@@ -44,29 +39,19 @@ double EnergyHelper::showerEnergy(const art::Ptr<recob::Shower> &shower,
 
     for (size_t ihit = 0; ihit < hits.size(); ++ihit)
     {
-
-      if (hits[ihit]->View() > 2 || hits[ihit]->View() < 0)
+      auto plane_nr = hits[ihit]->View();
+      if (plane_nr > 2 || plane_nr < 0)
         continue;
-      // 23 work function (23 eV/e- in the argon)
-      // 0.62 recombination factor
-      // TODO move to other function or use detector properties
-      energy[hits[ihit]->View()] +=
-          hits[ihit]->Integral() * _gain * (23. / 1e6) / 0.62;
-      n_hits[hits[ihit]->View()]++;
+
+      energy[plane_nr] += hits[ihit]->Integral() * _gain[plane_nr] * work_function / recombination_factor;
+      n_hits[plane_nr] ++;
     }
   }
 
   const int n = sizeof(n_hits) / sizeof(int);
 
-  return energy[std::distance(n_hits, std::max_element(n_hits, n_hits + n))] /
-         1000; // convert to GeV
-}
-
-double EnergyHelper::trackEnergy_hits(const art::Ptr<recob::Track> &track,
-                                      const art::Event &evt,
-                                      std::string _pfp_producer)
-{
-  return 0;
+  // Return the energy of the plane with the most hits (C++ does nor have argmax)
+  return energy[std::distance(n_hits, std::max_element(n_hits, n_hits + n))] /1000; // convert to GeV
 }
 
 
@@ -218,7 +203,7 @@ void EnergyHelper::dQdx(size_t pfp_id,
                         std::string _pfp_producer)
 {
 
-  double _gain;
+  std::vector<double> _gain;
   if (evt.isRealData())
     _gain = _data_gain;
   else
@@ -340,7 +325,7 @@ void EnergyHelper::dQdx(size_t pfp_id,
 
       if (is_within || first)
       {
-        double q = hit->Integral() * _gain;
+        double q = hit->Integral() * _gain[clusters[icl]->Plane().Plane];
         dqdxs.push_back(q / pitch);
         if (clusters[icl]->Plane().Plane == 2)
         {
@@ -371,81 +356,11 @@ void EnergyHelper::dQdx(size_t pfp_id,
 void EnergyHelper::dEdxFromdQdx(std::vector<double> &dedx,
                                 std::vector<double> &dqdx)
 {
-
-  double work_function = 23;
-  double recombination_factor = 0.62;
-
   for (size_t i = 0; i < dqdx.size(); i++)
   {
     if (dqdx[i] > 0)
-      dedx[i] = dqdx[i] * (work_function / 1e6) / recombination_factor;
+      dedx[i] = dqdx[i] * (work_function) / recombination_factor;
     std::cout << "[dEdx] " << i << " " << dedx[i] << std::endl;
-  }
-}
-
-void EnergyHelper::measureEnergy(size_t ipf, const art::Event &evt,
-                                 double &energy, std::string _pfp_producer)
-{
-
-  try
-  {
-
-    auto const &pfparticle_handle =
-        evt.getValidHandle<std::vector<recob::PFParticle>>(_pfp_producer);
-    auto const &pfparticles(*pfparticle_handle);
-
-    try
-    {
-
-      art::FindManyP<recob::Shower> showers_per_pfparticle(pfparticle_handle, evt,
-                                                           _pfp_producer);
-      std::vector<art::Ptr<recob::Shower>> showers = showers_per_pfparticle.at(ipf);
-
-      for (size_t ish = 0; ish < showers.size(); ish++)
-      {
-        double sh_E = showerEnergy(showers[ish], evt);
-        if ( sh_E > 0)
-        {
-          energy += sh_E;
-        }
-      }
-    }
-    catch (...)
-    {
-      std::cout << "[EnergyHelper] "
-                << "SHOWER NOT AVAILABLE " << std::endl;
-    }
-
-    try
-    {
-
-      art::FindManyP<recob::Track> tracks_per_pfparticle(pfparticle_handle, evt,
-                                                         _pfp_producer);
-      std::vector<art::Ptr<recob::Track>> tracks = tracks_per_pfparticle.at(ipf);
-
-      for (size_t itr = 0; itr < tracks.size(); itr++)
-      {
-        double tr_E = trackEnergy_dedx(tracks[itr], evt);
-        if ( tr_E > 0)
-        {
-          energy += tr_E;
-        }
-      }
-    }
-    catch (...)
-    {
-      std::cout << "[EnergyHelper] "
-                << "TRACK NOT AVAILABLE " << std::endl;
-    }
-    for (auto const &pfdaughter : pfparticles[ipf].Daughters())
-    {
-      measureEnergy(pfdaughter, evt, energy, _pfp_producer);
-    }
-  }
-  catch (...)
-  {
-    std::cout << "[EnergyHelper] "
-              << "PFParticles not available " << std::endl;
   }
 }
 
