@@ -1125,11 +1125,16 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
         << "***NOT NEUTRINO NOR COSMIC***" << std::endl;
     }
 
-    if ((track_cr_found && _nu_matched_tracks > 0)
-    || (shower_cr_found && _nu_matched_showers > 0)) {
+    // if ((track_cr_found && _nu_matched_tracks > 0)
+    // || (shower_cr_found && _nu_matched_showers > 0)) {
+    //   _category = k_mixed;
+    //   std::cout << "[PandoraLEE] "
+    //             << "***MIXED COSMIC/NEUTRINO***" << std::endl;
+    // }
+
+    if( (track_cr_found || shower_cr_found                 ) && 
+        (_nu_matched_tracks > 0 || _nu_matched_showers > 0 )  ){
       _category = k_mixed;
-      std::cout << "[PandoraLEE] "
-                << "***MIXED COSMIC/NEUTRINO***" << std::endl;
     }
 
     if ((track_cr_found || shower_cr_found) && _category != k_mixed) {
