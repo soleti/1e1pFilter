@@ -4,10 +4,6 @@
 #include "pandora_lee_ana_common.fcl"
 
 
-lee_electron_alg.startbeamtime: 3.2
-lee_electron_alg.endbeamtime: 4.8
-
-
 lee_pandora_analyzer:
 {
     module_type:                "PandoraLEEAnalyzer"
@@ -16,6 +12,8 @@ lee_pandora_analyzer:
     PrintDebug:                 false
 }
 
+lee_electron_alg.startbeamtime: 3.2 #Not sure if this is right
+lee_electron_alg.endbeamtime: 4.8
 
 
 physics: {
