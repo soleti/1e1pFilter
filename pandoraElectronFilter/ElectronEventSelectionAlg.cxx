@@ -55,8 +55,6 @@ TVector3 ElectronEventSelectionAlg::spaceChargeTrueToReco(const TVector3 &xyz)
 void ElectronEventSelectionAlg::reconfigure(fhicl::ParameterSet const &p)
 {
   // Implementation of optional member function here.
-  m_nTracks = p.get<int>("nTracks", 1);
-
   m_fidvolXstart = p.get<double>("fidvolXstart", 10);
   m_fidvolXend = p.get<double>("fidvolXend", 10);
 
@@ -87,6 +85,29 @@ void ElectronEventSelectionAlg::reconfigure(fhicl::ParameterSet const &p)
   m_isCosmicInTime = p.get<bool>("isCosmicInTime", false);
   m_mgr.Configure(p.get<flashana::Config_t>("FlashMatchConfig"));
   fOpticalFlashFinderLabel = p.get<std::string>("OpticalFlashFinderLabel", "simpleFlashBeam");
+
+  // std::cout << "fidvolXstart\t" << m_fidvolXstart << std::endl;
+  // std::cout << "fidvolXend\t" << m_fidvolXend   << std::endl;
+  // std::cout << "fidvolYstart\t" << m_fidvolYstart <<std::endl;
+  // std::cout << "fidvolYend\t" << m_fidvolYend   <<std::endl;
+  // std::cout << "fidvolZstart\t" << m_fidvolZstart <<std::endl;
+  // std::cout << "fidvolZend\t" << m_fidvolZend   <<std::endl;
+
+  // std::cout << "fractionsigmaflashwidth\t" << m_fractionsigmaflashwidth << std::endl;
+  // std::cout << "absoluteflashdist\t" << m_absoluteflashdist << std::endl;
+
+  // std::cout << "startbeamtime\t" << m_startbeamtime << std::endl;
+  // std::cout << "endbeamtime\t" << m_endbeamtime << std::endl;
+  // std::cout << "PE_threshold\t" << m_PE_threshold << std::endl;
+
+  // std::cout << "cut_zwidth\t" << m_cut_zwidth << std::endl;
+  // std::cout << "cut_sigzwidth\t" << m_cut_sigzwidth << std::endl;
+  // std::cout << "cut_ywidth\t" << m_cut_ywidth << std::endl;
+  // std::cout << "cut_sigywidth\t" << m_cut_sigywidth << std::endl;
+  // std::cout << "charge_light_ratio\t" << m_charge_light_ratio << std::endl;
+  // std::cout << "Flashmatching\t" << m_flashmatching << std::endl;
+  // std::cout << "Flashmatching_first\t" << m_FM_all << std::endl;
+
 }
 
 const std::map<size_t, int> ElectronEventSelectionAlg::flashBasedSelection(const art::Event &evt,
