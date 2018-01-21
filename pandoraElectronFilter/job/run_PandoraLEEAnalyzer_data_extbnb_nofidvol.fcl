@@ -10,10 +10,6 @@
 #include "lee_selection_alg.fcl"
 #include "pandora_lee_ana_common.fcl"
 
-lee_electron_alg.startbeamtime: 3.65
-lee_electron_alg.endbeamtime: 5.25
-
-
 lee_pandora_analyzer:
 {
     module_type:                "PandoraLEEAnalyzer"
@@ -22,6 +18,8 @@ lee_pandora_analyzer:
     isData:                     true
 }
 
+lee_electron_alg.startbeamtime: 3.65
+lee_electron_alg.endbeamtime: 5.25
 
 
 
