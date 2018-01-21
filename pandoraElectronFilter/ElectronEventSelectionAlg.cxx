@@ -55,6 +55,7 @@ TVector3 ElectronEventSelectionAlg::spaceChargeTrueToReco(const TVector3 &xyz)
 void ElectronEventSelectionAlg::reconfigure(fhicl::ParameterSet const &p)
 {
   // Implementation of optional member function here.
+  m_nTracks = p.get<int>("nTracks", 1);
   m_fidvolXstart = p.get<double>("fidvolXstart", 10);
   m_fidvolXend = p.get<double>("fidvolXend", 10);
 
@@ -485,8 +486,6 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt)
       _neutrino_candidate_passed[_i_primary] = false;
     }
 
-        // Loop over the neutrino daughters and check if there is a shower and a
-    // track
     int showers = 0;                // number of showers in the hierarchy of the pfp neutrino candidate.
     int tracks = 0;
     int shower_daughters =0;        // number of showers that are direct daughters of the pfp neutrino candidate.
@@ -550,6 +549,12 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt)
     }
     _n_tracks[_i_primary] = tracks;
     _n_showers[_i_primary] = showers;
+
+    std::cout << "showers" << showers << std::endl;
+    std::cout << "tracks"  << tracks << std::endl;
+    std::cout << "showers_daughters" << shower_daughters << std::endl;
+    std::cout << "tracks_daughters"  << track_daughters << std::endl;
+
 
     // Cut on the topology to select 1e Np like signal
     // Np: at least N direct track daughters
