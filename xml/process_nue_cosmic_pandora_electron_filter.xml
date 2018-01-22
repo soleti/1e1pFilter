@@ -1,6 +1,14 @@
-<project name="bnb_nu_cosmic_pandora_electron_filter">
-    <!--  Project size  -->
-    <numevents>60000</numevents>
+<?xml version="1.0"?>
+<!DOCTYPE project [
+<!ENTITY name "bnb_nue_cosmic_pandora_electron_filter">
+<!ENTITY version "v06_26_01_10">
+<!ENTITY qualifier "e10:prof">
+<!ENTITY dataset "prodgenie_bnb_intrinsic_nue_cosmic_uboone_mcc8.6_reco2">
+<!ENTITY user "srsoleti">
+]>
+<project name="&name;">
+    <!-- Doesn't matter for non-generating jobs -->
+    <numevents>1000000</numevents>
 
     <!--  Operating System  -->
     <os>SL6</os>
@@ -11,29 +19,24 @@
 
     <!--  Larsoft information  -->
     <larsoft>
-        <tag>v06_30_00</tag>
-        <qual>e10:prof</qual>
-        <local>/pnfs/uboone/scratch/users/srsoleti/v06_30_00.tar</local>
+        <tag>&version;</tag>
+        <qual>&qualifier;</qual>
+        <local>/pnfs/uboone/scratch/users/&user;/&version;.tar</local>
     </larsoft>
 
     <!--  Project stages  -->
-    <stage name="filter">
-        <fcl>run_PandoraLEEAnalyzer.fcl</fcl>
-        <outdir>/pnfs/uboone/scratch/users/srsoleti/v06_30_00/filter/bnb_nue_cosmic_pandora_electron_filter</outdir>
-        <logdir>/pnfs/uboone/scratch/users/srsoleti/v06_30_00/filter/bnb_nue_cosmic_pandora_electron_filter</logdir>
-        <workdir>/pnfs/uboone/scratch/users/srsoleti/work/v06_30_00/filter/bnb_nue_cosmic_pandora_electron_filter</workdir>
-        <inputdef>prodgenie_bnb_intrinsic_nue_cosmic_uboone_mcc8_reco2</inputdef>
-        <!-- <output> -->
-            <!-- bnb_nu_cosmic_pandora_electron_filter${PROCESS}_%tc_gen.root -->
-        <!-- </output> -->
-        <numjobs>600</numjobs>
-        <disk>50GB</disk>
+    <stage name="selection">
+        <fcl>run_PandoraOnly.fcl</fcl>
+        <outdir>/pnfs/uboone/scratch/users/&user;/&version;/lee/&name;</outdir>
+        <logdir>/pnfs/uboone/scratch/users/&user;/&version;/lee/&name;</logdir>
+        <workdir>/pnfs/uboone/scratch/users/&user;/work/lee/&name;</workdir>
+        <inputdef>&dataset;</inputdef>
+        <numjobs>308</numjobs>
+        <disk>16GB</disk>
         <memory>4096</memory>
-        <maxfilesperjob>2</maxfilesperjob>
+        <maxfilesperjob>40</maxfilesperjob>
         <datatier>filtered</datatier>
-        <!-- <defname>prodgenie_bnb_intrinsic_nue_uboone_mcc8_detsim</defname> -->
-        <memory>2000</memory>
-        <jobsub>--expected-lifetime=8h</jobsub>
+        <jobsub>--expected-lifetime=24h -Q</jobsub>
     </stage>
     <!--  file type  -->
     <!-- <filetype>mc</filetype> -->
