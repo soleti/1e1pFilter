@@ -2,6 +2,7 @@
 *.log
 *.vdp
 ._*
+Filelist
 mem.db
 time.db
 .DS_Store
