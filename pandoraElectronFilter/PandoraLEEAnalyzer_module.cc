@@ -889,7 +889,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
       std::vector<int> this_nhits; 
       energyHelper.energyFromHits(pfparticle,this_nhits,this_energy, evt);
 
-      std::transform (_energy.begin(), _energy.end(), this_energy.begin(), this_energy.begin(), std::plus<double>());
+      std::transform (_energy.begin(), _energy.end(), this_energy.begin(), this_energy.end(), std::plus<double>());
       _track_energy_hits.push_back(this_energy);
       // Alternative way to calculate the energy using dedx.
       _track_energy_dedx.push_back(energyHelper.trackEnergy_dedx(track_obj, evt));
@@ -1009,7 +1009,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
       std::vector<int> this_nhits; 
       energyHelper.energyFromHits(pfparticle,this_nhits,this_energy, evt);
 
-      std::transform (_energy.begin(), _energy.end(), this_energy.begin(), this_energy.begin(), std::plus<double>());
+      std::transform (_energy.begin(), _energy.end(), this_energy.begin(), this_energy.end(), std::plus<double>());
       _shower_energy.push_back(this_energy);
 
       std::vector< std::vector<double> > pca;
