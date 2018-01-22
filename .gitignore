@@ -3,6 +3,7 @@
 *.vdp
 ._*
 pandoraElectronFilter/job/Filelist
+xml/WouterXML/
 mem.db
 time.db
 .DS_Store
