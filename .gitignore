@@ -2,7 +2,7 @@
 *.log
 *.vdp
 ._*
-Filelist
+pandoraElectronFilter/job/Filelist
 mem.db
 time.db
 .DS_Store
