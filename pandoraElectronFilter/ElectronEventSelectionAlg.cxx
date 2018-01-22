@@ -221,11 +221,11 @@ const std::map<size_t, int> ElectronEventSelectionAlg::flashBasedSelection(const
 
     //  Commented out for now to force flashmatching to make sure x-values are calculated.
 
-    //else if(m_cut_xwidth==0 && m_cut_scorePE==0 && qcvec.size() ==1 )
-    //{
-    //  std::cout << "[ElectronEventSelectionAlg] " << "Candidate "<< PFPIDvector[0] <<"passed optical selection!" << std::endl;
-    //  chosen_index = PFPIDvector[0];
-    //}
+    else if(qcvec.size() ==1 )
+    {
+      std::cout << "[ElectronEventSelectionAlg] " << "Candidate "<< PFPIDvector[0] <<"passed optical selection!" << std::endl;
+      chosen_index = PFPIDvector[0];
+    }
     else
     { // Else run flashmatching in the remaining cases
       ::flashana::Flash_t flashRecoCopy = f;
@@ -246,7 +246,6 @@ const std::map<size_t, int> ElectronEventSelectionAlg::flashBasedSelection(const
       }
       else
       { // Else means we have a match
-        bool postmatchingcuts;
         for (auto match : matchvec)
         {
           //Postmatching cuts.
@@ -257,31 +256,19 @@ const std::map<size_t, int> ElectronEventSelectionAlg::flashBasedSelection(const
           }
           else
           {
-            postmatchingcuts = true;
-
-            if (postmatchingcuts)
-            {
-              scorevector.emplace_back(match.score);
-              TPC_x_vector.emplace_back(match.tpc_point.x);
-              TPCIDvector.emplace_back(match.tpc_id);
-            }
+            scorevector.emplace_back(match.score);
+            TPC_x_vector.emplace_back(match.tpc_point.x);
+            TPCIDvector.emplace_back(match.tpc_id);
           }
-        } // loop over matches
-        if (scorevector.size() == 0)
-        {
-          std::cout << "[ElectronEventSelectionAlg] "
-                    << "No candidates passed the postmatching cuts!" << std::endl;
         }
-        else
-        {
-          chosen_index = PFPIDvector[TPCIDvector[0]];
 
-          _TPC_x = chargexvector[TPCIDvector[0]];
-          _flash_x = TPC_x_vector[0];
-          std::cout << "[ElectronEventSelectionAlg] "
-                    << "Candidate " << PFPIDvector[TPCIDvector[0]]
-                    << "passed optical selection! TPC_X: " << _TPC_x << " flash_x " << _flash_x << std::endl;
-        }
+        chosen_index = PFPIDvector[TPCIDvector[0]];
+
+        _TPC_x = chargexvector[TPCIDvector[0]];
+        _flash_x = TPC_x_vector[0];
+        std::cout << "[ElectronEventSelectionAlg] "
+                  << "Candidate " << PFPIDvector[TPCIDvector[0]]
+                  << "passed optical selection! TPC_X: " << _TPC_x << " flash_x " << _flash_x << std::endl;
       } // Else means we have a match
 
     } // Else run flashmatching in the remaining cases
@@ -317,8 +304,9 @@ const flashana::QCluster_t ElectronEventSelectionAlg::collect3DHits(
 
   for (auto &pfpindex : pfplist)
   {
-    unsigned short pdgcode = pfparticle_handle->at(pfpindex).PdgCode();
-    double lycoef = m_ly_map[pdgcode];
+    //unsigned short pdgcode = pfparticle_handle->at(pfpindex).PdgCode();
+    // double lycoef = m_ly_map[pdgcode];
+    double lycoef = 1.0;
 
     std::vector<flashana::Hit3D_t> hitlist;
     std::vector<art::Ptr<recob::SpacePoint>> spcpnts = spcpnts_per_pfpart.at(pfpindex);
@@ -341,7 +329,6 @@ const flashana::QCluster_t ElectronEventSelectionAlg::collect3DHits(
           hit3D.plane = 2;
           double q = hit->Integral();
 
-          //q*=lycoef;
           hit3D.q = q;
 
           hitlist.emplace_back(hit3D);
@@ -451,7 +438,6 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt)
               << numDaughters << std::endl;
 
     _neutrino_candidate_passed[_i_primary] = true;
-    //_op_flash_indexes[_i_primary] = 0;
     _neutrino_vertex[_i_primary] = TVector3(0, 0, 0);
     _n_showers[_i_primary] = 0;
     _pfp_id_showers_from_primary[_i_primary] = std::vector<size_t>();

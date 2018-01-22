@@ -272,7 +272,7 @@ namespace lee {
     bool m_FM_all;
     double m_isCosmicInTime;
 
-    std::map<unsigned short, double> m_ly_map;
+    // std::map<unsigned short, double> m_ly_map;
 
     std::string _pfp_producer = "pandoraNu";
 
