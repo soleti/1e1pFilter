@@ -11,6 +11,8 @@
 
 #include <math.h>
 #include <fstream>
+#include <algorithm>
+#include <functional>
 
 #include "art/Framework/Core/EDAnalyzer.h"
 #include "art/Framework/Core/ModuleMacros.h"
