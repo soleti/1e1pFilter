@@ -38,6 +38,7 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
   myTTree->Branch("true_shower_y_sce", "std::vector< double >",&_true_shower_y_sce);
   myTTree->Branch("true_shower_z_sce", "std::vector< double >",&_true_shower_z_sce);
   myTTree->Branch("true_shower_pdg", "std::vector< int >",&_true_shower_pdg);
+  myTTree->Branch("true_shower_depE", "std::vector< int >",&_true_shower_depE);
 
   myTTree->Branch("true_vx_sce", &_true_vx_sce, "true_vx_sce/d");
   myTTree->Branch("true_vy_sce", &_true_vy_sce, "true_vy_sce/d");
@@ -221,6 +222,12 @@ myTTree->Branch("track_dQdx", "std::vector< std::vector< double > >",
   myTTree->Branch("track_nhits", "std::vector< std::vector<int> >",
                   &_track_nhits);
 
+  myTTree->Branch("shower_sp_x", "std::vector< float >",&_shower_sp_x);
+  myTTree->Branch("shower_sp_y", "std::vector< float >",&_shower_sp_y);
+  myTTree->Branch("shower_sp_z", "std::vector< float >",&_shower_sp_z);
+  myTTree->Branch("shower_sp_int", "std::vector< float >",&_shower_sp_int);
+                
+
   this->reconfigure(pset);
 }
 
@@ -338,6 +345,11 @@ void lee::PandoraLEEAnalyzer::clear() {
   _track_dQdx.clear();
   _track_dEdx.clear();
 
+  _shower_sp_x.clear();
+  _shower_sp_y.clear();
+  _shower_sp_z.clear();
+  _shower_sp_int.clear();
+
   _shower_open_angle.clear();
   _shower_length.clear();
   _shower_dir_x.clear();
@@ -366,6 +378,7 @@ void lee::PandoraLEEAnalyzer::clear() {
   _true_shower_y_sce.clear();
   _true_shower_z_sce.clear();
   _true_shower_pdg.clear();
+  _true_shower_depE.clear();
 
   _track_end_x.clear();
   _track_end_y.clear();
@@ -688,6 +701,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
 
       if((pdg_mother==22 || pdg_mother==11) && origin==1){
         _true_shower_pdg.push_back( mcshower_handle->at(_i_mcs).AncestorPdgCode());
+        _true_shower_depE.push_back(mcshower_handle->at(_i_mcs).DetProfile ().E());
 
         double x_det = mcshower_handle->at(_i_mcs).Start().X();
         double y_det = mcshower_handle->at(_i_mcs).Start().Y();
@@ -947,6 +961,12 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
                 << std::endl;
     }
 
+    // Needed for saving shower distributions.
+    auto const &spacepoint_handle = evt.getValidHandle<std::vector<recob::SpacePoint>>(_pfp_producer);
+    art::FindManyP<recob::SpacePoint> spcpnts_per_pfpart(pfparticle_handle, evt, _pfp_producer);
+    art::FindManyP<recob::Hit> hits_per_spcpnts(spacepoint_handle, evt, _pfp_producer);
+
+
     for (auto &pf_id : _nu_shower_ids) {
 
       recob::PFParticle const &pfparticle = pfparticle_handle->at(pf_id);
@@ -1033,6 +1053,29 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
       _shower_pca.push_back(weighted_pca);
       _shower_nhits.push_back(this_nhits);
       //std::cout << "[PCA] Shower " << pca[2][0] << " " << pca[2][1] << std::endl;
+
+      std::vector<art::Ptr<recob::SpacePoint>> spcpnts = spcpnts_per_pfpart.at(pf_id);
+      for (auto &_sps : spcpnts)
+      {
+        std::vector<art::Ptr<recob::Hit>> hits = hits_per_spcpnts.at(_sps.key());
+        auto xyz = _sps->XYZ();
+        float integral=0;
+
+        for (auto &hit : hits)
+        {
+          if (hit->View() == geo::kZ)
+          {
+            integral+= hit->Integral();
+          }
+        }
+        // Only save points with nonzero collection charge
+        if (integral>0){
+          _shower_sp_int.push_back(integral);
+          _shower_sp_x.push_back(xyz[0]);
+          _shower_sp_y.push_back(xyz[1]);
+          _shower_sp_z.push_back(xyz[2]);
+        }
+      }
 
 
     }
