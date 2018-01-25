@@ -38,7 +38,7 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
   myTTree->Branch("true_shower_y_sce", "std::vector< double >",&_true_shower_y_sce);
   myTTree->Branch("true_shower_z_sce", "std::vector< double >",&_true_shower_z_sce);
   myTTree->Branch("true_shower_pdg", "std::vector< int >",&_true_shower_pdg);
-  myTTree->Branch("true_shower_depE", "std::vector< int >",&_true_shower_depE);
+  myTTree->Branch("true_shower_depE", "std::vector< double >",&_true_shower_depE);
 
   myTTree->Branch("true_vx_sce", &_true_vx_sce, "true_vx_sce/d");
   myTTree->Branch("true_vy_sce", &_true_vy_sce, "true_vy_sce/d");
