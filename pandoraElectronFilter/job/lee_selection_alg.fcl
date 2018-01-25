@@ -3,7 +3,7 @@
 BEGIN_PROLOG
 
 lee_electron_alg: {
-    nTracks:                    1
+    nTracks:                    0
     fidvolXstart:               0  #10
     fidvolXend:                 0  #10
     fidvolYstart:               0  #20
