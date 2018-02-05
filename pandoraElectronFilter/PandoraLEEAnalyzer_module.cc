@@ -189,12 +189,20 @@ myTTree->Branch("track_dQdx", "std::vector< std::vector< double > >",
                   &_shower_dQdx_hits);
   myTTree->Branch("shower_dEdx_hits", "std::vector< std::vector< double > >",
                   &_shower_dEdx_hits);
+  myTTree->Branch("shower_distance_hits", "std::vector< std::vector< double > >",
+                  &_shower_distance_hits);
+  myTTree->Branch("shower_pitch", "std::vector< double >",
+                  &_shower_pitch;
 
   myTTree->Branch("track_dQdx_hits", "std::vector< std::vector< double > >",
                   &_track_dQdx_hits);
   myTTree->Branch("track_dEdx_hits", "std::vector< std::vector< double > >",
                   &_track_dEdx_hits);
-
+  myTTree->Branch("track_distance_hits", "std::vector< std::vector< double > >",
+                  &_track_distance_hits);
+  myTTree->Branch("track_pitch", "std::vector< double >",
+                  &_track_pitch);
+  
   myTTree->Branch("matched_tracks", "std::vector< int >",
                 &_matched_tracks);
   myTTree->Branch("matched_tracks_energy", "std::vector< double >",
@@ -330,11 +338,15 @@ void lee::PandoraLEEAnalyzer::clear() {
 
   _shower_dQdx_hits.clear();
   _shower_dEdx_hits.clear();
+  _shower_pitch = std::numeric_limits<double>::lowest();
   _shower_dQdx.clear();
   _shower_dEdx.clear();
 
   _track_dQdx_hits.clear();
   _track_dEdx_hits.clear();
+  _track_distance_hits.clear();
+  _track_pitch = std::numeric_limits<double>::lowest();
+
   _track_dQdx.clear();
   _track_dEdx.clear();
 
@@ -483,12 +495,8 @@ void lee::PandoraLEEAnalyzer::categorizePFParticles(
 
   lar_pandora::PFParticlesToMCParticles matchedParticles;
 
-  std::cout << "[PandoraLEE] Before configure " << std::endl;
-
-
   pandoraHelper.Configure(evt, _pfp_producer, _spacepointLabel,
     _hitfinderLabel, _geantModuleLabel, _mcpHitAssLabel);
-    std::cout << "[PandoraLEE] Before GetRecoToTrueMatches " << std::endl;
 
   pandoraHelper.GetRecoToTrueMatches(matchedParticles);
   std::cout << "[PandoraLEE] Matched size " << matchedParticles.size() << std::endl;
@@ -753,13 +761,11 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
   std::vector<double> cosmic_energy;
 
   if ((!evt.isRealData() || m_isOverlaidSample) && !m_isCosmicInTime) {
-    std::cout << "[PandoraLEE] "
-              << "Before categorize "<< std::endl;
+
     categorizePFParticles(evt,
       neutrino_pdg, neutrino_process, neutrino_energy, neutrino_pf,
       cosmic_pdg, cosmic_process, cosmic_energy, cosmic_pf);
-      std::cout << "[PandoraLEE] "
-                << "After categorize "<< std::endl;
+
     _n_matched = neutrino_pf.size();
   }
 
@@ -827,19 +833,22 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
       std::vector<double> dqdx(3, std::numeric_limits<double>::lowest());
       std::vector<double> dedx(3, std::numeric_limits<double>::lowest());
       std::vector<double> dqdx_hits_track;
+      std::vector<double> dqdx_distance_track;
+      double pitch;
 
-
-      energyHelper.dQdx(pf_id, evt, dqdx, dqdx_hits_track, m_dQdxRectangleLength,m_dQdxRectangleWidth);
+      energyHelper.dQdx(pf_id, evt, dqdx, dqdx_hits_track, dqdx_distance_track, pitch, m_dQdxRectangleLength,m_dQdxRectangleWidth);
       _track_dQdx_hits.push_back(dqdx_hits_track);
       std::vector<double> dedx_hits_track(dqdx_hits_track.size(), std::numeric_limits<double>::lowest());
 
       energyHelper.dEdxFromdQdx(dedx, dqdx);
 
       energyHelper.dEdxFromdQdx(dedx_hits_track, dqdx_hits_track);
+      std::cout << "After dedx track" << std::endl;
       _track_dEdx_hits.push_back(dedx_hits_track);
-
+      _track_distance_hits.push_back(dqdx_distance_track);
       _track_dQdx.push_back(dqdx);
       _track_dEdx.push_back(dedx);
+      _track_pitch.push_back(pitch);
 
       art::FindOneP<recob::Track> track_per_pfpart(pfparticle_handle, evt,
                                                    _pfp_producer);
@@ -851,7 +860,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
 
       auto const &trackVecHandle =
           evt.getValidHandle<std::vector<recob::Track>>(_pfp_producer);
-
+      
       art::FindManyP<anab::CosmicTag> dtAssns(trackVecHandle, evt,
                                               "decisiontreeid");
 
@@ -889,7 +898,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
       std::vector<int> this_nhits; 
       energyHelper.energyFromHits(pfparticle,this_nhits,this_energy, evt);
 
-      std::transform (_energy.begin(), _energy.end(), this_energy.begin(), this_energy.end(), std::plus<double>());
+      //std::transform (_energy.begin(), _energy.end(), this_energy.begin(), this_energy.end(), std::plus<double>());
       _track_energy_hits.push_back(this_energy);
       // Alternative way to calculate the energy using dedx.
       _track_energy_dedx.push_back(energyHelper.trackEnergy_dedx(track_obj, evt));
@@ -934,9 +943,11 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
     }
 
     try {
+
       _nu_shower_ids = vectorCast(
           fElectronEventSelectionAlg.get_pfp_id_showers_from_primary().at(
               ipf_candidate));
+
       _n_showers = fElectronEventSelectionAlg.get_n_showers().at(ipf_candidate);
     } catch (...) {
       std::cout << "[PandoraLEE] Error getting associated showers to neutrino "
@@ -952,12 +963,14 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
       std::vector<double> dqdx(3, std::numeric_limits<double>::lowest());
       std::vector<double> dedx(3, std::numeric_limits<double>::lowest());
       std::vector<double> dqdx_hits_shower;
+      std::vector<double> dqdx_hits_distance;
+      double pitch;
+
       _matched_showers.push_back(std::numeric_limits<int>::lowest());
       _matched_showers_process.push_back("");
-
       _matched_showers_energy.push_back(std::numeric_limits<double>::lowest());
 
-      energyHelper.dQdx(pf_id, evt, dqdx, dqdx_hits_shower, m_dQdxRectangleLength,
+      energyHelper.dQdx(pf_id, evt, dqdx, dqdx_hits_shower, dqdx_hits_distance, pitch, m_dQdxRectangleLength,
                         m_dQdxRectangleWidth);
 
       _shower_dQdx_hits.push_back(dqdx_hits_shower);
@@ -967,8 +980,11 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
 
       energyHelper.dEdxFromdQdx(dedx, dqdx);
       energyHelper.dEdxFromdQdx(dedx_hits_shower, dqdx_hits_shower);
-      _shower_dEdx_hits.push_back(dedx_hits_shower);
+      std::cout << "After dedx shower" << std::endl;
 
+      _shower_dEdx_hits.push_back(dedx_hits_shower);
+      _shower_distance_hits.push_back(dqdx_hits_distance);
+      _shower_pitch.push_back(pitch);
       _shower_dQdx.push_back(dqdx);
       _shower_dEdx.push_back(dedx);
 
@@ -1009,7 +1025,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt) {
       std::vector<int> this_nhits; 
       energyHelper.energyFromHits(pfparticle,this_nhits,this_energy, evt);
 
-      std::transform (_energy.begin(), _energy.end(), this_energy.begin(), this_energy.end(), std::plus<double>());
+      //std::transform (_energy.begin(), _energy.end(), this_energy.begin(), this_energy.end(), std::plus<double>());
       _shower_energy.push_back(this_energy);
 
       std::vector< std::vector<double> > pca;

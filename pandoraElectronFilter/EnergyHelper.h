@@ -9,7 +9,7 @@
 #define ENERGYHELPER_H
 
 #include "HelperBase.h"
-
+#include <math.h>
 #include "GeometryHelper.h"
 
 #include "lardataobj/AnalysisBase/Calorimetry.h"
@@ -59,6 +59,9 @@ public:
   void dQdx(size_t pfp_id, const art::Event &evt,
             std::vector<double> &dqdx,
             std::vector<double> &dqdx_hits,
+            std::vector<double> &distances,
+            double &cluster_pitch,
+
             double m_dQdxRectangleLength, double m_dQdxRectangleWidth,
             std::string _pfp_producer = "pandoraNu");
 

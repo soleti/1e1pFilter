@@ -159,6 +159,8 @@ void EnergyHelper::dQdx(size_t pfp_id,
                         const art::Event &evt,
                         std::vector<double> &dqdx,
                         std::vector<double> &dqdx_hits,
+                        std::vector<double> &distances,
+                        double &cluster_pitch,
                         double m_dQdxRectangleLength,
                         double m_dQdxRectangleWidth,
                         std::string _pfp_producer)
@@ -279,8 +281,8 @@ void EnergyHelper::dQdx(size_t pfp_id,
       double pitch =
           geoHelper.getPitch(pfp_dir, clusters[icl]->Plane().Plane);
 
-      bool is_within = geoHelper.isInside(hit_pos, points);
-
+      // bool is_within = geoHelper.isInside(hit_pos, points);
+      bool is_within = true; 
       // Hit within the rectangle. The function considers points on the border
       // as outside, so we manually add the first point
 
@@ -291,6 +293,16 @@ void EnergyHelper::dQdx(size_t pfp_id,
         if (clusters[icl]->Plane().Plane == 2)
         {
           dqdx_hits.push_back(q / pitch);
+          // TODO put this inside GeometryHelper
+          double A = hit_pos[0] - cluster_start[0];
+          double B = hit_pos[1] - cluster_start[1];
+          double C = cluster_axis[0];
+          double D = cluster_axis[1];
+          double perp_distance = std::abs(A * D - C * B) / std::sqrt(C * C + D * D);
+          double distance = std::sqrt(std::pow(cluster_start[0]-hit_pos[0], 2) + std::pow(cluster_start[1]-hit_pos[1], 2));
+          double long_distance = std::sqrt(distance * distance - perp_distance * perp_distance);
+          cluster_pitch = pitch;
+          distances.push_back(long_distance);
         }
       }
       first = false;
@@ -319,9 +331,10 @@ void EnergyHelper::dEdxFromdQdx(std::vector<double> &dedx,
 {
   for (size_t i = 0; i < dqdx.size(); i++)
   {
-    if (dqdx[i] > 0)
+    if (dqdx[i] > 0) {
       dedx[i] = dqdx[i] * (work_function) / recombination_factor;
-    std::cout << "[dEdx] " << i << " " << dedx[i] << std::endl;
+      std::cout << "[dEdx] " << i << " " << dedx[i] << std::endl;
+    }
   }
 }
 

@@ -187,14 +187,19 @@ private:
 
   std::vector<std::vector<double>> _shower_dQdx_hits;
   std::vector<std::vector<double>> _shower_dEdx_hits;
+  std::vector<std::vector<double>> _shower_distance_hits;
+  std::vector<std::vector<double>> _shower_pitch_hits;
 
   std::vector<std::vector<double>> _shower_dQdx;
   std::vector<std::vector<double>> _shower_dEdx;
 
   std::vector<std::vector<double>> _track_dQdx_hits;
   std::vector<std::vector<double>> _track_dEdx_hits;
+  std::vector<std::vector<double>> _track_distance_hits;
+  std::vector<std::vector<double>> _track_pitch_hits;
 
-  std::vector<std::vector<double>> _track_dQdx;
+  std::vector<std::vector<double>>
+      _track_dQdx;
   std::vector<std::vector<double>> _track_dEdx;
 
   std::vector<int> _nu_track_ids;

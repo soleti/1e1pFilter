@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!DOCTYPE project [
 <!ENTITY name "bnb_nue_cosmic_pandora_electron_filter">
-<!ENTITY version "v06_26_01_10">
+<!ENTITY version "v06_26_01_10_1e0p">
 <!ENTITY qualifier "e10:prof">
 <!ENTITY dataset "prodgenie_bnb_intrinsic_nue_cosmic_uboone_mcc8.6_reco2">
 <!ENTITY user "srsoleti">
