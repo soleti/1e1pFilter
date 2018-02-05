@@ -11,6 +11,8 @@
 
 #include <math.h>
 #include <fstream>
+#include <algorithm>
+#include <functional>
 
 #include "art/Framework/Core/EDAnalyzer.h"
 #include "art/Framework/Core/ModuleMacros.h"
@@ -145,6 +147,7 @@ private:
   std::vector<double> _true_shower_y_sce;
   std::vector<double> _true_shower_z_sce;
   std::vector<int> _true_shower_pdg;
+  std::vector<double> _true_shower_depE;
 
   int _nu_matched_tracks;
   int _nu_matched_showers;
@@ -263,6 +266,11 @@ private:
 
   std::vector<double> _flash_PE;
   std::vector<double> _flash_time;
+
+  std::vector<float> _shower_sp_x;
+  std::vector<float> _shower_sp_y;
+  std::vector<float> _shower_sp_z;
+  std::vector<float> _shower_sp_int;
 
   double _TPC_x;
   double _flash_x;
