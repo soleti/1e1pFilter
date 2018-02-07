@@ -26,10 +26,12 @@
 // uncomment the lines below as you use these objects
 
 #include "TFile.h"
-#include "TH1F.h"
+#include "TTree.h"
+
 #include "THStack.h"
 #include "TTree.h"
 #include "TVector3.h"
+
 #include "canvas/Persistency/Common/FindManyP.h"
 #include "canvas/Persistency/Common/FindOneP.h"
 #include "canvas/Utilities/InputTag.h"
@@ -49,13 +51,13 @@
 #include "uboone/EventWeight/MCEventWeight.h"
 #include "larevt/SpaceChargeServices/SpaceChargeService.h" 
 
-#include "TEfficiency.h"
 #include "art/Framework/Services/Optional/TFileService.h"
 
 #include "ElectronEventSelectionAlg.h"
 
 #include "EnergyHelper.h"
 #include "GeometryHelper.h"
+#include "FindDeadRegions.h"
 
 #include "larcore/Geometry/WireGeo.h"
 #include "lardata/DetectorInfoServices/DetectorPropertiesService.h"
@@ -105,6 +107,7 @@ private:
   EnergyHelper energyHelper;
   GeometryHelper geoHelper;
   PandoraInterfaceHelper pandoraHelper;
+  FindDeadRegions deadRegionsFinder;
 
   TFile *myTFile;
   TTree *myTTree;
@@ -219,6 +222,10 @@ private:
   std::vector<double> _shower_theta;
   std::vector<double> _shower_phi;
 
+  std::vector<double> _shower_dead_fraction_collP;
+  std::vector<double> _shower_dead_fraction_2P;
+  std::vector<double> _shower_dead_fraction_3P;
+
   std::vector<std::vector<double>> _shower_energy;
 
   std::vector<double> _track_dir_x;
@@ -240,6 +247,10 @@ private:
 
   std::vector<double> _track_length;
   std::vector<double> _track_id;
+
+  std::vector<double> _track_dead_fraction_collP;
+  std::vector<double> _track_dead_fraction_2P;
+  std::vector<double> _track_dead_fraction_3P;
 
   std::vector<double> _track_energy_dedx;
   std::vector<std::vector<double>> _track_energy_hits;

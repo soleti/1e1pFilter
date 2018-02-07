@@ -125,6 +125,10 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
   myTTree->Branch("shower_theta", "std::vector< double >", &_shower_theta);
   myTTree->Branch("shower_phi", "std::vector< double >", &_shower_phi);
 
+  myTTree->Branch("shower_dead_fraction_collP", "std::vector< double >", &_shower_dead_fraction_collP);
+  myTTree->Branch("shower_dead_fraction_2P", "std::vector< double >", &_shower_dead_fraction_2P);
+  myTTree->Branch("shower_dead_fraction_3P", "std::vector< double >", &_shower_dead_fraction_3P);
+
   myTTree->Branch("shower_energy", "std::vector< std::vector< double > >", &_shower_energy);
   myTTree->Branch("track_energy_dedx", "std::vector< double >", &_track_energy_dedx);
   myTTree->Branch("track_energy_hits", "std::vector< std::vector< double > >", &_track_energy_hits);
@@ -151,6 +155,10 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
 
   myTTree->Branch("track_len", "std::vector< double >", &_track_length);
   myTTree->Branch("track_id", "std::vector< double >", &_track_id);
+
+  myTTree->Branch("track_dead_fraction_collP", "std::vector< double >", &_track_dead_fraction_collP);
+  myTTree->Branch("track_dead_fraction_2P", "std::vector< double >", &_track_dead_fraction_2P);
+  myTTree->Branch("track_dead_fraction_3P", "std::vector< double >", &_track_dead_fraction_3P);
 
   myTTree->Branch("nu_pdg", &_nu_pdg, "nu_pdg/i");
 
@@ -377,6 +385,10 @@ void lee::PandoraLEEAnalyzer::clear()
   _shower_start_y.clear();
   _shower_start_z.clear();
 
+  _shower_dead_fraction_collP.clear();
+  _shower_dead_fraction_2P.clear();
+  _shower_dead_fraction_3P.clear();
+
   _track_is_fiducial.clear();
   _shower_is_fiducial.clear();
 
@@ -417,6 +429,10 @@ void lee::PandoraLEEAnalyzer::clear()
   _track_length.clear();
   _track_id.clear();
 
+  _track_dead_fraction_collP.clear();
+  _track_dead_fraction_2P.clear();
+  _track_dead_fraction_3P.clear();
+  
   _nu_pdg = 0;
 
   _flash_passed.clear();
@@ -632,6 +648,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
       _bnbweight = 1;
     }
 
+    //extract generator level information
     auto const &generator_handle =
         evt.getValidHandle<std::vector<simb::MCTruth>>(_mctruthLabel);
     auto const &generator(*generator_handle);
@@ -805,6 +822,20 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
   std::cout << "[PandoraLEE] "
             << "Nu energy " << _nu_energy << std::endl;
 
+
+  // Prepare the dead region finder
+  std::cout << "Recreate ch status map" << std::endl;
+  const lariov::ChannelStatusProvider& chanFilt = art::ServiceHandle<lariov::ChannelStatusService>()->GetProvider();
+  for (unsigned int ch = 0; ch < 8256; ch++) 
+  {
+    deadRegionsFinder.SetChannelStatus(ch, chanFilt.Status(ch));
+  }
+  std::cout << "Now force reload BWires" << std::endl;
+  deadRegionsFinder.CreateBWires();
+
+
+  //RECONSTRUCTION LEVEL
+  
   std::vector<art::Ptr<recob::PFParticle>> neutrino_pf;
   std::vector<art::Ptr<recob::PFParticle>> cosmic_pf;
 
@@ -999,6 +1030,33 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
         _track_nhits.push_back(this_nhits);
 
         std::cout << "[PCA] Track " << pca[2][0] << " " << pca[2][1] << std::endl;
+
+        std::vector<art::Ptr<recob::SpacePoint>> spcpnts = spcpnts_per_pfpart.at(pf_id);
+        double total_spcpnts = spcpnts.size();
+        double dead_spcpnts_collP = 0.;
+        double dead_spcpnts_2p = 0.;
+        double dead_spcpnts_3p = 0.;
+
+        for (auto &_sps : spcpnts)
+        {
+          auto xyz = _sps->XYZ();
+          if (deadRegionsFinder.NearDeadRegCollection(xyz[1], xyz[2], m_deadRegionTolerance))
+          {
+            dead_spcpnts_collP ++;
+          }
+          if (deadRegionsFinder.NearDeadReg2P(xyz[1], xyz[2], m_deadRegionTolerance))
+          {
+            dead_spcpnts_2p ++;
+          }
+          if (deadRegionsFinder.NearDeadReg3P(xyz[1], xyz[2], m_deadRegionTolerance))
+          {
+            dead_spcpnts_3p ++;
+          }
+        }
+        _track_dead_fraction_collP.push_back(dead_spcpnts_collP/total_spcpnts);
+        _track_dead_fraction_2P.push_back(dead_spcpnts_2p/total_spcpnts);
+        _track_dead_fraction_3P.push_back(dead_spcpnts_3p/total_spcpnts);
+
       }
     }
 
@@ -1113,6 +1171,11 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
       //std::cout << "[PCA] Shower " << pca[2][0] << " " << pca[2][1] << std::endl;
 
       std::vector<art::Ptr<recob::SpacePoint>> spcpnts = spcpnts_per_pfpart.at(pf_id);
+      double total_spcpnts = spcpnts.size();
+      double dead_spcpnts_collP = 0.;
+      double dead_spcpnts_2p = 0.;
+      double dead_spcpnts_3p = 0.;
+      
       for (auto &_sps : spcpnts)
       {
         std::vector<art::Ptr<recob::Hit>> hits = hits_per_spcpnts.at(_sps.key());
@@ -1134,7 +1197,24 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
           _shower_sp_y.push_back(xyz[1]);
           _shower_sp_z.push_back(xyz[2]);
         }
+
+        if (deadRegionsFinder.NearDeadRegCollection(xyz[1], xyz[2], m_deadRegionTolerance))
+        {
+          dead_spcpnts_collP ++;
+        }
+        if (deadRegionsFinder.NearDeadReg2P(xyz[1], xyz[2], m_deadRegionTolerance))
+        {
+          dead_spcpnts_2p ++;
+        }
+        if (deadRegionsFinder.NearDeadReg3P(xyz[1], xyz[2], m_deadRegionTolerance))
+        {
+          dead_spcpnts_3p ++;
+        }
       }
+
+      _shower_dead_fraction_collP.push_back(dead_spcpnts_collP/total_spcpnts);
+      _shower_dead_fraction_2P.push_back(dead_spcpnts_2p/total_spcpnts);
+      _shower_dead_fraction_3P.push_back(dead_spcpnts_3p/total_spcpnts);
     }
 
     /* For each neutrino PFParticle checks how many daughter tracks and showers
@@ -1345,6 +1425,8 @@ void lee::PandoraLEEAnalyzer::reconfigure(fhicl::ParameterSet const &pset)
 
   m_dQdxRectangleWidth = pset.get<double>("dQdxRectangleWidth", 1);
   m_dQdxRectangleLength = pset.get<double>("dQdxRectangleLength", 4);
+
+  m_deadRegionTolerance = pset.get<double>("deadRegionTolerance", 4);
 }
 
 //---------------------------------------------------------------------------------------------------------------------------
