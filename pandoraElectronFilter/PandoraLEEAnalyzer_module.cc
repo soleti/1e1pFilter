@@ -824,14 +824,14 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
 
 
   // Prepare the dead region finder
-  std::cout << "Recreate ch status map" << std::endl;
-  const lariov::ChannelStatusProvider& chanFilt = art::ServiceHandle<lariov::ChannelStatusService>()->GetProvider();
-  for (unsigned int ch = 0; ch < 8256; ch++) 
-  {
-    deadRegionsFinder.SetChannelStatus(ch, chanFilt.Status(ch));
-  }
-  std::cout << "Now force reload BWires" << std::endl;
-  deadRegionsFinder.CreateBWires();
+  // std::cout << "Recreate ch status map" << std::endl;
+  // const lariov::ChannelStatusProvider& chanFilt = art::ServiceHandle<lariov::ChannelStatusService>()->GetProvider();
+  // for (unsigned int ch = 0; ch < 8256; ch++) 
+  // {
+  //   deadRegionsFinder.SetChannelStatus(ch, chanFilt.Status(ch));
+  // }
+  // std::cout << "Now force reload BWires" << std::endl;
+  // deadRegionsFinder.CreateBWires();
 
 
   //RECONSTRUCTION LEVEL
@@ -1031,6 +1031,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
 
         std::cout << "[PCA] Track " << pca[2][0] << " " << pca[2][1] << std::endl;
 
+        art::FindManyP<recob::SpacePoint> spcpnts_per_pfpart(pfparticle_handle, evt, _pfp_producer);
         std::vector<art::Ptr<recob::SpacePoint>> spcpnts = spcpnts_per_pfpart.at(pf_id);
         double total_spcpnts = spcpnts.size();
         double dead_spcpnts_collP = 0.;
