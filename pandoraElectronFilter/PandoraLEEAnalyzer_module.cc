@@ -1040,7 +1040,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
         for (auto &_sps : spcpnts)
         {
           auto xyz = _sps->XYZ();
-          if (deadRegionsFinder.NearDeadRegCollection(xyz[1], xyz[2], m_deadRegionTolerance))
+          if (deadRegionsFinder.NearDeadRegCollection(xyz[2], m_deadRegionTolerance))
           {
             dead_spcpnts_collP ++;
           }
@@ -1198,7 +1198,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
           _shower_sp_z.push_back(xyz[2]);
         }
 
-        if (deadRegionsFinder.NearDeadRegCollection(xyz[1], xyz[2], m_deadRegionTolerance))
+        if (deadRegionsFinder.NearDeadRegCollection(xyz[2], m_deadRegionTolerance))
         {
           dead_spcpnts_collP ++;
         }
