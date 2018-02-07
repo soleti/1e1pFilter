@@ -432,7 +432,7 @@ void lee::PandoraLEEAnalyzer::clear()
   _track_dead_fraction_collP.clear();
   _track_dead_fraction_2P.clear();
   _track_dead_fraction_3P.clear();
-  
+
   _nu_pdg = 0;
 
   _flash_passed.clear();
@@ -1426,7 +1426,7 @@ void lee::PandoraLEEAnalyzer::reconfigure(fhicl::ParameterSet const &pset)
   m_dQdxRectangleWidth = pset.get<double>("dQdxRectangleWidth", 1);
   m_dQdxRectangleLength = pset.get<double>("dQdxRectangleLength", 4);
 
-  m_deadRegionTolerance = pset.get<double>("deadRegionTolerance", 4);
+  m_deadRegionTolerance = pset.get<double>("deadRegionTolerance", 5);
 }
 
 //---------------------------------------------------------------------------------------------------------------------------

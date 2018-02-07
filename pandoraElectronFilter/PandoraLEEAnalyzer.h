@@ -289,6 +289,8 @@ private:
   double m_dQdxRectangleWidth;
   double m_dQdxRectangleLength;
 
+  double m_deadRegionTolerance;
+  
   size_t choose_candidate(std::vector<size_t> &candidates,
                           const art::Event &evt);
   void clear();
