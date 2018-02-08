@@ -96,7 +96,7 @@ private:
   std::vector<float> eyVec;
   std::vector<float> ezVec;
 
-  bool _use_file = True;  ///< If true, uses input files instad of geometry and database
+  bool _use_file = true;  ///< If true, uses input files instad of geometry and database
   double _tolerance = 0.6; ///< Tolerance in cm to claim a point is in a dead region
   int _ch_thres = 4;       ///< Channels with status _less_ than threshold are considered as bad (only if using database)
 };
