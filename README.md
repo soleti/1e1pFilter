@@ -26,6 +26,16 @@ cp localProducts_*/xgboost/libxgboost.so localProducts_*/uboonecode/v06_26_01_10
 ```
 cp /uboone/app/users/wvdp/Binaries/MyLarsoft/localProducts_larsoft_v06_26_01_09_e10_prof/multiclass_pandoraNu_mcc86.model localProducts_*/
 ```
+- add on your .bash_profile the correct exports
+```
+XGBOOSTSYS="${MRB_INSTALL}/xgboost" 
+export XGBOOST_LIB=${XGBOOSTSYS}/lib
+export XGBOOST_INC=${XGBOOSTSYS}/include
+export RABIT_INC=${XGBOOSTSYS}/rabit/include
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${XGBOOSTSYS}/lib
+```
+- source again your .bash_profile
+```source ~/.bash_profile```
 
 Now you can compile using at usual:
 - got to the `srcs` folder
