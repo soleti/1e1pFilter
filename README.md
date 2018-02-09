@@ -24,7 +24,7 @@ cp localProducts_*/xgboost/libxgboost.so localProducts_*/uboonecode/v06_26_01_10
 ```
 - copy the BDT model:
 ```
-cp /uboone/app/users/srsoleti/v06_26_00_2/localProducts_larsoft_v06_30_00_e10_prof/multiclass_pandora_mcc8.model localProducts_*/
+cp /uboone/app/users/wvdp/Binaries/MyLarsoft/localProducts_larsoft_v06_26_01_09_e10_prof/multiclass_pandoraNu_mcc86.model localProducts_*/
 ```
 
 Now you can compile using at usual:
