@@ -4,12 +4,12 @@
 #include "pandora_lee_ana_common.fcl"
 
 
-
 lee_pandora_analyzer:
 {
     module_type:                "PandoraLEEAnalyzer"
     ElectronSelectionAlg:       @local::lee_electron_alg
     PrintDebug:                 false
+    deadRegionTolerance:        5
 }
 
 
@@ -45,4 +45,5 @@ physics: {
 
 physics.analyzers.robertoana.isData: false
 source.inputCommands:        [ "keep *_*_*_*", "drop *_opfiltercommon__McRecoStage1" ]
+
 services.SpaceCharge.EnableSimSpatialSCE: true

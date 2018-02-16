@@ -831,7 +831,8 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
   //   deadRegionsFinder.SetChannelStatus(ch, chanFilt.Status(ch));
   // }
   // std::cout << "Now force reload BWires" << std::endl;
-  // deadRegionsFinder.CreateBWires();
+  deadRegionsFinder.LoadChannelStatus();
+  deadRegionsFinder.CreateBWires();
 
 
   //RECONSTRUCTION LEVEL
@@ -1177,6 +1178,9 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
       double dead_spcpnts_2p = 0.;
       double dead_spcpnts_3p = 0.;
       
+      art::FindManyP<recob::Cluster> clusters_per_pfpart(pfparticle_handle, evt, _pfp_producer);
+      std::vector<art::Ptr<recob::Cluster>> clusters = clusters_per_pfpart.at(pfp_id);
+
       for (auto &_sps : spcpnts)
       {
         std::vector<art::Ptr<recob::Hit>> hits = hits_per_spcpnts.at(_sps.key());

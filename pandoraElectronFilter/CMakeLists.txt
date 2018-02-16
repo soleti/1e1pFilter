@@ -39,6 +39,9 @@ art_make(
                         ${SIMULATIONBASE}
                    	larsim_MCCheater_BackTracker_service
 
+                        larevt_CalibrationDBI_IOVData
+                        larevt_CalibrationDBI_Providers
+
                         uboonecode_uboone_SelectionTool_OpT0FinderBase
                         uboonecode_uboone_SelectionTool_OpT0FinderAlgorithms
                         uboonecode_uboone_BasicTool_GeoAlgo
