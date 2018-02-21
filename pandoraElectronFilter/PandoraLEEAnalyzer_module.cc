@@ -1178,8 +1178,8 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
       double dead_spcpnts_2p = 0.;
       double dead_spcpnts_3p = 0.;
       
-      art::FindManyP<recob::Cluster> clusters_per_pfpart(pfparticle_handle, evt, _pfp_producer);
-      std::vector<art::Ptr<recob::Cluster>> clusters = clusters_per_pfpart.at(pfp_id);
+      // art::FindManyP<recob::Cluster> clusters_per_pfpart(pfparticle_handle, evt, _pfp_producer);
+      // std::vector<art::Ptr<recob::Cluster>> clusters = clusters_per_pfpart.at(pf_id);
 
       for (auto &_sps : spcpnts)
       {
