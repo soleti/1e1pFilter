@@ -7,4 +7,5 @@ There are two FCL files, one for data (`run_PandoraOnly_data.fcl`) and one for M
 ## Requirements
 
 - `uboonecode v06_26_01_10` (MCC8.6)
+- `uboonecode v06_26_01_08` (MCC8.4)
 - [XGBoost](http://xgboost.readthedocs.io/en/latest/). Follow the instructions in [DocDB 10685](https://microboone-docdb.fnal.gov/cgi-bin/private/ShowDocument?docid=10685).
