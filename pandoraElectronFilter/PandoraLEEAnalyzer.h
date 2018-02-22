@@ -81,10 +81,10 @@ public:
   void reconfigure(fhicl::ParameterSet const &pset) override;
 
 private:
-  std::string _hitfinderLabel = "pandoraCosmicHitRemoval";
+  std::string m_hitfinderLabel;
   std::string _geantModuleLabel = "largeant";
-  std::string _pfp_producer = "pandoraNu";
-  std::string _spacepointLabel = "pandoraNu";
+  std::string m_pfp_producer; 
+  std::string m_spacepointLabel; 
   std::string _mctruthLabel = "generator";
   std::string _mcpHitAssLabel = "crHitRemovalTruthMatch";
 
@@ -165,6 +165,8 @@ private:
   int _n_matched;
   double _pot;
   int _event_passed;
+  int _numu_passed;
+  int _numu_cuts;
   double _distance;
 
   std::vector<int> _flash_passed;

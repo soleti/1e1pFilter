@@ -8,6 +8,7 @@
 ////////////////////////////////////////////////////////////////////////
 
 #include "PandoraLEEAnalyzer.h"
+#include "uboone/UBXSec/DataTypes/SelectionResult.h"
 
 lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
     : EDAnalyzer(pset) // ,
@@ -46,6 +47,9 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
 
   myTTree->Branch("nu_E", &_nu_energy, "nu_E/d");
   myTTree->Branch("passed", &_event_passed, "passed/I");
+  myTTree->Branch("numu_passed", &_numu_passed, "numu_passed/I");
+  myTTree->Branch("numu_cuts", &_numu_cuts, "numu_cuts/I");
+
   myTTree->Branch("n_candidates", &_n_candidates, "n_candidates/i");
   myTTree->Branch("n_true_nu", &_n_true_nu, "n_true_nu/i");
   myTTree->Branch("distance", &_distance, "distance/d");
@@ -292,7 +296,7 @@ lee::PandoraLEEAnalyzer::choose_candidate(std::vector<size_t> &candidates,
     std::cout << "[PandoraLEE] Candidate " << ic << std::endl;
     std::vector<size_t> _nu_track_ids =
         fElectronEventSelectionAlg.get_pfp_id_tracks_from_primary().at(ic);
-    pandoraHelper.get_daughter_tracks(_nu_track_ids, evt, nu_tracks);
+    pandoraHelper.get_daughter_tracks(_nu_track_ids, evt, nu_tracks, m_pfp_producer);
     longest_track_dir = get_longest_track(nu_tracks)->StartDirection().Z();
 
     if (longest_track_dir > most_z)
@@ -466,6 +470,8 @@ void lee::PandoraLEEAnalyzer::clear()
   _n_matched = std::numeric_limits<int>::lowest();
   _pot = std::numeric_limits<double>::lowest();
   _event_passed = 0;
+  _numu_passed = 0;
+  _numu_cuts = 0;
   _distance = std::numeric_limits<double>::lowest();
 
   _flash_x = std::numeric_limits<double>::lowest();
@@ -506,8 +512,8 @@ void lee::PandoraLEEAnalyzer::categorizePFParticles(
 
   std::cout << "[PandoraLEE] Before configure " << std::endl;
 
-  pandoraHelper.Configure(evt, _pfp_producer, _spacepointLabel,
-                          _hitfinderLabel, _geantModuleLabel, _mcpHitAssLabel);
+  pandoraHelper.Configure(evt, m_pfp_producer, m_spacepointLabel,
+                          m_hitfinderLabel, _geantModuleLabel, _mcpHitAssLabel);
   std::cout << "[PandoraLEE] Before GetRecoToTrueMatches " << std::endl;
 
   pandoraHelper.GetRecoToTrueMatches(matchedParticles);
@@ -589,6 +595,40 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
   _category = 0;
   std::vector<double> true_neutrino_vertex(3);
   std::cout << "Real data " << evt.isRealData() << std::endl;
+
+  art::Handle<std::vector<ubana::SelectionResult>> selection_h;
+  evt.getByLabel("UBXSec", selection_h);
+
+  if (!selection_h.isValid() || selection_h->empty())
+  {
+    std::cout << "[PandoraLEEAnalyzer] SelectionResult handle is not valid or empty." << std::endl;
+  }
+
+  std::vector<art::Ptr<ubana::SelectionResult>> selection_v;
+  art::fill_ptr_vector(selection_v, selection_h);
+
+  if (selection_v.size() > 0) {
+    _numu_passed = int(selection_v.at(0)->GetSelectionStatus());
+    if (selection_v.at(0)->GetSelectionStatus())
+    {
+        std::cout << "[PandoraLEEAnalyzer] Event is selected by UBXSec" << std::endl;
+    }
+    else
+    {
+        std::cout << "[PandoraLEEAnalyzer] Event is not selected by UBXSec" << std::endl;
+        std::cout << "[PandoraLEEAnalyzer] Failure reason " << selection_v.at(0)->GetFailureReason() << std::endl;
+    }
+    std::map<std::string, bool> failure_map = selection_v.at(0)->GetCutFlowStatus();
+    for (auto iter : failure_map)
+    {
+      std::cout << "[PandoraLEEAnalyzer] UBXSec Cut: " << iter.first << "  >>>  " << (iter.second ? "PASSED" : "NOT PASSED") << std::endl;
+      if (iter.second) {
+          _numu_cuts += 1;
+      }
+    }
+  }
+
+
   if ((!evt.isRealData() || m_isOverlaidSample) && !m_isCosmicInTime)
   {
     _gain = 200;
@@ -845,7 +885,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
     std::cout << "[PandoraLEE] "
               << "EVENT PASSED" << std::endl;
     auto const &pfparticle_handle =
-        evt.getValidHandle<std::vector<recob::PFParticle>>(_pfp_producer);
+        evt.getValidHandle<std::vector<recob::PFParticle>>(m_pfp_producer);
 
     ipf_candidate = choose_candidate(nu_candidates, evt);
     std::cout << "[PandoraLEE] "
@@ -855,7 +895,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
     _energy.resize(3, 0); //Total reconstructed energy for three planes, will be filled for tracks and showers.
 
     art::FindOneP<recob::Vertex> vertex_per_pfpart(pfparticle_handle, evt,
-                                                   _pfp_producer);
+                                                   m_pfp_producer);
     auto const &vertex_obj = vertex_per_pfpart.at(ipf_candidate);
 
     double reco_neutrino_vertex[3];
@@ -907,7 +947,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
         _track_dEdx.push_back(dedx);
 
         art::FindOneP<recob::Track> track_per_pfpart(pfparticle_handle, evt,
-                                                     _pfp_producer);
+                                                     m_pfp_producer);
         auto const &track_obj = track_per_pfpart.at(pf_id);
 
         _matched_tracks.push_back(std::numeric_limits<int>::lowest());
@@ -915,7 +955,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
         _matched_tracks_energy.push_back(std::numeric_limits<double>::lowest());
 
         auto const &trackVecHandle =
-            evt.getValidHandle<std::vector<recob::Track>>(_pfp_producer);
+            evt.getValidHandle<std::vector<recob::Track>>(m_pfp_producer);
 
         art::FindManyP<anab::CosmicTag> dtAssns(trackVecHandle, evt,
                                                 "decisiontreeid");
@@ -1017,9 +1057,9 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
     }
 
     // Needed for saving shower distributions.
-    auto const &spacepoint_handle = evt.getValidHandle<std::vector<recob::SpacePoint>>(_pfp_producer);
-    art::FindManyP<recob::SpacePoint> spcpnts_per_pfpart(pfparticle_handle, evt, _pfp_producer);
-    art::FindManyP<recob::Hit> hits_per_spcpnts(spacepoint_handle, evt, _pfp_producer);
+    auto const &spacepoint_handle = evt.getValidHandle<std::vector<recob::SpacePoint>>(m_pfp_producer);
+    art::FindManyP<recob::SpacePoint> spcpnts_per_pfpart(pfparticle_handle, evt, m_pfp_producer);
+    art::FindManyP<recob::Hit> hits_per_spcpnts(spacepoint_handle, evt, m_pfp_producer);
 
     for (auto &pf_id : _nu_shower_ids)
     {
@@ -1051,7 +1091,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
       _shower_dEdx.push_back(dedx);
 
       art::FindOneP<recob::Shower> shower_per_pfpart(pfparticle_handle, evt,
-                                                     _pfp_producer);
+                                                     m_pfp_producer);
       auto const &shower_obj = shower_per_pfpart.at(pf_id);
 
       _shower_dir_x.push_back(shower_obj->Direction().X());
@@ -1336,6 +1376,10 @@ void lee::PandoraLEEAnalyzer::reconfigure(fhicl::ParameterSet const &pset)
   //  m_particleLabel = pset.get<std::string>("PFParticleModule","pandoraNu");
   fElectronEventSelectionAlg.reconfigure(
       pset.get<fhicl::ParameterSet>("ElectronSelectionAlg"));
+
+  m_hitfinderLabel = pset.get<std::string>("HitFinderLabel", "pandoraCosmicHitRemoval::McRecoStage2");
+  m_pfp_producer = pset.get<std::string>("PFParticleLabel", "pandoraNu::McRecoStage2");
+  m_spacepointLabel = pset.get<std::string>("SpacePointLabel", "pandoraNu::McRecoStage2");
 
   m_printDebug = pset.get<bool>("PrintDebug", false);
 

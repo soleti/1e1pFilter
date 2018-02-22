@@ -274,7 +274,7 @@ namespace lee {
 
     // std::map<unsigned short, double> m_ly_map;
 
-    std::string _pfp_producer = "pandoraNu";
+    std::string m_pfp_producer;
 
     std::string fOpticalFlashFinderLabel;
 

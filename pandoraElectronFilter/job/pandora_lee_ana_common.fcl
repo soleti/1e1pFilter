@@ -1,16 +1,4 @@
-#include "services_microboone.fcl"
-#include "singles_microboone.fcl"
-#include "largeantmodules_microboone.fcl"
-#include "mcreco.fcl"
-#include "detsimmodules_microboone.fcl"
-#include "triggersim_microboone.fcl"
-#include "opticaldetectorsim_microboone.fcl"
-#include "opticaldetectormodules_microboone.fcl"
-#include "photpropservices_microboone.fcl"
-#include "correct_saturation.fcl"
-#include "caldata_microboone.fcl"
-#include "time_memory_tracker_microboone.fcl"
-#include "photpropservices_microboone.fcl"
+
 
 process_name : PandoraLEEAnalyzer      #The process name must NOT contain any underscores
 

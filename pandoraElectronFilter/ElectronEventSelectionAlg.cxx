@@ -64,6 +64,7 @@ void ElectronEventSelectionAlg::reconfigure(fhicl::ParameterSet const &p)
 
   m_fidvolZstart = p.get<double>("fidvolZstart", 10);
   m_fidvolZend = p.get<double>("fidvolZend", 50);
+  m_pfp_producer = p.get<std::string>("PFParticleLabel", "pandoraNu::McRecoStage2");
 
   geoHelper.setFiducialVolumeCuts(m_fidvolXstart, m_fidvolXend, m_fidvolYstart,
                                   m_fidvolYend, m_fidvolZstart, m_fidvolZend);
@@ -180,11 +181,11 @@ const std::map<size_t, int> ElectronEventSelectionAlg::flashBasedSelection(const
     }
 
     // Loop over the neutrino candidates to do prematching cuts
-    art::FindOneP<recob::Vertex> vertex_per_pfpart(pfparticle_handle, evt, _pfp_producer);
+    art::FindOneP<recob::Vertex> vertex_per_pfpart(pfparticle_handle, evt, m_pfp_producer);
 
     for (size_t pfpindex : pfplist)
     {
-      ChargeCenter = pandoraHelper.calculateChargeCenter(pfpindex, pfparticle_handle, evt);
+      ChargeCenter = pandoraHelper.calculateChargeCenter(pfpindex, pfparticle_handle, evt, m_pfp_producer);
 
       // candidates that fail the prematching cuts do not need to be passed to the manager
       bool prematching_cuts;
@@ -296,11 +297,11 @@ const flashana::QCluster_t ElectronEventSelectionAlg::collect3DHits(
 
   flashana::QCluster_t cluster;
 
-  auto const &pfparticle_handle = evt.getValidHandle<std::vector<recob::PFParticle>>(_pfp_producer);
-  auto const &spacepoint_handle = evt.getValidHandle<std::vector<recob::SpacePoint>>(_pfp_producer);
+  auto const &pfparticle_handle = evt.getValidHandle<std::vector<recob::PFParticle>>(m_pfp_producer);
+  auto const &spacepoint_handle = evt.getValidHandle<std::vector<recob::SpacePoint>>(m_pfp_producer);
 
-  art::FindManyP<recob::SpacePoint> spcpnts_per_pfpart(pfparticle_handle, evt, _pfp_producer);
-  art::FindManyP<recob::Hit> hits_per_spcpnts(spacepoint_handle, evt, _pfp_producer);
+  art::FindManyP<recob::SpacePoint> spcpnts_per_pfpart(pfparticle_handle, evt, m_pfp_producer);
+  art::FindManyP<recob::Hit> hits_per_spcpnts(spacepoint_handle, evt, m_pfp_producer);
 
   for (auto &pfpindex : pfplist)
   {
@@ -365,7 +366,7 @@ const std::map<size_t, int> ElectronEventSelectionAlg::opticalfilter(const art::
       if ((flash.Time() < m_endbeamtime && flash.Time() > m_startbeamtime))
       {
 
-        ChargeCenter = pandoraHelper.calculateChargeCenter(pfp_i, pfparticle_handle, evt);
+        ChargeCenter = pandoraHelper.calculateChargeCenter(pfp_i, pfparticle_handle, evt, m_pfp_producer);
 
         // Cut on the z position
         double absolute = std::abs(flash.ZCenter() - ChargeCenter[2]);
@@ -387,10 +388,12 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt)
 {
 
   clear();
+  std::cout << "PFP PRODUCER " << m_pfp_producer << std::endl; 
+  std::cout << "START BEAM TIME " << m_startbeamtime << std::endl; 
 
   // Get the list of pfparticles:
   auto const &pfparticle_handle =
-      evt.getValidHandle<std::vector<recob::PFParticle>>(_pfp_producer);
+      evt.getValidHandle<std::vector<recob::PFParticle>>(m_pfp_producer);
 
   // Are there any pfparticles?
   if (pfparticle_handle->size() == 0)
@@ -425,7 +428,7 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt)
 
   // Need associations from pfparticle to vertex
   art::FindOneP<recob::Vertex> vertex_per_pfpart(pfparticle_handle, evt,
-                                                 _pfp_producer);
+                                                 m_pfp_producer);
 
   for (auto &_i_primary : _primary_indexes)
   {
@@ -491,7 +494,7 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt)
         try
         {
           art::FindOneP<recob::Shower> shower_per_pfpart(pfparticle_handle, evt,
-                                                         _pfp_producer);
+                                                         m_pfp_producer);
           auto const &shower_obj = shower_per_pfpart.at(pfdaughter);
           std::cerr << "Shower found with length "<< shower_obj->Length() << std::endl;
           if(pfparticle_handle->at(pfdaughter).Parent()==_i_primary)
@@ -513,7 +516,7 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt)
         try
         {
 
-          art::FindOneP<recob::Track> track_per_pfpart(pfparticle_handle, evt, _pfp_producer);
+          art::FindOneP<recob::Track> track_per_pfpart(pfparticle_handle, evt, m_pfp_producer);
           auto const &track_obj = track_per_pfpart.at(pfdaughter);
           std::cerr << "Shower found with length"<< track_obj->Length() << std::endl;
           if(pfparticle_handle->at(pfdaughter).Parent()==_i_primary)

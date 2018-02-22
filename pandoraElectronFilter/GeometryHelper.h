@@ -149,7 +149,7 @@ public:
    * @return     { description_of_the_return_value }
    */
 
-  int correct_direction(size_t pfp_id, const art::Event &evt, std::string _pfp_producer="pandoraNu");
+  int correct_direction(size_t pfp_id, const art::Event &evt, std::string _pfp_producer="pandoraNu::McRecoStage2");
 
 
 private:

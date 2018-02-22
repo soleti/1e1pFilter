@@ -272,7 +272,7 @@ void PandoraInterfaceHelper::traversePFParticleTree(
   for (size_t i = 0; i < pfparticles->at(top_index).Daughters().size(); i++) {
     traversePFParticleTree(pfparticles,
                            pfparticles->at(top_index).Daughters().at(i),
-                           unordered_daugthers);
+                           unordered_daugthers, _pfp_producer);
   }
 
   return;
@@ -307,7 +307,7 @@ std::vector<double> PandoraInterfaceHelper::calculateChargeCenter(
   // particle:
   std::vector<size_t> daughters;
   daughters.reserve(50);
-  traversePFParticleTree(pfparticles, top_particle_index, daughters);
+  traversePFParticleTree(pfparticles, top_particle_index, daughters, _pfp_producer);
 
   // Get the associations from pfparticle to spacepoint
   auto const &spacepoint_handle =

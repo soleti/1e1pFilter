@@ -38,7 +38,7 @@ art_make(
                         ${ROOT_BASIC_LIB_LIST}
                         ${SIMULATIONBASE}
                    	larsim_MCCheater_BackTracker_service
-
+			uboonecode_uboone_UBXSec_DataTypes
                         uboonecode_uboone_SelectionTool_OpT0FinderBase
                         uboonecode_uboone_SelectionTool_OpT0FinderAlgorithms
                         uboonecode_uboone_BasicTool_GeoAlgo
@@ -76,7 +76,7 @@ art_make(
                         ${ROOT_GDML}
                         ${ROOT_BASIC_LIB_LIST}
                         ${SIMULATIONBASE}
-
+			uboonecode_uboone_UBXSec_DataTypes	
                         uboonecode_uboone_BasicTool_GeoAlgo
                         uboonecode_uboone_SelectionTool_OpT0FinderBase
                         uboonecode_uboone_SelectionTool_OpT0FinderAlgorithms

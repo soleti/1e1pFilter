@@ -40,7 +40,7 @@ public:
    * @return     Energy in units of GeV
    */
   double trackEnergy_dedx(const art::Ptr<recob::Track> &track, const art::Event &evt,
-                     std::string _pfp_producer = "pandoraNu");
+                          std::string _pfp_producer = "pandoraNu::McRecoStage2");
 
   /**
    * @brief      Measure the energy of a pfp_particle
@@ -54,24 +54,24 @@ public:
                                     std::vector<int>    &nHits,
                                     std::vector<double> &pfenergy,
                                     const art::Event &evt,
-                                    std::string _pfp_producer = "pandoraNu");
+                                    std::string _pfp_producer = "pandoraNu::McRecoStage2");
 
   void dQdx(size_t pfp_id, const art::Event &evt,
             std::vector<double> &dqdx,
             std::vector<double> &dqdx_hits,
             double m_dQdxRectangleLength, double m_dQdxRectangleWidth,
-            std::string _pfp_producer = "pandoraNu");
+            std::string _pfp_producer = "pandoraNu::McRecoStage2");
 
   void dEdxFromdQdx(std::vector<double> &dedx, std::vector<double> &dqdx);
   void PCA(size_t pfp_id,
            const art::Event &evt,
            std::vector<std::vector <double>> &pca_planes,
-           std::string _pfp_producer = "pandoraNu");
+           std::string _pfp_producer = "pandoraNu::McRecoStage2");
 
   void nHits(size_t pfp_id,
                            const art::Event &evt,
                            std::vector< int > &nHits,
-                           std::string _pfp_producer = "pandoraNu");
+                           std::string _pfp_producer = "pandoraNu::McRecoStage2");
 private:
 
   std::vector<double> _data_gain = {239.5,239.5,239.5}; // Only measured of collection plane, David Caratelli
