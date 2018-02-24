@@ -529,12 +529,10 @@ void lee::PandoraLEEAnalyzer::categorizePFParticles(
 
     art::Ptr<simb::MCParticle> mc_par = iter->second; // The MCParticle
     art::Ptr<recob::PFParticle> pf_par = iter->first; // The matched PFParticle
-    std::cout << "[PandoraLEE] PdgCode " << mc_par->PdgCode() << std::endl;
 
     const auto mc_truth =
         pandoraHelper.TrackIDToMCTruth(evt, "largeant", mc_par->TrackId());
 
-    std::cout << "[PandoraLEE] Origin " << mc_truth->Origin() << std::endl;
     if (mc_truth->Origin() == simb::kBeamNeutrino)
     {
       neutrino_pf.push_back(pf_par);
@@ -858,13 +856,11 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
 
   if ((!evt.isRealData() || m_isOverlaidSample) && !m_isCosmicInTime)
   {
-    std::cout << "[PandoraLEE] "
-              << "Before categorize " << std::endl;
+
     categorizePFParticles(evt,
                           neutrino_pdg, neutrino_process, neutrino_energy, neutrino_pf,
                           cosmic_pdg, cosmic_process, cosmic_energy, cosmic_pf);
-    std::cout << "[PandoraLEE] "
-              << "After categorize " << std::endl;
+
     _n_matched = neutrino_pf.size();
   }
 
@@ -918,14 +914,10 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
     {
       _nu_track_ids = vectorCast(fElectronEventSelectionAlg.get_pfp_id_tracks_from_primary().at(ipf_candidate));
 
-      std::cout << "[PandoraLEE] size _nu_track_ids " << _nu_track_ids.size()
-                << "\t_n_tracks " << _n_tracks << std::endl;
 
       for (auto &pf_id : _nu_track_ids)
       {
 
-        std::cout << "[PandoraLEE] "
-                  << "pfp_track_id: " << pf_id << std::endl;
         recob::PFParticle const &pfparticle = pfparticle_handle->at(pf_id);
 
         _nu_track_daughters.push_back(vectorCast(pfparticle.Daughters()));
@@ -1101,7 +1093,6 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
       _shower_open_angle.push_back(shower_obj->OpenAngle());
       double shower_length = shower_obj->Length();
       _shower_length.push_back(shower_length);
-      std::cout << "RecoShowerLength: " << shower_length << std::endl;
 
       std::vector<double> start_point;
       std::vector<double> end_point;

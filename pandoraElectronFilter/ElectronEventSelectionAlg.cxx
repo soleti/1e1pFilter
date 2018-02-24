@@ -495,8 +495,7 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt)
         {
           art::FindOneP<recob::Shower> shower_per_pfpart(pfparticle_handle, evt,
                                                          m_pfp_producer);
-          auto const &shower_obj = shower_per_pfpart.at(pfdaughter);
-          std::cerr << "Shower found with length "<< shower_obj->Length() << std::endl;
+
           if(pfparticle_handle->at(pfdaughter).Parent()==_i_primary)
           {
             shower_daughters++;
@@ -517,8 +516,6 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt)
         {
 
           art::FindOneP<recob::Track> track_per_pfpart(pfparticle_handle, evt, m_pfp_producer);
-          auto const &track_obj = track_per_pfpart.at(pfdaughter);
-          std::cerr << "Shower found with length"<< track_obj->Length() << std::endl;
           if(pfparticle_handle->at(pfdaughter).Parent()==_i_primary)
           {
             track_daughters++;

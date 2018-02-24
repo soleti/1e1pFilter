@@ -92,10 +92,6 @@ physics.producers.TPCObjectMaker.MCPHitAssProducer:                 "pandoraCosm
 
 physics.producers.pandoraNuGeoCosmicTag.TrackProducer:              "pandoraNu::PandoraLEEAnalyzer"
 physics.producers.pandoraNuGeoCosmicTag.PFParticleProducer:         "pandoraNu::PandoraLEEAnalyzer"
-physics.producers.pandoraCosmicTPCObj.PFParticleProducer:           "pandoraNu::PandoraLEEAnalyzer"
-physics.producers.pandoraCosmicTPCObj.TrackProducer:                "pandoraNu::PandoraLEEAnalyzer"
-physics.producers.pandoraCosmicTPCObj.ShowerProducer:               "pandoraNu::PandoraLEEAnalyzer"
-physics.producers.pandoraCosmicTPCObj.VertexProducer:               "pandoraNu::PandoraLEEAnalyzer"
 physics.producers.pandoraNu.HitFinderModuleLabel:                   "pandoraCosmicHitRemoval::PandoraLEEAnalyzer"
 physics.producers.pandoraCosmicStoppingMu.TrackProducer:            "pandoraNu::PandoraLEEAnalyzer"
 physics.producers.pandoraCosmicStoppingMu.PFParticleProducer:            "pandoraNu::PandoraLEEAnalyzer"

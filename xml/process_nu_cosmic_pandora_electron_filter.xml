@@ -1,9 +1,10 @@
 <?xml version="1.0"?>
 <!DOCTYPE project [
 <!ENTITY name "bnb_nu_cosmic_pandora_electron_filter">
-<!ENTITY version "v06_26_01_10">
+<!ENTITY version "v06_26_01_11">
+<!ENTITY larsoft_version "v06_26_01_10">
 <!ENTITY qualifier "e10:prof">
-<!ENTITY dataset "prodgenie_bnb_nu_cosmic_uboone_mcc8.6_reco2">
+<!ENTITY dataset "prodgenie_bnb_nu_cosmic_uboone_mcc8.6_reco2_dev">
 <!ENTITY user "srsoleti">
 ]>
 
@@ -32,13 +33,14 @@
         <logdir>/pnfs/uboone/scratch/users/&user;/&version;/lee/&name;</logdir>
         <workdir>/pnfs/uboone/scratch/users/&user;/work/lee/&name;</workdir>
         <inputdef>&dataset;</inputdef>
-        <numjobs>1183</numjobs>
-        <disk>16GB</disk>
+        <numjobs>100</numjobs>
+        <disk>8GB</disk>
         <memory>4096</memory>
-        <maxfilesperjob>40</maxfilesperjob>
+        <maxfilesperjob>50</maxfilesperjob>
         <datatier>reconstructed</datatier>
-        <jobsub>--expected-lifetime=24h -Q</jobsub>
-        <schema>root</schema>
+        <jobsub>--expected-lifetime=24h -Q --append_condor_requirements='(TARGET.HAS_CVMFS_uboone_opensciencegrid_org==true)'</jobsub>
+        <jobsub_start>--append_condor_requirements='(TARGET.HAS_CVMFS_uboone_opensciencegrid_org==true)'</jobsub_start>        
+<schema>root</schema>
     </stage>
     <!--  file type  -->
     <!-- <filetype>mc</filetype> -->

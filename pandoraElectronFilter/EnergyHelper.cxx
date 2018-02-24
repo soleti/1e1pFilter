@@ -321,7 +321,6 @@ void EnergyHelper::dEdxFromdQdx(std::vector<double> &dedx,
   {
     if (dqdx[i] > 0)
       dedx[i] = dqdx[i] * (work_function) / recombination_factor;
-    std::cout << "[dEdx] " << i << " " << dedx[i] << std::endl;
   }
 }
 
