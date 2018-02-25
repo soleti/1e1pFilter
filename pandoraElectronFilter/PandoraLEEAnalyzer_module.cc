@@ -231,6 +231,10 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
   myTTree->Branch("shower_sp_z", "std::vector< float >", &_shower_sp_z);
   myTTree->Branch("shower_sp_int", "std::vector< float >", &_shower_sp_int);
 
+
+  deadRegionsFinder.LoadChannelStatus();
+  deadRegionsFinder.CreateBWires();
+
   this->reconfigure(pset);
 }
 
@@ -825,15 +829,14 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
 
   // Prepare the dead region finder
   // std::cout << "Recreate ch status map" << std::endl;
-  // const lariov::ChannelStatusProvider& chanFilt = art::ServiceHandle<lariov::ChannelStatusService>()->GetProvider();
-  // for (unsigned int ch = 0; ch < 8256; ch++) 
-  // {
-  //   deadRegionsFinder.SetChannelStatus(ch, chanFilt.Status(ch));
-  // }
+  // // const lariov::ChannelStatusProvider& chanFilt = art::ServiceHandle<lariov::ChannelStatusService>()->GetProvider();
+  // // for (unsigned int ch = 0; ch < 8256; ch++) 
+  // // {
+  // //   deadRegionsFinder.SetChannelStatus(ch, chanFilt.Status(ch));
+  // // }
   // std::cout << "Now force reload BWires" << std::endl;
-  deadRegionsFinder.LoadChannelStatus();
-  deadRegionsFinder.CreateBWires();
-
+  // deadRegionsFinder.LoadChannelStatus();
+  // deadRegionsFinder.CreateBWires();
 
   //RECONSTRUCTION LEVEL
   

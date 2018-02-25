@@ -49,7 +49,7 @@ FindDeadRegions::FindDeadRegions()//fhicl::ParameterSet const & p, art::Activity
 
 void FindDeadRegions::Configure(fhicl::ParameterSet const& pset) {
   _use_file   = pset.get< bool   > ( "UseFile",   false );
-  _tolerance  = pset.get< double > ( "Tolerance", 0.6   ); //cm
+  _tolerance  = pset.get< double > ( "Tolerance", 5   ); //cm
   _ch_thres   = pset.get< int >    ( "ChThres",   4     ); 
 }
 
@@ -207,7 +207,7 @@ void FindDeadRegions::LoadChannelStatus() {
     // **********
 
     const lariov::ChannelStatusProvider& chanFilt = art::ServiceHandle<lariov::ChannelStatusService>()->GetProvider();
-
+    
     CSchannelVec.resize(8256);
     CSstatusVec.resize(8256);
 
@@ -263,6 +263,9 @@ void FindDeadRegions::LoadChannelStatus() {
 
 
 void FindDeadRegions::CreateBWires() {
+  BWires_U.clear();
+  BWires_V.clear();
+  BWires_Y.clear();
 
   std::cout << "[FindDeadRegions] Now creating BWires" << std::endl;
 
