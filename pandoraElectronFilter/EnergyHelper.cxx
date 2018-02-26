@@ -184,18 +184,22 @@ void EnergyHelper::dQdx(size_t pfp_id,
   //For a shower
   if (pfparticle_handle->at(pfp_id).PdgCode() == 11)
   {
+
     art::FindOneP<recob::Shower> shower_per_pfpart(pfparticle_handle, evt, _pfp_producer);
     auto const &shower_obj = shower_per_pfpart.at(pfp_id);
 
-    pfp_dir.SetX(shower_obj->Direction().X());
-    pfp_dir.SetY(shower_obj->Direction().Y());
-    pfp_dir.SetZ(shower_obj->Direction().Z());
-
-    pfp_dir *= geoHelper.correct_direction(pfp_id, evt);
+    try {
+      pfp_dir.SetX(shower_obj->Direction().X());
+      pfp_dir.SetY(shower_obj->Direction().Y());
+      pfp_dir.SetZ(shower_obj->Direction().Z());
+    } catch (...) {
+      return;
+    }
   }
   // For a track
   else
   {
+
     art::FindOneP<recob::Track> track_per_pfpart(pfparticle_handle, evt, _pfp_producer);
     auto const &track_obj = track_per_pfpart.at(pfp_id);
 
@@ -204,7 +208,6 @@ void EnergyHelper::dQdx(size_t pfp_id,
     pfp_dir.SetZ(track_obj->StartDirection().Z());
   }
 
-  // geoHelper.correct_direction(pfp_id, evt); Not needed anymore
 
   art::FindManyP<recob::Cluster> clusters_per_pfpart(pfparticle_handle, evt,
                                                      _pfp_producer);

@@ -202,11 +202,11 @@ private:
   std::vector<std::vector<double>> _track_dQdx;
   std::vector<std::vector<double>> _track_dEdx;
 
-  std::vector<int> _nu_track_ids;
-  std::vector<int> _nu_shower_ids;
+  std::vector<size_t> _nu_track_ids;
+  std::vector<size_t> _nu_shower_ids;
 
-  std::vector<std::vector<int>> _nu_track_daughters;
-  std::vector<std::vector<int>> _nu_shower_daughters;
+  std::vector< std::vector<size_t> > _nu_track_daughters;
+  std::vector< std::vector<size_t> > _nu_shower_daughters;
 
   std::vector<double> _shower_open_angle;
   std::vector<double> _shower_length;

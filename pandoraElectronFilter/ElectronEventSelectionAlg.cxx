@@ -491,10 +491,12 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt)
 
       if (pfparticle_handle->at(pfdaughter).PdgCode() == 11)
       {
-        try
-        {
           art::FindOneP<recob::Shower> shower_per_pfpart(pfparticle_handle, evt,
                                                          m_pfp_producer);
+          auto const &shower_obj = shower_per_pfpart.at(pfdaughter);
+          
+          if (shower_obj.isNull())
+            continue;
 
           if(pfparticle_handle->at(pfdaughter).Parent()==_i_primary)
           {
@@ -502,45 +504,28 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt)
           }
           _pfp_id_showers_from_primary[_i_primary].push_back(pfdaughter);
           showers++;
-        }
-        catch (...)
-        {
-          std::cout << "[ElectronEventSelectionAlg] "
-                    << "NO SHOWERS AVAILABLE" << std::endl;
-        }
       }
 
       if (pfparticle_handle->at(pfdaughter).PdgCode() == 13)
       {
-        try
-        {
-
           art::FindOneP<recob::Track> track_per_pfpart(pfparticle_handle, evt, m_pfp_producer);
+          auto const &track_obj = track_per_pfpart.at(pfdaughter);
+          if (track_obj.isNull())
+            continue;
+
           if(pfparticle_handle->at(pfdaughter).Parent()==_i_primary)
           {
             track_daughters++;
           }
           _pfp_id_tracks_from_primary[_i_primary].push_back(pfdaughter);
           tracks++;
-        }
-        catch (...)
-        {
-          std::cout << "[ElectronEventSelectionAlg] "
-                    << "NO TRACKS AVAILABLE" << std::endl;
-        }
       }
 
-      std::cout << "[ElectronEventSelectionAlg] "
-                << "Showers tracks " << showers << " " << tracks << std::endl;
     }
     _n_tracks[_i_primary] = tracks;
     _n_showers[_i_primary] = showers;
-
-    std::cout << "showers" << showers << std::endl;
-    std::cout << "tracks"  << tracks << std::endl;
-    std::cout << "showers_daughters" << shower_daughters << std::endl;
-    std::cout << "tracks_daughters"  << track_daughters << std::endl;
-
+    std::cout << "[ElectronEventSelectionAlg] "
+              << "Showers tracks " << showers << " " << tracks << std::endl;
 
     // Cut on the topology to select 1e Np like signal
     // Np: at least N direct track daughters

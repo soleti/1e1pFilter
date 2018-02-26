@@ -8,7 +8,7 @@
 ////////////////////////////////////////////////////////////////////////
 
 #include "PandoraLEEAnalyzer.h"
-#include "uboone/UBXSec/DataTypes/SelectionResult.h"
+//#include "uboone/UBXSec/DataTypes/SelectionResult.h"
 
 lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
     : EDAnalyzer(pset) // ,
@@ -86,14 +86,14 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
   myTTree->Branch("nu_daughters_pz", "std::vector< double >",
                   &_nu_daughters_pz);
 
-  myTTree->Branch("nu_track_ids", "std::vector<  int >",
+  myTTree->Branch("nu_track_ids", "std::vector< size_t >",
                   &_nu_track_ids);
-  myTTree->Branch("nu_shower_ids", "std::vector< int >",
+  myTTree->Branch("nu_shower_ids", "std::vector< size_t >",
                   &_nu_shower_ids);
 
-  myTTree->Branch("nu_shower_daughters", "std::vector< std::vector< int > >",
+  myTTree->Branch("nu_shower_daughters", "std::vector< std::vector< size_t > >",
                   &_nu_shower_daughters);
-  myTTree->Branch("nu_track_daughters", "std::vector< std::vector< int > >",
+  myTTree->Branch("nu_track_daughters", "std::vector< std::vector< size_t > >",
                   &_nu_track_daughters);
 
   myTTree->Branch("event", &_event, "event/i");
@@ -294,8 +294,7 @@ lee::PandoraLEEAnalyzer::choose_candidate(std::vector<size_t> &candidates,
   {
     std::vector<art::Ptr<recob::Track>> nu_tracks;
     std::cout << "[PandoraLEE] Candidate " << ic << std::endl;
-    std::vector<size_t> _nu_track_ids =
-        fElectronEventSelectionAlg.get_pfp_id_tracks_from_primary().at(ic);
+    std::vector<size_t> _nu_track_ids = fElectronEventSelectionAlg.get_pfp_id_tracks_from_primary().at(ic);
     pandoraHelper.get_daughter_tracks(_nu_track_ids, evt, nu_tracks, m_pfp_producer);
     longest_track_dir = get_longest_track(nu_tracks)->StartDirection().Z();
 
@@ -594,37 +593,37 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
   std::vector<double> true_neutrino_vertex(3);
   std::cout << "Real data " << evt.isRealData() << std::endl;
 
-  art::Handle<std::vector<ubana::SelectionResult>> selection_h;
-  evt.getByLabel("UBXSec", selection_h);
+  // art::Handle<std::vector<ubana::SelectionResult>> selection_h;
+  // evt.getByLabel("UBXSec", selection_h);
 
-  if (!selection_h.isValid() || selection_h->empty())
-  {
-    std::cout << "[PandoraLEEAnalyzer] SelectionResult handle is not valid or empty." << std::endl;
-  }
+  // if (!selection_h.isValid() || selection_h->empty())
+  // {
+  //   std::cout << "[PandoraLEEAnalyzer] SelectionResult handle is not valid or empty." << std::endl;
+  // }
 
-  std::vector<art::Ptr<ubana::SelectionResult>> selection_v;
-  art::fill_ptr_vector(selection_v, selection_h);
+  // std::vector<art::Ptr<ubana::SelectionResult>> selection_v;
+  // art::fill_ptr_vector(selection_v, selection_h);
 
-  if (selection_v.size() > 0) {
-    _numu_passed = int(selection_v.at(0)->GetSelectionStatus());
-    if (selection_v.at(0)->GetSelectionStatus())
-    {
-        std::cout << "[PandoraLEEAnalyzer] Event is selected by UBXSec" << std::endl;
-    }
-    else
-    {
-        std::cout << "[PandoraLEEAnalyzer] Event is not selected by UBXSec" << std::endl;
-        std::cout << "[PandoraLEEAnalyzer] Failure reason " << selection_v.at(0)->GetFailureReason() << std::endl;
-    }
-    std::map<std::string, bool> failure_map = selection_v.at(0)->GetCutFlowStatus();
-    for (auto iter : failure_map)
-    {
-      std::cout << "[PandoraLEEAnalyzer] UBXSec Cut: " << iter.first << "  >>>  " << (iter.second ? "PASSED" : "NOT PASSED") << std::endl;
-      if (iter.second) {
-          _numu_cuts += 1;
-      }
-    }
-  }
+  // if (selection_v.size() > 0) {
+  //   _numu_passed = int(selection_v.at(0)->GetSelectionStatus());
+  //   if (selection_v.at(0)->GetSelectionStatus())
+  //   {
+  //       std::cout << "[PandoraLEEAnalyzer] Event is selected by UBXSec" << std::endl;
+  //   }
+  //   else
+  //   {
+  //       std::cout << "[PandoraLEEAnalyzer] Event is not selected by UBXSec" << std::endl;
+  //       std::cout << "[PandoraLEEAnalyzer] Failure reason " << selection_v.at(0)->GetFailureReason() << std::endl;
+  //   }
+  //   std::map<std::string, bool> failure_map = selection_v.at(0)->GetCutFlowStatus();
+  //   for (auto iter : failure_map)
+  //   {
+  //     std::cout << "[PandoraLEEAnalyzer] UBXSec Cut: " << iter.first << "  >>>  " << (iter.second ? "PASSED" : "NOT PASSED") << std::endl;
+  //     if (iter.second) {
+  //         _numu_cuts += 1;
+  //     }
+  //   }
+  // }
 
 
   if ((!evt.isRealData() || m_isOverlaidSample) && !m_isCosmicInTime)
@@ -912,15 +911,14 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
 
     if (_n_tracks > 0)
     {
-      _nu_track_ids = vectorCast(fElectronEventSelectionAlg.get_pfp_id_tracks_from_primary().at(ipf_candidate));
+      _nu_track_ids = fElectronEventSelectionAlg.get_pfp_id_tracks_from_primary().at(ipf_candidate);
 
 
       for (auto &pf_id : _nu_track_ids)
       {
 
         recob::PFParticle const &pfparticle = pfparticle_handle->at(pf_id);
-
-        _nu_track_daughters.push_back(vectorCast(pfparticle.Daughters()));
+        _nu_track_daughters.push_back(pfparticle.Daughters());
 
         std::vector<double> dqdx(3, std::numeric_limits<double>::lowest());
         std::vector<double> dedx(3, std::numeric_limits<double>::lowest());
@@ -1036,9 +1034,8 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
 
     try
     {
-      _nu_shower_ids = vectorCast(
-          fElectronEventSelectionAlg.get_pfp_id_showers_from_primary().at(
-              ipf_candidate));
+      _nu_shower_ids = fElectronEventSelectionAlg.get_pfp_id_showers_from_primary().at(
+              ipf_candidate);
       _n_showers = fElectronEventSelectionAlg.get_n_showers().at(ipf_candidate);
     }
     catch (...)
@@ -1055,9 +1052,16 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
 
     for (auto &pf_id : _nu_shower_ids)
     {
+      art::FindOneP<recob::Shower> shower_per_pfpart(pfparticle_handle, evt,
+                                                     m_pfp_producer);
+      auto const &shower_obj = shower_per_pfpart.at(pf_id);
+      if (shower_obj.isNull()) {
+        std::cout << "[PandoraLEEAnalyzer] Shower pointer " << pf_id << " is null, exiting" << std::endl;
+        continue;
+      }
 
       recob::PFParticle const &pfparticle = pfparticle_handle->at(pf_id);
-      _nu_shower_daughters.push_back(vectorCast(pfparticle.Daughters()));
+      _nu_shower_daughters.push_back(pfparticle.Daughters());
 
       std::vector<double> dqdx(3, std::numeric_limits<double>::lowest());
       std::vector<double> dedx(3, std::numeric_limits<double>::lowest());
@@ -1070,6 +1074,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
       energyHelper.dQdx(pf_id, evt, dqdx, dqdx_hits_shower, m_dQdxRectangleLength,
                         m_dQdxRectangleWidth);
 
+
       _shower_dQdx_hits.push_back(dqdx_hits_shower);
       std::cout << "[dQdx] nohits " << dqdx_hits_shower.size() << " " << dqdx[0] << " " << dqdx[1] << " " << dqdx[2] << std::endl;
 
@@ -1081,10 +1086,6 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
 
       _shower_dQdx.push_back(dqdx);
       _shower_dEdx.push_back(dedx);
-
-      art::FindOneP<recob::Shower> shower_per_pfpart(pfparticle_handle, evt,
-                                                     m_pfp_producer);
-      auto const &shower_obj = shower_per_pfpart.at(pf_id);
 
       _shower_dir_x.push_back(shower_obj->Direction().X());
       _shower_dir_y.push_back(shower_obj->Direction().Y());
@@ -1117,6 +1118,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
 
       std::vector<double> this_energy;
       std::vector<int> this_nhits;
+
       energyHelper.energyFromHits(pfparticle, this_nhits, this_energy, evt);
 
       for (int i = 0; i < 3; ++i)
@@ -1141,7 +1143,8 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
       weighted_pca /= total_hits;
       _shower_pca.push_back(weighted_pca);
       _shower_nhits.push_back(this_nhits);
-      //std::cout << "[PCA] Shower " << pca[2][0] << " " << pca[2][1] << std::endl;
+
+      std::cout << "[PCA] Shower " << pca[2][0] << " " << pca[2][1] << std::endl;
 
       std::vector<art::Ptr<recob::SpacePoint>> spcpnts = spcpnts_per_pfpart.at(pf_id);
       for (auto &_sps : spcpnts)
@@ -1192,9 +1195,11 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
       {
         for (size_t ipf = 0; ipf < neutrino_pf.size(); ipf++)
         {
+
           if (pfp_showers_id[ish] == neutrino_pf[ipf].key())
           {
             pass_shower += 1;
+
             if (inu == ipf_candidate)
             {
               _nu_matched_showers++;
