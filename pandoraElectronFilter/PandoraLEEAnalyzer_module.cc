@@ -8,7 +8,7 @@
 ////////////////////////////////////////////////////////////////////////
 
 #include "PandoraLEEAnalyzer.h"
-//#include "uboone/UBXSec/DataTypes/SelectionResult.h"
+#include "uboone/UBXSec/DataTypes/SelectionResult.h"
 
 lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
     : EDAnalyzer(pset) // ,
@@ -591,39 +591,39 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
   _TPC_x = fElectronEventSelectionAlg.get_TPC_x();
   _category = 0;
   std::vector<double> true_neutrino_vertex(3);
-  std::cout << "Real data " << evt.isRealData() << std::endl;
+  std::cout << "[PandoraLEEAnalyzer] Real data " << evt.isRealData() << std::endl;
 
-  // art::Handle<std::vector<ubana::SelectionResult>> selection_h;
-  // evt.getByLabel("UBXSec", selection_h);
+  art::Handle<std::vector<ubana::SelectionResult>> selection_h;
+  evt.getByLabel("UBXSec", selection_h);
 
-  // if (!selection_h.isValid() || selection_h->empty())
-  // {
-  //   std::cout << "[PandoraLEEAnalyzer] SelectionResult handle is not valid or empty." << std::endl;
-  // }
+  if (!selection_h.isValid() || selection_h->empty())
+  {
+    std::cout << "[PandoraLEEAnalyzer] SelectionResult handle is not valid or empty." << std::endl;
+  }
 
-  // std::vector<art::Ptr<ubana::SelectionResult>> selection_v;
-  // art::fill_ptr_vector(selection_v, selection_h);
+  std::vector<art::Ptr<ubana::SelectionResult>> selection_v;
+  art::fill_ptr_vector(selection_v, selection_h);
 
-  // if (selection_v.size() > 0) {
-  //   _numu_passed = int(selection_v.at(0)->GetSelectionStatus());
-  //   if (selection_v.at(0)->GetSelectionStatus())
-  //   {
-  //       std::cout << "[PandoraLEEAnalyzer] Event is selected by UBXSec" << std::endl;
-  //   }
-  //   else
-  //   {
-  //       std::cout << "[PandoraLEEAnalyzer] Event is not selected by UBXSec" << std::endl;
-  //       std::cout << "[PandoraLEEAnalyzer] Failure reason " << selection_v.at(0)->GetFailureReason() << std::endl;
-  //   }
-  //   std::map<std::string, bool> failure_map = selection_v.at(0)->GetCutFlowStatus();
-  //   for (auto iter : failure_map)
-  //   {
-  //     std::cout << "[PandoraLEEAnalyzer] UBXSec Cut: " << iter.first << "  >>>  " << (iter.second ? "PASSED" : "NOT PASSED") << std::endl;
-  //     if (iter.second) {
-  //         _numu_cuts += 1;
-  //     }
-  //   }
-  // }
+  if (selection_v.size() > 0) {
+    _numu_passed = int(selection_v.at(0)->GetSelectionStatus());
+    if (selection_v.at(0)->GetSelectionStatus())
+    {
+        std::cout << "[PandoraLEEAnalyzer] Event is selected by UBXSec" << std::endl;
+    }
+    else
+    {
+        std::cout << "[PandoraLEEAnalyzer] Event is not selected by UBXSec" << std::endl;
+        std::cout << "[PandoraLEEAnalyzer] Failure reason " << selection_v.at(0)->GetFailureReason() << std::endl;
+    }
+    std::map<std::string, bool> failure_map = selection_v.at(0)->GetCutFlowStatus();
+    for (auto iter : failure_map)
+    {
+      std::cout << "[PandoraLEEAnalyzer] UBXSec Cut: " << iter.first << "  >>>  " << (iter.second ? "PASSED" : "NOT PASSED") << std::endl;
+      if (iter.second) {
+          _numu_cuts += 1;
+      }
+    }
+  }
 
 
   if ((!evt.isRealData() || m_isOverlaidSample) && !m_isCosmicInTime)
@@ -665,7 +665,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
     }
     catch (...)
     {
-      std::cout << "[PandoraLEE] No MCEventWeight data product" << std::endl;
+      std::cout << "[PandoraLEEAnalyzer] No MCEventWeight data product" << std::endl;
       _bnbweight = 1;
     }
 
@@ -677,12 +677,12 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
     std::vector<simb::MCParticle> nu_mcparticles;
 
     bool there_is_a_neutrino = false;
-    std::cout << "Generator size " << generator.size() << std::endl;
+    std::cout << "[PandoraLEEAnalyzer] Generator size " << generator.size() << std::endl;
     if (generator.size() > 0)
     {
       for (auto &gen : generator)
       {
-        std::cout << "Generator origin " << gen.Origin() << std::endl;
+        std::cout << "[PandoraLEEAnalyzer] Generator origin " << gen.Origin() << std::endl;
 
         if (gen.Origin() == simb::kBeamNeutrino)
         {
@@ -723,13 +723,13 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
             }
             else
             {
-              std::cout << "[PandoraLEE] "
+              std::cout << "[PandoraLEEAnalyzer] "
                         << "Space Charge service offset size < 3" << std::endl;
             }
           }
           catch (...)
           {
-            std::cout << "[PandoraLEE] "
+            std::cout << "[PandoraLEEAnalyzer] "
                       << "Space Charge service error" << std::endl;
           }
 
