@@ -52,7 +52,7 @@ class PandoraInterfaceHelper : public HelperBase
     void traversePFParticleTree(
         const art::ValidHandle<std::vector<recob::PFParticle>> pfparticles,
         size_t top_index, std::vector<size_t> &unordered_daugthers,
-        std::string _pfp_producer = "pandoraNu::McRecoStage2");
+        std::string _pfp_producer);
 
     /**
    * @brief Measures the three-dimensional center of the deposited charge for a
@@ -67,15 +67,15 @@ class PandoraInterfaceHelper : public HelperBase
         size_t ipf,
         const art::ValidHandle<std::vector<recob::PFParticle>> pfparticles,
         const art::Event &evt,
-        std::string _pfp_producer = "pandoraNu::McRecoStage2");
+        std::string _pfp_producer);
 
     void get_daughter_tracks(std::vector<size_t> pf_ids, const art::Event &evt,
                              std::vector<art::Ptr<recob::Track>> &tracks,
-                             std::string _pfp_producer = "pandoraNu::McRecoStage2");
+                             std::string _pfp_producer);
 
     void get_daughter_showers(std::vector<size_t> pf_ids, const art::Event &evt,
                               std::vector<art::Ptr<recob::Shower>> &showers,
-                              std::string _pfp_producer = "pandoraNu::McRecoStage2");
+                              std::string _pfp_producer);
 
     /// Configure function parameters
     /**

@@ -199,7 +199,7 @@ const std::map<size_t, int> ElectronEventSelectionAlg::flashBasedSelection(const
       if (prematching_cuts)
       {
         std::vector<size_t> daughters;
-        pandoraHelper.traversePFParticleTree(pfparticle_handle, pfpindex, daughters);
+        pandoraHelper.traversePFParticleTree(pfparticle_handle, pfpindex, daughters, m_pfp_producer);
         qcvec.emplace_back(collect3DHits(evt, daughters));
         PFPIDvector.emplace_back(pfpindex);
         chargexvector.emplace_back(ChargeCenter[0]);
@@ -481,7 +481,7 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt)
     int track_daughters =0;
 
     std::vector<size_t> daughters_id;
-    pandoraHelper.traversePFParticleTree(pfparticle_handle, _i_primary, daughters_id);
+    pandoraHelper.traversePFParticleTree(pfparticle_handle, _i_primary, daughters_id, m_pfp_producer);
 
     for (auto const &pfdaughter : daughters_id)
     {

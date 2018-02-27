@@ -924,7 +924,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
         std::vector<double> dedx(3, std::numeric_limits<double>::lowest());
         std::vector<double> dqdx_hits_track;
 
-        energyHelper.dQdx(pf_id, evt, dqdx, dqdx_hits_track, m_dQdxRectangleLength, m_dQdxRectangleWidth);
+        energyHelper.dQdx(pf_id, evt, dqdx, dqdx_hits_track, m_dQdxRectangleLength, m_dQdxRectangleWidth, m_pfp_producer);
         _track_dQdx_hits.push_back(dqdx_hits_track);
         std::vector<double> dedx_hits_track(dqdx_hits_track.size(), std::numeric_limits<double>::lowest());
 
@@ -983,7 +983,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
 
         std::vector<double> this_energy;
         std::vector<int> this_nhits;
-        energyHelper.energyFromHits(pfparticle, this_nhits, this_energy, evt);
+        energyHelper.energyFromHits(pfparticle, this_nhits, this_energy, evt, m_pfp_producer);
 
         for (int i = 0; i < 3; ++i)
         {
@@ -992,7 +992,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
 
         _track_energy_hits.push_back(this_energy);
         // Alternative way to calculate the energy using dedx.
-        _track_energy_dedx.push_back(energyHelper.trackEnergy_dedx(track_obj, evt));
+        _track_energy_dedx.push_back(energyHelper.trackEnergy_dedx(track_obj, evt, m_pfp_producer));
 
         _track_length.push_back(track_obj->Length());
         _track_id.push_back(track_obj->ID());
@@ -1014,7 +1014,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
         std::vector<std::vector<double>> pca;
         pca.resize(3, std::vector<double>(2));
 
-        energyHelper.PCA(pf_id, evt, pca);
+        energyHelper.PCA(pf_id, evt, pca, m_pfp_producer);
 
         double weighted_pca = 0;
         int total_hits = 0;
@@ -1072,7 +1072,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
       _matched_showers_energy.push_back(std::numeric_limits<double>::lowest());
 
       energyHelper.dQdx(pf_id, evt, dqdx, dqdx_hits_shower, m_dQdxRectangleLength,
-                        m_dQdxRectangleWidth);
+                        m_dQdxRectangleWidth, m_pfp_producer);
 
 
       _shower_dQdx_hits.push_back(dqdx_hits_shower);
@@ -1119,7 +1119,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
       std::vector<double> this_energy;
       std::vector<int> this_nhits;
 
-      energyHelper.energyFromHits(pfparticle, this_nhits, this_energy, evt);
+      energyHelper.energyFromHits(pfparticle, this_nhits, this_energy, evt, m_pfp_producer);
 
       for (int i = 0; i < 3; ++i)
       {
@@ -1130,7 +1130,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
       std::vector<std::vector<double>> pca;
       pca.resize(3, std::vector<double>(2));
 
-      energyHelper.PCA(pf_id, evt, pca);
+      energyHelper.PCA(pf_id, evt, pca, m_pfp_producer);
 
       double weighted_pca = 0;
       int total_hits = 0;
