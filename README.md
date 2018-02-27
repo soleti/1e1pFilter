@@ -20,7 +20,7 @@ make -j4
 ```
 - copy the compiled library libxgboost.so to the localProducts folder
 ```
-cp localProducts_*/xgboost/libxgboost.so localProducts_*/uboonecode/v06_26_01_10/slf6.x86_64.e10.prof/lib/
+cp localProducts_*/xgboost/lib/libxgboost.so localProducts_*/uboonecode/v06_26_01_10/slf6.x86_64.e10.prof/lib/
 ```
 - copy the BDT model:
 ```
