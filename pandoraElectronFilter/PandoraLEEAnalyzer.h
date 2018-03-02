@@ -187,6 +187,7 @@ private:
 
   int _n_primaries;
   int _chosen_candidate;
+  int _candidate_pdg;
 
   double _bnbweight;
 

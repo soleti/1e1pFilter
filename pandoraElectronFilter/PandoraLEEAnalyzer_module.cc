@@ -103,6 +103,7 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
   myTTree->Branch("bnbweight", &_bnbweight, "bnbweight/d");
 
   myTTree->Branch("chosen_candidate", &_chosen_candidate, "chosen_candidate/i");
+  myTTree->Branch("candidate_pdg", &_candidate_pdg, "candidate_pdg/i");
   myTTree->Branch("n_primaries", &_n_primaries, "n_primaries/i");
 
   myTTree->Branch("primary_indexes", "std::vector< int >", &_primary_indexes);
@@ -433,6 +434,7 @@ void lee::PandoraLEEAnalyzer::clear()
   _flash_time.clear();
 
   _chosen_candidate = std::numeric_limits<int>::lowest();
+  _candidate_pdg = std::numeric_limits<int>::lowest();
   _n_primaries = 0;
 
   _energy.clear();
@@ -543,7 +545,7 @@ void lee::PandoraLEEAnalyzer::categorizePFParticles(
       neutrino_energy.push_back(mc_par->E());
     }
 
-    if (mc_truth->Origin() == simb::kCosmicRay)
+    if (mc_truth->Origin() == simb::kCosmicRay || mc_truth->Origin() == simb::kUnknown)
     {
       cosmic_pf.push_back(pf_par);
       cosmic_pdg.push_back(mc_par->PdgCode());
@@ -883,10 +885,12 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
         evt.getValidHandle<std::vector<recob::PFParticle>>(m_pfp_producer);
 
     ipf_candidate = choose_candidate(nu_candidates, evt);
+    recob::PFParticle const &pfpneutrino = pfparticle_handle->at(ipf_candidate);
+
     std::cout << "[PandoraLEE] "
               << "Neutrino candidate " << ipf_candidate << std::endl;
     _chosen_candidate = ipf_candidate;
-
+    _candidate_pdg = pfpneutrino.PdgCode();
     _energy.resize(3, 0); //Total reconstructed energy for three planes, will be filled for tracks and showers.
 
     art::FindOneP<recob::Vertex> vertex_per_pfpart(pfparticle_handle, evt,
@@ -1373,9 +1377,11 @@ void lee::PandoraLEEAnalyzer::reconfigure(fhicl::ParameterSet const &pset)
   fElectronEventSelectionAlg.reconfigure(
       pset.get<fhicl::ParameterSet>("ElectronSelectionAlg"));
 
-  m_hitfinderLabel = pset.get<std::string>("HitFinderLabel", "pandoraCosmicHitRemoval::McRecoStage2");
-  m_pfp_producer = pset.get<std::string>("PFParticleLabel", "pandoraNu::McRecoStage2");
-  m_spacepointLabel = pset.get<std::string>("SpacePointLabel", "pandoraNu::McRecoStage2");
+  m_hitfinderLabel = pset.get<std::string>("HitFinderLabel", "pandoraCosmicHitRemoval::UBXSec");
+  m_pfp_producer = pset.get<std::string>("PFParticleLabel", "pandoraNu::UBXSec");
+  m_spacepointLabel = pset.get<std::string>("SpacePointLabel", "pandoraNu::UBXSec");
+  
+  //m_spacepointLabel = pset.get<std::string>("SpacePointLabel", "pandoraNu::McRecoStage2");
 
   m_printDebug = pset.get<bool>("PrintDebug", false);
 
