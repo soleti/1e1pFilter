@@ -222,7 +222,8 @@ private:
   std::vector<double> _shower_theta;
   std::vector<double> _shower_phi;
 
-  std::vector<std::vector<double>> _shower_energy;
+  std::vector<std::vector<double>> _shower_energy_hits;
+  std::vector<std::vector<double>> _shower_energy_product;
 
   std::vector<double> _track_dir_x;
   std::vector<double> _track_dir_y;
@@ -277,7 +278,12 @@ private:
   std::vector<double> _track_pca;
 
   std::vector<std::vector<int>> _shower_nhits;
-  std::vector<std::vector<int>> _track_nhits;
+  std::vector<std::vector<int>> _shower_nhits_cluster;
+  std::vector<std::vector<int>> _shower_nhits_spacepoint;
+
+  std::vector<std::vector<int>> _track_nhits_cluster;
+  std::vector<std::vector<int>> _track_nhits_spacepoint;
+
   double m_dQdxRectangleWidth;
   double m_dQdxRectangleLength;
 

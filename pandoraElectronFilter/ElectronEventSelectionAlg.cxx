@@ -64,7 +64,7 @@ void ElectronEventSelectionAlg::reconfigure(fhicl::ParameterSet const &p)
 
   m_fidvolZstart = p.get<double>("fidvolZstart", 10);
   m_fidvolZend = p.get<double>("fidvolZend", 50);
-  m_pfp_producer = p.get<std::string>("PFParticleLabel", "pandoraNu::UBXSec");
+  m_pfp_producer = p.get<std::string>("PFParticleLabel", "pandoraNu::McRecoStage2");
 
   geoHelper.setFiducialVolumeCuts(m_fidvolXstart, m_fidvolXend, m_fidvolYstart,
                                   m_fidvolYend, m_fidvolZstart, m_fidvolZend);
@@ -353,6 +353,7 @@ const std::map<size_t, int> ElectronEventSelectionAlg::opticalfilter(const art::
   auto const &optical_handle = evt.getValidHandle<std::vector<recob::OpFlash>>(optical_tag);
 
   // Loop over pfp neutrino candidates and flashes.
+  std::cout << "startbeamtime " << m_startbeamtime << " endbeamtime" << m_endbeamtime << std::endl;
   for (size_t pfp_i : pfplist)
   {
     result[pfp_i] = -1;

@@ -53,8 +53,6 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
   myTTree->Branch("n_candidates", &_n_candidates, "n_candidates/i");
   myTTree->Branch("n_true_nu", &_n_true_nu, "n_true_nu/i");
   myTTree->Branch("distance", &_distance, "distance/d");
-  myTTree->Branch("true_nu_is_fiducial", &_true_nu_is_fiducial,
-                  "true_nu_is_fiducial/I");
 
   myTTree->Branch("n_matched", &_n_matched, "n_matched/i");
   myTTree->Branch("nu_matched_tracks", &_nu_matched_tracks,
@@ -130,7 +128,8 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
   myTTree->Branch("shower_theta", "std::vector< double >", &_shower_theta);
   myTTree->Branch("shower_phi", "std::vector< double >", &_shower_phi);
 
-  myTTree->Branch("shower_energy", "std::vector< std::vector< double > >", &_shower_energy);
+  myTTree->Branch("shower_energy_hits", "std::vector< std::vector< double > >", &_shower_energy_hits);
+  myTTree->Branch("shower_energy_product", "std::vector< std::vector< double > >", &_shower_energy_product);
   myTTree->Branch("track_energy_dedx", "std::vector< double >", &_track_energy_dedx);
   myTTree->Branch("track_energy_hits", "std::vector< std::vector< double > >", &_track_energy_hits);
 
@@ -141,11 +140,6 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
   myTTree->Branch("track_start_x", "std::vector< double >", &_track_start_x);
   myTTree->Branch("track_start_y", "std::vector< double >", &_track_start_y);
   myTTree->Branch("track_start_z", "std::vector< double >", &_track_start_z);
-
-  myTTree->Branch("track_is_fiducial", "std::vector< int >",
-                  &_track_is_fiducial);
-  myTTree->Branch("shower_is_fiducial", "std::vector< int >",
-                  &_shower_is_fiducial);
 
   myTTree->Branch("track_end_x", "std::vector< double >", &_track_end_x);
   myTTree->Branch("track_end_y", "std::vector< double >", &_track_end_y);
@@ -217,11 +211,18 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
   myTTree->Branch("shower_nhits", "std::vector< std::vector<int> >",
                   &_shower_nhits);
 
+  myTTree->Branch("shower_nhits_cluster", "std::vector< std::vector<int> >",
+                  &_shower_nhits_cluster);
+  myTTree->Branch("shower_nhits_spacepoint", "std::vector< std::vector<int> >",
+                  &_shower_nhits_spacepoint);
+
   myTTree->Branch("track_pca", "std::vector< double >",
                   &_track_pca);
 
-  myTTree->Branch("track_nhits", "std::vector< std::vector<int> >",
-                  &_track_nhits);
+  myTTree->Branch("track_nhits_cluster", "std::vector< std::vector<int> >",
+                  &_track_nhits_cluster);
+  myTTree->Branch("track_nhits_spacepoint", "std::vector< std::vector<int> >",
+                  &_track_nhits_spacepoint);
 
   myTTree->Branch("shower_sp_x", "std::vector< float >", &_shower_sp_x);
   myTTree->Branch("shower_sp_y", "std::vector< float >", &_shower_sp_y);
@@ -339,8 +340,14 @@ void lee::PandoraLEEAnalyzer::clear()
 
   _shower_pca.clear();
   _track_pca.clear();
+
   _shower_nhits.clear();
-  _track_nhits.clear();
+  _shower_nhits_cluster.clear();
+  _shower_nhits_spacepoint.clear();
+
+  _track_nhits_cluster.clear();
+  _track_nhits_spacepoint.clear();
+
   _matched_tracks.clear();
   _matched_tracks_process.clear();
   _matched_tracks_energy.clear();
@@ -381,9 +388,6 @@ void lee::PandoraLEEAnalyzer::clear()
   _shower_start_y.clear();
   _shower_start_z.clear();
 
-  _track_is_fiducial.clear();
-  _shower_is_fiducial.clear();
-
   _track_start_x.clear();
   _track_start_y.clear();
   _track_start_z.clear();
@@ -414,7 +418,8 @@ void lee::PandoraLEEAnalyzer::clear()
   _track_theta.clear();
   _track_phi.clear();
 
-  _shower_energy.clear();
+  _shower_energy_hits.clear();
+  _shower_energy_product.clear();
   _track_energy_dedx.clear();
   _track_energy_hits.clear();
 
@@ -439,7 +444,6 @@ void lee::PandoraLEEAnalyzer::clear()
 
   _energy.clear();
 
-  _true_nu_is_fiducial = std::numeric_limits<int>::lowest();
   _nu_energy = std::numeric_limits<double>::lowest();
 
   _n_tracks = std::numeric_limits<int>::lowest();
@@ -675,7 +679,6 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
         evt.getValidHandle<std::vector<simb::MCTruth>>(_mctruthLabel);
     auto const &generator(*generator_handle);
     _n_true_nu = generator.size();
-    _true_nu_is_fiducial = 0;
     std::vector<simb::MCParticle> nu_mcparticles;
 
     bool there_is_a_neutrino = false;
@@ -705,8 +708,6 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
           _true_vx = true_neutrino_vertex[0];
           _true_vy = true_neutrino_vertex[1];
           _true_vz = true_neutrino_vertex[2];
-
-          _true_nu_is_fiducial = int(geoHelper.isFiducial(true_neutrino_vertex));
 
           _interaction_type = gen.GetNeutrino().InteractionType();
 
@@ -893,8 +894,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
     _candidate_pdg = pfpneutrino.PdgCode();
     _energy.resize(3, 0); //Total reconstructed energy for three planes, will be filled for tracks and showers.
 
-    art::FindOneP<recob::Vertex> vertex_per_pfpart(pfparticle_handle, evt,
-                                                   m_pfp_producer);
+    art::FindOneP<recob::Vertex> vertex_per_pfpart(pfparticle_handle, evt, m_pfp_producer);
     auto const &vertex_obj = vertex_per_pfpart.at(ipf_candidate);
 
     double reco_neutrino_vertex[3];
@@ -910,6 +910,23 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
 
       _distance = geoHelper.distance(v_reco_vertex, sce_true_vertex);
     }
+
+    // Load all the initializations of associations
+    auto const &trackVecHandle = evt.getValidHandle<std::vector<recob::Track>>(m_pfp_producer);
+    auto const &spacepoint_handle = evt.getValidHandle<std::vector<recob::SpacePoint>>(m_pfp_producer);
+    auto const &cluster_handle = evt.getValidHandle<std::vector<recob::Cluster>>(m_pfp_producer);
+
+    art::FindOneP<recob::Shower> shower_per_pfpart(pfparticle_handle, evt, m_pfp_producer);
+    art::FindOneP<recob::Track> track_per_pfpart(pfparticle_handle, evt, m_pfp_producer);
+    art::FindManyP<anab::CosmicTag> dtAssns(trackVecHandle, evt, "decisiontreeid");
+
+    art::FindManyP<recob::Cluster> clusters_per_pfpart(pfparticle_handle, evt, m_pfp_producer);
+    art::FindManyP<recob::Hit> hits_per_clusters(cluster_handle, evt, m_pfp_producer);
+
+    art::FindManyP<recob::SpacePoint> spcpnts_per_pfpart(pfparticle_handle, evt, m_pfp_producer);
+    art::FindManyP<recob::Hit> hits_per_spcpnts(spacepoint_handle, evt, m_pfp_producer);
+
+
 
     _n_tracks = fElectronEventSelectionAlg.get_n_tracks().at(ipf_candidate);
 
@@ -940,22 +957,13 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
         _track_dQdx.push_back(dqdx);
         _track_dEdx.push_back(dedx);
 
-        art::FindOneP<recob::Track> track_per_pfpart(pfparticle_handle, evt,
-                                                     m_pfp_producer);
         auto const &track_obj = track_per_pfpart.at(pf_id);
 
         _matched_tracks.push_back(std::numeric_limits<int>::lowest());
         _matched_tracks_process.push_back("");
         _matched_tracks_energy.push_back(std::numeric_limits<double>::lowest());
 
-        auto const &trackVecHandle =
-            evt.getValidHandle<std::vector<recob::Track>>(m_pfp_producer);
-
-        art::FindManyP<anab::CosmicTag> dtAssns(trackVecHandle, evt,
-                                                "decisiontreeid");
-
-        std::vector<art::Ptr<anab::CosmicTag>> dtVec =
-            dtAssns.at(track_obj.key());
+        std::vector<art::Ptr<anab::CosmicTag>> dtVec = dtAssns.at(track_obj.key());
 
         for (auto const &dttag : dtVec)
         {
@@ -982,8 +990,41 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
         end_point.push_back(track_obj->End().Y());
         end_point.push_back(track_obj->End().Z());
 
-        _track_is_fiducial.push_back(int(geoHelper.isFiducial(start_point) &&
-                                         geoHelper.isFiducial(end_point)));
+        //_track_nhits_spacepoint filling:
+        std::vector<art::Ptr<recob::SpacePoint>> spcpnts = spcpnts_per_pfpart.at(track_obj.key());
+        // Loop over the spacepoints and get the associated hits:
+        std::vector<int> nhits_spacepoint(3, 0);
+        for (auto &_sps : spcpnts)
+        {
+          std::vector<art::Ptr<recob::Hit>> hits = hits_per_spcpnts.at(_sps.key());
+          // Add the hits to the weighted average, if they are collection hits:
+          for (auto &hit : hits)
+          {
+            auto plane_nr = hit->View();
+            if (plane_nr > 2 || plane_nr < 0)
+              continue;
+            nhits_spacepoint[plane_nr] ++;
+          }
+        }
+        _track_nhits_spacepoint.push_back(nhits_spacepoint);
+
+        //_track_nhits_cluster filling:
+        std::vector<art::Ptr<recob::Cluster>> clusters = clusters_per_pfpart.at(track_obj.key());
+        // Loop over the clusters and get the associated hits:
+        std::vector<int> nhits_cluster(3, 0);
+        for (auto &_clu : clusters)
+        {
+          std::vector<art::Ptr<recob::Hit>> hits = hits_per_clusters.at(_clu.key());
+          // Add the hits to the weighted average, if they are collection hits:
+          for (auto &hit : hits)
+          {
+            auto plane_nr = hit->View();
+            if (plane_nr > 2 || plane_nr < 0)
+              continue;
+            nhits_cluster[plane_nr] ++;
+          }
+        }
+        _track_nhits_cluster.push_back(nhits_cluster);
 
         std::vector<double> this_energy;
         std::vector<int> this_nhits;
@@ -1030,7 +1071,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
 
         weighted_pca /= total_hits;
         _track_pca.push_back(weighted_pca);
-        _track_nhits.push_back(this_nhits);
+        //_track_nhits_cluster.push_back(this_nhits);
 
         std::cout << "[PCA] Track " << pca[2][0] << " " << pca[2][1] << std::endl;
       }
@@ -1049,15 +1090,9 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
                 << std::endl;
     }
 
-    // Needed for saving shower distributions.
-    auto const &spacepoint_handle = evt.getValidHandle<std::vector<recob::SpacePoint>>(m_pfp_producer);
-    art::FindManyP<recob::SpacePoint> spcpnts_per_pfpart(pfparticle_handle, evt, m_pfp_producer);
-    art::FindManyP<recob::Hit> hits_per_spcpnts(spacepoint_handle, evt, m_pfp_producer);
-
     for (auto &pf_id : _nu_shower_ids)
     {
-      art::FindOneP<recob::Shower> shower_per_pfpart(pfparticle_handle, evt,
-                                                     m_pfp_producer);
+     
       auto const &shower_obj = shower_per_pfpart.at(pf_id);
       if (shower_obj.isNull()) {
         std::cout << "[PandoraLEEAnalyzer] Shower pointer " << pf_id << " is null, exiting" << std::endl;
@@ -1110,15 +1145,49 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
             shower_obj->ShowerStart()[ix] + shower_length;
       }
 
-      _shower_is_fiducial.push_back(int(geoHelper.isFiducial(start_point) &&
-                                        geoHelper.isFiducial(end_point)));
-
       _shower_start_x.push_back(shower_obj->ShowerStart().X());
       _shower_start_y.push_back(shower_obj->ShowerStart().Y());
       _shower_start_z.push_back(shower_obj->ShowerStart().Z());
 
+      _shower_energy_product.push_back(shower_obj->Energy());
+
       _shower_phi.push_back(shower_obj->Direction().Phi());
       _shower_theta.push_back(shower_obj->Direction().Theta());
+
+      //_shower_nhits_spacepoint filling:
+      std::vector<art::Ptr<recob::SpacePoint>> spcpnts = spcpnts_per_pfpart.at(shower_obj.key());
+      // Loop over the spacepoints and get the associated hits:
+      std::vector<int> nhits_spacepoint(3, 0);
+      for (auto &_sps : spcpnts)
+      {
+        std::vector<art::Ptr<recob::Hit>> hits = hits_per_spcpnts.at(_sps.key());
+        // Add the hits to the weighted average, if they are collection hits:
+        for (auto &hit : hits)
+        {
+          auto plane_nr = hit->View();
+          if (plane_nr > 2 || plane_nr < 0)
+            continue;
+          nhits_spacepoint[plane_nr] ++;
+        }
+      }
+      _shower_nhits_spacepoint.push_back(nhits_spacepoint);
+
+      //_shower_nhits_cluster filling:
+      std::vector<art::Ptr<recob::Cluster>> clusters = clusters_per_pfpart.at(shower_obj.key());
+      // Loop over the clusters and get the associated hits:
+      std::vector<int> nhits_cluster(3, 0);
+      for (auto &_clu : clusters)
+      {
+        std::vector<art::Ptr<recob::Hit>> hits = hits_per_clusters.at(_clu.key());
+        // Add the hits to the weighted average, if they are collection hits:
+        for (auto &hit : hits)
+        {
+          auto plane_nr = hit->View();
+          if (plane_nr > 2 || plane_nr < 0)
+            continue;
+          nhits_cluster[plane_nr] ++;
+        }
+      }
 
       std::vector<double> this_energy;
       std::vector<int> this_nhits;
@@ -1129,7 +1198,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
       {
         _energy[i] += this_energy[i];
       }
-      _shower_energy.push_back(this_energy);
+      _shower_energy_hits.push_back(this_energy);
 
       std::vector<std::vector<double>> pca;
       pca.resize(3, std::vector<double>(2));
@@ -1149,8 +1218,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
       _shower_nhits.push_back(this_nhits);
 
       std::cout << "[PCA] Shower " << pca[2][0] << " " << pca[2][1] << std::endl;
-
-      std::vector<art::Ptr<recob::SpacePoint>> spcpnts = spcpnts_per_pfpart.at(pf_id);
+      
       for (auto &_sps : spcpnts)
       {
         std::vector<art::Ptr<recob::Hit>> hits = hits_per_spcpnts.at(_sps.key());
@@ -1377,11 +1445,10 @@ void lee::PandoraLEEAnalyzer::reconfigure(fhicl::ParameterSet const &pset)
   fElectronEventSelectionAlg.reconfigure(
       pset.get<fhicl::ParameterSet>("ElectronSelectionAlg"));
 
-  m_hitfinderLabel = pset.get<std::string>("HitFinderLabel", "pandoraCosmicHitRemoval::UBXSec");
-  m_pfp_producer = pset.get<std::string>("PFParticleLabel", "pandoraNu::UBXSec");
-  m_spacepointLabel = pset.get<std::string>("SpacePointLabel", "pandoraNu::UBXSec");
-  
-  //m_spacepointLabel = pset.get<std::string>("SpacePointLabel", "pandoraNu::McRecoStage2");
+  m_hitfinderLabel = pset.get<std::string>("HitFinderLabel", "pandoraCosmicHitRemoval::McRecoStage2");
+  m_pfp_producer = pset.get<std::string>("PFParticleLabel", "pandoraNu::McRecoStage2");
+  m_spacepointLabel = pset.get<std::string>("SpacePointLabel", "pandoraNu::McRecoStage2");
+  //m_spacepointLabel = pset.get<std::string>("SpacePointLabel", "pandoraNu::PandoraLEEAnalyzer");
 
   m_printDebug = pset.get<bool>("PrintDebug", false);
 
