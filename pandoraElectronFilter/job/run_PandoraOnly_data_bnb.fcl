@@ -9,7 +9,7 @@ lee_pandora_analyzer:
     ElectronSelectionAlg:       @local::lee_electron_alg
     isData:                     true
     PrintDebug:                 false
-    HitFinderLabel:             "pandoraNu::DataRecoStage2"
+    HitFinderLabel:             "pandoraCosmicHitRemoval::DataRecoStage2"
     PFParticleLabel:            "pandoraNu::DataRecoStage2"
     SpacePointLabel:            "pandoraNu::DataRecoStage2"
 }

@@ -1,9 +1,10 @@
 <?xml version="1.0"?>
 <!DOCTYPE project [
-<!ENTITY name "bnb_filter_data">
-<!ENTITY version "v06_26_01_10">
+<!ENTITY name "bnb_filter_data_ubxsec_b">
+<!ENTITY larsoft_version "v06_26_01_10">
+<!ENTITY version "v06_26_01_11">
 <!ENTITY qualifier "e10:prof">
-<!ENTITY dataset "prod_reco_optfilter_bnb_v11_unblind_mcc8a">
+<!ENTITY dataset "prod_reco_optfilter_bnb_v11_unblind_mcc8b">
 <!ENTITY user "srsoleti">
 ]>
 
@@ -20,7 +21,7 @@
 
     <!--  Larsoft information  -->
     <larsoft>
-        <tag>&version;</tag>
+        <tag>&larsoft_version;</tag>
         <qual>&qualifier;</qual>
         <local>/pnfs/uboone/scratch/users/&user;/&version;.tar</local>
     </larsoft>
@@ -33,7 +34,7 @@
         <workdir>/pnfs/uboone/scratch/users/&user;/work/lee/&name;</workdir>
         <inputdef>&dataset;</inputdef>
 
-        <numjobs>822</numjobs>
+        <numjobs>771</numjobs>
         <disk>10GB</disk>
         <memory>4096</memory>
         <maxfilesperjob>5</maxfilesperjob>

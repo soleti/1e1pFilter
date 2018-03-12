@@ -30,7 +30,9 @@
 #include "THStack.h"
 #include "TTree.h"
 #include "TVector3.h"
+#include "TLorentzVector.h"
 #include "canvas/Persistency/Common/FindManyP.h"
+#include "canvas/Persistency/Common/FindMany.h"
 #include "canvas/Persistency/Common/FindOneP.h"
 #include "canvas/Utilities/InputTag.h"
 #include "larcore/Geometry/Geometry.h"
@@ -47,8 +49,9 @@
 #include "nusimdata/SimulationBase/MCParticle.h"
 #include "nusimdata/SimulationBase/MCTruth.h"
 #include "uboone/EventWeight/MCEventWeight.h"
-#include "larevt/SpaceChargeServices/SpaceChargeService.h" 
-
+#include "larevt/SpaceChargeServices/SpaceChargeService.h"
+#include "uboone/UBXSec/DataTypes/SelectionResult.h"
+#include "lardataobj/AnalysisBase/ParticleID.h"
 #include "TEfficiency.h"
 #include "art/Framework/Services/Optional/TFileService.h"
 
@@ -83,7 +86,8 @@ public:
 private:
   std::string m_hitfinderLabel;
   std::string _geantModuleLabel = "largeant";
-  std::string m_pfp_producer; 
+  std::string m_pfp_producer;
+  std::string m_pid_producer;
   std::string m_spacepointLabel; 
   std::string _mctruthLabel = "generator";
   std::string _mcpHitAssLabel = "crHitRemovalTruthMatch";
@@ -153,7 +157,7 @@ private:
   int _nu_matched_showers;
 
   int _nu_pdg;
-
+  int _ccnc;
   int _category;
   int _run;
   int _subrun;
@@ -168,6 +172,12 @@ private:
   int _numu_passed;
   int _numu_cuts;
   double _distance;
+
+  double _qsqr;
+  double _theta;
+  TLorentzVector _nu_p;
+  double _lepton_E;
+  TLorentzVector _lepton_p; 
 
   std::vector<int> _flash_passed;
   std::vector<int> _track_passed;
@@ -242,6 +252,13 @@ private:
 
   std::vector<double> _track_length;
   std::vector<double> _track_id;
+
+  std::vector< double > _track_pidchi;
+  std::vector< double > _track_pidchipr;
+  std::vector< double > _track_pidchika;
+  std::vector< double > _track_pidchipi;
+  std::vector< double > _track_pidchimu;
+  std::vector< double > _track_pida;
 
   std::vector<double> _track_energy_dedx;
   std::vector<std::vector<double>> _track_energy_hits;

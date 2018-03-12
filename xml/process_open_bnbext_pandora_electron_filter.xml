@@ -1,9 +1,10 @@
 <?xml version="1.0"?>
 <!DOCTYPE project [
-<!ENTITY name "bnbext_filter_data">
-<!ENTITY version "v06_26_01_10">
+<!ENTITY name "bnbext_filter_data_b">
+<!ENTITY version "v06_26_01_11">
+<!ENTITY larsoft_version "v06_26_01_10">
 <!ENTITY qualifier "e10:prof">
-<!ENTITY dataset "prod_reco_optfilter_extbnb_v11_mcc8a">
+<!ENTITY dataset "prod_reco_optfilter_extbnb_v11_mcc8b">
 <!ENTITY user "srsoleti">
 ]>
 
@@ -20,25 +21,26 @@
 
     <!--  Larsoft information  -->
     <larsoft>
-        <tag>&version;</tag>
+        <tag>&larsoft_version;</tag>
         <qual>&qualifier;</qual>
         <local>/pnfs/uboone/scratch/users/&user;/&version;.tar</local>
     </larsoft>
 
     <!--  Project stages  -->
     <stage name="selection">
-        <fcl>run_PandoraOnly_data_ext.fcl</fcl>
+        <fcl>run_PandoraOnly_data_extbnb.fcl</fcl>
         <outdir>/pnfs/uboone/scratch/users/&user;/&version;/lee/&name;</outdir>
         <logdir>/pnfs/uboone/scratch/users/&user;/&version;/lee/&name;</logdir>
         <workdir>/pnfs/uboone/scratch/users/&user;/work/lee/&name;</workdir>
         <inputdef>&dataset;</inputdef>
-        <numjobs>174</numjobs>
+        <numjobs>283</numjobs>
         <disk>10GB</disk>
         <memory>4096</memory>
         <maxfilesperjob>40</maxfilesperjob>
         <datatier>filtered</datatier>
         <datatier>reconstructed</datatier>
-        <jobsub>--expected-lifetime=24h -Q</jobsub>
+        <jobsub>--expected-lifetime=24h -Q --append_condor_requirements='(TARGET.HAS_CVMFS_uboone_opensciencegrid_org==true)'</jobsub>
+        <jobsub_start>--append_condor_requirements='(TARGET.HAS_CVMFS_uboone_opensciencegrid_org==true)'</jobsub_start>
         <schema>root</schema>
     </stage>
     <!--  file type  -->

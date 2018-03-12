@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <!DOCTYPE project [
-<!ENTITY name "bnb_nu_cosmic_pandora_electron_filter_ubxsec_2">
+<!ENTITY name "bnb_nu_cosmic_pandora_electron_filter_ubxsec_4">
 <!ENTITY version "v06_26_01_11">
 <!ENTITY larsoft_version "v06_26_01_10">
 <!ENTITY qualifier "e10:prof">
-<!ENTITY dataset "ahack379_mcc7_mcbnbcos_snapshot_14981403_oneFourth_2">
+<!ENTITY dataset "ahack379_mcc7_mcbnbcos_snapshot_14981403_oneFourth_0">
 <!ENTITY user "srsoleti">
 ]>
 

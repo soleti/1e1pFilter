@@ -8,7 +8,6 @@
 ////////////////////////////////////////////////////////////////////////
 
 #include "PandoraLEEAnalyzer.h"
-#include "uboone/UBXSec/DataTypes/SelectionResult.h"
 
 lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
     : EDAnalyzer(pset) // ,
@@ -27,6 +26,14 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
 
   myTTree->Branch("n_tracks", &_n_tracks, "n_tracks/i");
   myTTree->Branch("n_showers", &_n_showers, "n_showers/i");
+  myTTree->Branch("ccnc", &_ccnc, "ccnc/i");
+  
+  myTTree->Branch("qsqr", &_qsqr, "qsqr/d");
+  myTTree->Branch("theta", &_theta, "theta/d");
+  myTTree->Branch("lepton_E", &_lepton_E, "lepton_E/d");
+  myTTree->Branch("nu_p", "TLorentzVector", &_nu_p);
+  myTTree->Branch("lepton_p", "TLorentzVector", &_lepton_p);
+
   myTTree->Branch("vx", &_vx, "vx/d");
   myTTree->Branch("vy", &_vy, "vy/d");
   myTTree->Branch("vz", &_vz, "vz/d");
@@ -155,6 +162,13 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
 
   myTTree->Branch("track_len", "std::vector< double >", &_track_length);
   myTTree->Branch("track_id", "std::vector< double >", &_track_id);
+
+  myTTree->Branch("track_pidchi", "std::vector< double >", &_track_pidchi);
+  myTTree->Branch("track_pidchipr", "std::vector< double >", &_track_pidchipr);
+  myTTree->Branch("track_pidchika", "std::vector< double >", &_track_pidchika);
+  myTTree->Branch("track_pidchipi", "std::vector< double >", &_track_pidchipi);
+  myTTree->Branch("track_pidchimu", "std::vector< double >", &_track_pidchimu);
+  myTTree->Branch("track_pida", "std::vector< double >", &_track_pida);
 
   myTTree->Branch("nu_pdg", &_nu_pdg, "nu_pdg/i");
 
@@ -334,8 +348,19 @@ void lee::PandoraLEEAnalyzer::endSubRun(const art::SubRun &sr)
 }
 void lee::PandoraLEEAnalyzer::clear()
 {
+  _qsqr = std::numeric_limits<double>::lowest();
+  _theta = std::numeric_limits<double>::lowest();
+  _nu_p = TLorentzVector();
+  _lepton_E = std::numeric_limits<double>::lowest();
+  _lepton_p = TLorentzVector();
+  _ccnc = std::numeric_limits<int>::lowest();
   _interaction_type = std::numeric_limits<int>::lowest();
-
+  _track_pida.clear();
+  _track_pidchipr.clear();
+  _track_pidchika.clear();
+  _track_pidchipi.clear();
+  _track_pidchimu.clear();
+  _track_pidchi.clear();
   _shower_pca.clear();
   _track_pca.clear();
   _shower_nhits.clear();
@@ -674,7 +699,6 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
     auto const &generator(*generator_handle);
     _n_true_nu = generator.size();
     _true_nu_is_fiducial = 0;
-    std::vector<simb::MCParticle> nu_mcparticles;
 
     bool there_is_a_neutrino = false;
     std::cout << "[PandoraLEEAnalyzer] Generator size " << generator.size() << std::endl;
@@ -688,11 +712,15 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
         {
           there_is_a_neutrino = true;
           _nu_pdg = gen.GetNeutrino().Nu().PdgCode();
-
           _nu_energy = gen.GetNeutrino().Nu().E();
-          int ccnc = gen.GetNeutrino().CCNC();
+          _ccnc = gen.GetNeutrino().CCNC();
+          _qsqr = gen.GetNeutrino().QSqr();
+          _theta = gen.GetNeutrino().Theta();
+          _nu_p = gen.GetNeutrino().Nu().Momentum();
+          _lepton_E = gen.GetNeutrino().Lepton().E();
+          _lepton_p = gen.GetNeutrino().Lepton().Momentum();
 
-          if (ccnc == simb::kNC)
+          if (_ccnc == simb::kNC)
           {
             _category = k_nc;
           }
@@ -703,44 +731,30 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
           _true_vx = true_neutrino_vertex[0];
           _true_vy = true_neutrino_vertex[1];
           _true_vz = true_neutrino_vertex[2];
-
           _true_nu_is_fiducial = int(geoHelper.isFiducial(true_neutrino_vertex));
-
           _interaction_type = gen.GetNeutrino().InteractionType();
 
-          try
+          auto const *SCE = lar::providerFrom<spacecharge::SpaceChargeService>();
+          if (SCE->GetPosOffsets(_true_vx, _true_vy, _true_vz).size() == 3)
           {
-            auto const *SCE = lar::providerFrom<spacecharge::SpaceChargeService>();
-            if (SCE->GetPosOffsets(_true_vx, _true_vy, _true_vz).size() == 3)
-            {
 
-              _true_vx_sce =
-                  _true_vx - SCE->GetPosOffsets(_true_vx, _true_vy, _true_vz)[0] + 0.7;
-              _true_vy_sce =
-                  _true_vy + SCE->GetPosOffsets(_true_vx, _true_vy, _true_vz)[1];
-              _true_vz_sce =
-                  _true_vz + SCE->GetPosOffsets(_true_vx, _true_vy, _true_vz)[2];
-            }
-            else
-            {
-              std::cout << "[PandoraLEEAnalyzer] "
-                        << "Space Charge service offset size < 3" << std::endl;
-            }
+            _true_vx_sce =
+                _true_vx - SCE->GetPosOffsets(_true_vx, _true_vy, _true_vz)[0] + 0.7;
+            _true_vy_sce =
+                _true_vy + SCE->GetPosOffsets(_true_vx, _true_vy, _true_vz)[1];
+            _true_vz_sce =
+                _true_vz + SCE->GetPosOffsets(_true_vx, _true_vy, _true_vz)[2];
           }
-          catch (...)
+          else
           {
             std::cout << "[PandoraLEEAnalyzer] "
-                      << "Space Charge service error" << std::endl;
+                      << "Space Charge service offset size < 3" << std::endl;
+            continue;
           }
 
           if (!geoHelper.isActive(true_neutrino_vertex))
           {
             _category = k_dirt;
-          }
-
-          for (int i = 0; i < gen.NParticles(); i++)
-          {
-            nu_mcparticles.push_back(gen.GetParticle(i));
           }
         }
       }
@@ -749,12 +763,20 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
     if (!there_is_a_neutrino)
       _category = k_cosmic;
 
-    for (auto &mcparticle : nu_mcparticles)
-    {
-      if (mcparticle.Process() == "primary" and mcparticle.T() != 0 and
-          mcparticle.StatusCode() == 1)
-      {
+    auto const &mcparticles_handle = evt.getValidHandle< std::vector< simb::MCParticle > >("largeant");
+    auto const &mcparticles(*mcparticles_handle);
 
+    for (auto &mcparticle : mcparticles)
+    {
+      if (!(mcparticle.Process() == "primary" &&
+            mcparticle.T() != 0 &&
+            mcparticle.StatusCode() == 1))
+        continue;
+
+      const auto mc_truth =
+            pandoraHelper.TrackIDToMCTruth(evt, "largeant", mcparticle.TrackId());
+      if (mc_truth->Origin() == simb::kBeamNeutrino)
+      {
         _nu_daughters_E.push_back(mcparticle.E());
         _nu_daughters_pdg.push_back(mcparticle.PdgCode());
 
@@ -940,12 +962,39 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
                                                      m_pfp_producer);
         auto const &track_obj = track_per_pfpart.at(pf_id);
 
+        auto const &trackVecHandle =
+            evt.getValidHandle<std::vector<recob::Track>>(m_pfp_producer);
+            
+        art::FindMany<anab::ParticleID> fmpid(trackVecHandle, evt, m_pid_producer);
+        std::vector<const anab::ParticleID *> pids = fmpid.at(track_obj.key());
+        
+        for (size_t ipid = 0; ipid < pids.size(); ++ipid)
+        {
+          if (!pids[ipid] || !pids[ipid]->PlaneID().isValid) {
+            _track_pida.push_back(std::numeric_limits<double>::lowest());
+            _track_pidchipr.push_back(std::numeric_limits<double>::lowest());
+            _track_pidchika.push_back(std::numeric_limits<double>::lowest());
+            _track_pidchipi.push_back(std::numeric_limits<double>::lowest());
+            _track_pidchimu.push_back(std::numeric_limits<double>::lowest());
+            _track_pidchi.push_back(std::numeric_limits<double>::lowest());
+            continue;
+          }
+
+          int planenum = pids[ipid]->PlaneID().Plane;
+          if (planenum != 2)
+            continue;
+
+          _track_pida.push_back(pids[ipid]->PIDA());
+          _track_pidchipr.push_back(pids[ipid]->Chi2Proton());
+          _track_pidchika.push_back(pids[ipid]->Chi2Kaon());
+          _track_pidchipi.push_back(pids[ipid]->Chi2Pion());
+          _track_pidchimu.push_back(pids[ipid]->Chi2Muon());
+          _track_pidchi.push_back(pids[ipid]->MinChi2());
+        }
+
         _matched_tracks.push_back(std::numeric_limits<int>::lowest());
         _matched_tracks_process.push_back("");
         _matched_tracks_energy.push_back(std::numeric_limits<double>::lowest());
-
-        auto const &trackVecHandle =
-            evt.getValidHandle<std::vector<recob::Track>>(m_pfp_producer);
 
         art::FindManyP<anab::CosmicTag> dtAssns(trackVecHandle, evt,
                                                 "decisiontreeid");
@@ -1374,6 +1423,8 @@ void lee::PandoraLEEAnalyzer::reconfigure(fhicl::ParameterSet const &pset)
       pset.get<fhicl::ParameterSet>("ElectronSelectionAlg"));
 
   m_hitfinderLabel = pset.get<std::string>("HitFinderLabel", "pandoraCosmicHitRemoval::McRecoStage2");
+  m_pid_producer = pset.get<std::string>("ParticleIDModuleLabel", "pandoraNupid::McRecoStage2");
+
   m_pfp_producer = pset.get<std::string>("PFParticleLabel", "pandoraNu::McRecoStage2");
   m_spacepointLabel = pset.get<std::string>("SpacePointLabel", "pandoraNu::McRecoStage2");
 
