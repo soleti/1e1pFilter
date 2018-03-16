@@ -12,6 +12,7 @@ lee_pandora_analyzer:
     HitFinderLabel:             "pandoraCosmicHitRemoval::DataRecoStage2"
     PFParticleLabel:            "pandoraNu::DataRecoStage2"
     SpacePointLabel:            "pandoraNu::DataRecoStage2"
+    ParticleIDModuleLabel:      "pandoraNupid::DataRecoStage2" 
 }
 
 lee_pandora_analyzer.ElectronSelectionAlg.startbeamtime: 3.3
@@ -50,7 +51,6 @@ physics: {
 
 }
 
-physics.analyzers.robertoana.isData: false
 source.inputCommands:        [ "keep *_*_*_*", "drop *_opfiltercommon__McRecoStage1" ]
 services.SpaceCharge.EnableSimSpatialSCE: true
 

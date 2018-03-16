@@ -239,6 +239,9 @@ private:
   std::vector<int> _track_is_fiducial;
   std::vector<int> _shower_is_fiducial;
 
+  std::vector<double> _track_res_mean;
+  std::vector<double> _track_res_std;
+
   std::vector<double> _track_start_x;
   std::vector<double> _track_start_y;
   std::vector<double> _track_start_z;

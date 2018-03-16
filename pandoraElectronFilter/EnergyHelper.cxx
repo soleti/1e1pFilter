@@ -6,6 +6,73 @@
 namespace lee
 {
 
+EnergyHelper::EnergyHelper() {
+  detprop = lar::providerFrom<detinfo::DetectorPropertiesService>();
+}
+
+
+void EnergyHelper::trackResiduals(const art::Event &e,
+                                  std::string _pfp_producer,
+                                  art::Ptr<recob::Track> candidate_track,
+                                  double &mean,
+                                  double &std)
+{
+  lar_pandora::TrackVector allPfParticleTracks;
+  lar_pandora::TracksToHits trackToHitsMap;
+  lar_pandora::LArPandoraHelper::CollectTracks(e, _pfp_producer, allPfParticleTracks, trackToHitsMap);
+  
+  std::vector<TVector3> hit_v;   // a vec of hits from coll plane
+  std::vector<TVector3> track_v; // a vec of hits from coll plane
+
+  // Collect hits
+  auto iter = trackToHitsMap.find(candidate_track);
+  if (iter != trackToHitsMap.end())
+  {
+    std::vector<art::Ptr<recob::Hit>> hits = iter->second;
+    for (auto hit : hits)
+    {
+      if (hit->View() == 2)
+      {
+        TVector3 h(hit->WireID().Wire, hit->PeakTime(), 0);
+        //std::cout << "emplacing hit with wire " << h.X() << ", and time " << h.Y() << std::endl;
+        hit_v.emplace_back(h);
+      }
+    }
+  }
+
+  // Collect track points
+  for (size_t i = 0; i < candidate_track->NumberTrajectoryPoints(); i++)
+  {
+    try
+    {
+      if (candidate_track->HasValidPoint(i))
+      {
+        TVector3 trk_pt = candidate_track->LocationAtPoint(i);
+        double wire = geo->NearestWire(trk_pt, 2);
+        double time = detprop->ConvertXToTicks(trk_pt.X(), geo::PlaneID(0, 0, 2));
+        TVector3 p(wire, time, 0.);
+        //std::cout << "emplacing track point on wire " << p.X() << ", and time " << p.Y() << std::endl;
+        track_v.emplace_back(p);
+      }
+    }
+    catch (...)
+    {
+      continue;
+    }
+  }
+
+  ubana::TrackQuality _track_quality;
+  _track_quality.SetTrackPoints(track_v);
+  _track_quality.SetHitCollection(hit_v);
+  std::pair<double, double> residual_mean_std = _track_quality.GetResiduals();
+  
+  if (!isnan(residual_mean_std.first) && !isnan(residual_mean_std.second)) {
+    mean = residual_mean_std.first;
+    std = residual_mean_std.second;
+  }
+
+}
+
 void EnergyHelper::energyFromHits(recob::PFParticle const &pfparticle,
                                     std::vector<int>    &nHits,
                                     std::vector<double> &pfenergy,
@@ -126,8 +193,6 @@ void EnergyHelper::PCA(size_t pfp_id,
   std::vector<art::Ptr<recob::Cluster>> clusters = clusters_per_pfpart.at(pfp_id);
 
   art::FindManyP<recob::Hit> hits_per_clusters(cluster_handle, evt, _pfp_producer);
-  detinfo::DetectorProperties const *detprop =
-      lar::providerFrom<detinfo::DetectorPropertiesService>();
 
   double drift = detprop->DriftVelocity() * 1e-3;
   double fromTickToNs = 4.8 / detprop->ReadOutWindowSize() * 1e6;

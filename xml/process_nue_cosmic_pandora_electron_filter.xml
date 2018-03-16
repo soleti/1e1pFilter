@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <!DOCTYPE project [
-<!ENTITY name "bnb_nue_cosmic_pandora_electron_filter_new">
+<!ENTITY name "bnb_nue_cosmic_pandora_electron_filter">
 <!ENTITY larsoft_version "v06_26_01_10">
 <!ENTITY version "v06_26_01_11">
 <!ENTITY qualifier "e10:prof">
-<!ENTITY dataset "prodgenie_bnb_intrinsic_nue_cosmic_uboone_mcc8.6_reco2_dev">
+<!ENTITY dataset "prodgenie_bnb_intrinsic_nue_cosmic_uboone_mcc8.7_reco2">
 <!ENTITY user "srsoleti">
 ]>
 <project name="&name;">
@@ -32,7 +32,7 @@
         <logdir>/pnfs/uboone/scratch/users/&user;/&version;/lee/&name;</logdir>
         <workdir>/pnfs/uboone/scratch/users/&user;/work/lee/&name;</workdir>
         <inputdef>&dataset;</inputdef>
-        <numjobs>200</numjobs>
+        <numjobs>400</numjobs>
         <disk>16GB</disk>
         <memory>4096</memory>
         <maxfilesperjob>20</maxfilesperjob>

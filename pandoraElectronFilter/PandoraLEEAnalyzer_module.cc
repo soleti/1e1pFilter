@@ -169,6 +169,8 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
   myTTree->Branch("track_pidchipi", "std::vector< double >", &_track_pidchipi);
   myTTree->Branch("track_pidchimu", "std::vector< double >", &_track_pidchimu);
   myTTree->Branch("track_pida", "std::vector< double >", &_track_pida);
+  myTTree->Branch("track_res_mean", "std::vector< double >", &_track_res_mean);
+  myTTree->Branch("track_res_std", "std::vector< double >", &_track_res_std);
 
   myTTree->Branch("nu_pdg", &_nu_pdg, "nu_pdg/i");
 
@@ -348,6 +350,8 @@ void lee::PandoraLEEAnalyzer::endSubRun(const art::SubRun &sr)
 }
 void lee::PandoraLEEAnalyzer::clear()
 {
+  _track_res_mean.clear();
+  _track_res_std.clear();
   _qsqr = std::numeric_limits<double>::lowest();
   _theta = std::numeric_limits<double>::lowest();
   _nu_p = TLorentzVector();
@@ -952,7 +956,8 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
 
         energyHelper.dEdxFromdQdx(dedx, dqdx);
 
-        energyHelper.dEdxFromdQdx(dedx_hits_track, dqdx_hits_track);
+
+            energyHelper.dEdxFromdQdx(dedx_hits_track, dqdx_hits_track);
         _track_dEdx_hits.push_back(dedx_hits_track);
 
         _track_dQdx.push_back(dqdx);
@@ -962,12 +967,20 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
                                                      m_pfp_producer);
         auto const &track_obj = track_per_pfpart.at(pf_id);
 
+        double mean = std::numeric_limits<double>::lowest();
+        double stdev = std::numeric_limits<double>::lowest();
+        
+        energyHelper.trackResiduals(evt, m_pfp_producer, track_obj, mean, stdev);
+        
+        _track_res_mean.push_back(mean);
+        _track_res_std.push_back(stdev);
+
         auto const &trackVecHandle =
             evt.getValidHandle<std::vector<recob::Track>>(m_pfp_producer);
             
         art::FindMany<anab::ParticleID> fmpid(trackVecHandle, evt, m_pid_producer);
         std::vector<const anab::ParticleID *> pids = fmpid.at(track_obj.key());
-        
+
         for (size_t ipid = 0; ipid < pids.size(); ++ipid)
         {
           if (!pids[ipid] || !pids[ipid]->PlaneID().isValid) {
@@ -977,7 +990,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
             _track_pidchipi.push_back(std::numeric_limits<double>::lowest());
             _track_pidchimu.push_back(std::numeric_limits<double>::lowest());
             _track_pidchi.push_back(std::numeric_limits<double>::lowest());
-            continue;
+            break;
           }
 
           int planenum = pids[ipid]->PlaneID().Plane;
