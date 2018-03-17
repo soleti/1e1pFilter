@@ -39,6 +39,7 @@ art_make(
                         ${SIMULATIONBASE}
                    	larsim_MCCheater_BackTracker_service
 			uboonecode_uboone_UBXSec_DataTypes
+                        uboonecode_uboone_UBXSec_Algorithms
                         uboonecode_uboone_SelectionTool_OpT0FinderBase
                         uboonecode_uboone_SelectionTool_OpT0FinderAlgorithms
                         uboonecode_uboone_BasicTool_GeoAlgo
@@ -81,7 +82,7 @@ art_make(
                         uboonecode_uboone_SelectionTool_OpT0FinderBase
                         uboonecode_uboone_SelectionTool_OpT0FinderAlgorithms
                         uboone_UBFlashFinder
-)
+uboonecode_uboone_UBXSec_Algorithms)
 
 add_subdirectory(job)
 
