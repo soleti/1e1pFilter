@@ -318,8 +318,8 @@ void EnergyHelper::dQdx(size_t pfp_id,
     if (!xcorrection_end)
       xcorrection_end = 1.0;
     end_corr = yzcorrection_end * xcorrection_end;
-
-    dqdx_cali.push_back((start_corr+middle_corr+end_corr)/3);
+    std::cout << "[EnergyHelper] dqdx_cali " << start_corr << middle_corr << end_corr << std::endl;
+    dqdx_cali[plane_nr] = (start_corr+middle_corr+end_corr)/3;
   }
 
   art::FindManyP<recob::Cluster> clusters_per_pfpart(pfparticle_handle, evt, _pfp_producer);

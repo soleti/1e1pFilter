@@ -966,6 +966,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
                 std::vector<double> dqdx_hits_track;
 
                 energyHelper.dQdx(pf_id, evt, dqdx, dqdx_cali, dqdx_hits_track, m_dQdxRectangleLength, m_dQdxRectangleWidth, m_pfp_producer);
+                _track_dQdx_cali.push_back(dqdx_cali);
                 _track_dQdx_hits.push_back(dqdx_hits_track);
                 std::vector<double> dedx_hits_track(dqdx_hits_track.size(), std::numeric_limits<double>::lowest());
 
@@ -1178,6 +1179,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
                               m_dQdxRectangleWidth, m_pfp_producer);
 
             _shower_dQdx_hits.push_back(dqdx_hits_shower);
+            _shower_dQdx_cali.push_back(dqdx_cali);
             std::cout << "[dQdx] nohits " << dqdx_hits_shower.size() << " " << dqdx[0] << " " << dqdx[1] << " " << dqdx[2] << std::endl;
 
             std::vector<double> dedx_hits_shower(dqdx_hits_shower.size(), std::numeric_limits<double>::lowest());
