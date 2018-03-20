@@ -1,14 +1,14 @@
 <?xml version="1.0"?>
 <!DOCTYPE project [
-<!ENTITY name "bnb_nu_cosmic_1e0p">
-<!ENTITY version "v06_26_01_11">
+<!ENTITY name "cosmic_intime_1s0t">
+<!ENTITY version "v06_26_01_12">
 <!ENTITY qualifier "e10:prof">
-<!ENTITY dataset "prodgenie_bnb_nu_cosmic_uboone_mcc8.7_reco2_dev">
+<!ENTITY dataset "prodcosmics_corsika_cmc_uboone_intime_mcc8.7_reco2">
 <!ENTITY user "wvdp">
 ]>
 <project name="&name;">
     <!-- Doesn't matter for non-generating jobs -->
-    <numevents>200000</numevents>
+    <numevents>994473</numevents>
 
     <!--  Operating System  -->
     <os>SL6</os>
@@ -21,25 +21,25 @@
     <larsoft>
         <tag>&version;</tag>
         <qual>&qualifier;</qual>
-        <local>/pnfs/uboone/resilient/users/&user;/submission/MCC87_3_11_1e0p.tar</local>
+        <local>/pnfs/uboone/resilient/users/&user;/submission/MCC87_3_20_1s0t.tar</local>
     </larsoft>
 
     <!--  Project stages  -->
     <stage name="selection">
-        <fcl>run_PandoraOnly.fcl</fcl>
+        <fcl>run_NueCC_intime.fcl</fcl>
         
         <outdir>/uboone/data/users/&user;/&version;/&name;</outdir>
         <logdir>/pnfs/uboone/scratch/users/&user;/log/&version;/&name;</logdir>
         <workdir>/pnfs/uboone/resilient/users/&user;/work/&version;/&name;</workdir>
         <bookdir>/uboone/data/users/&user;/book/&version;/&name;</bookdir>>
         <inputdef>&dataset;</inputdef>
-        <numjobs>286</numjobs>
+        <numjobs>2208</numjobs>
         <disk>8GB</disk>
         <memory>2048</memory>
         <maxfilesperjob>14</maxfilesperjob>
         <jobsub>--expected-lifetime=7h -Q --append_condor_requirements='(TARGET.HAS_CVMFS_uboone_opensciencegrid_org==true)'</jobsub>
         <jobsub_start>--append_condor_requirements='(TARGET.HAS_CVMFS_uboone_opensciencegrid_org==true)'</jobsub_start> 
-        
+      
        <schema>root</schema>
     </stage>
     <!--  file type  -->
