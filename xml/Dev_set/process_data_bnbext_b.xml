@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<!DOCTYPE project [
+<!ENTITY name "data_bnbext_b_1e0p">
+<!ENTITY version "v06_26_01_10">
+<!ENTITY qualifier "e10:prof">
+<!ENTITY dataset "prod_reco_optfilter_extbnb_v11_mcc8b">
+<!ENTITY user "wvdp">
+]>
+<project name="&name;">
+    <!-- Doesn't matter for non-generating jobs -->
+    <numevents>1000000</numevents>
+
+    <!--  Operating System  -->
+    <os>SL6</os>
+
+    <!--  Batch resources  -->
+    <resource>DEDICATED,OPPORTUNISTIC,OFFSITE</resource>
+
+
+    <!--  Larsoft information  -->
+    <larsoft>
+        <tag>&version;</tag>
+        <qual>&qualifier;</qual>
+        <local>/pnfs/uboone/scratch/users/&user;/submission/MCC86_2_1e0p.tar</local>
+    </larsoft>
+
+    <!--  Project stages  -->
+    <stage name="selection">
+        <fcl>run_PandoraOnly_data_bnb.fcl</fcl>
+        <outdir>/uboone/data/users/&user;/&version;/&name;</outdir>
+        <logdir>/pnfs/uboone/scratch/users/&user;/log/&version;/&name;</logdir>
+        <workdir>/pnfs/uboone/scratch/users/&user;/work/&version;/&name;</workdir>
+        <inputdef>&dataset;</inputdef>
+
+        <numjobs>943</numjobs>
+        <disk>20GB</disk>
+        <memory>4096</memory>
+        <maxfilesperjob>12</maxfilesperjob>
+        <datatier>filtered</datatier>
+        <jobsub>--expected-lifetime=24h -Q</jobsub>
+    </stage>
+    <!--  file type  -->
+    <!-- <filetype>mc</filetype> -->
+    <!--  run type  -->
+    <!-- <runtype>physics</runtype> -->
+</project>
