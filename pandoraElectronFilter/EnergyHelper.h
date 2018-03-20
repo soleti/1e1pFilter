@@ -24,6 +24,9 @@
 #include "lardata/DetectorInfoServices/DetectorPropertiesService.h"
 #include "TPrincipal.h"
 
+#include "uboone/Database/TPCEnergyCalib/TPCEnergyCalibProvider.h"
+#include "uboone/Database/TPCEnergyCalib/TPCEnergyCalibService.h"
+
 #include "uboone/UBXSec/Algorithms/TrackQuality.h"
 
 namespace lee
@@ -64,6 +67,7 @@ public:
 
   void dQdx(size_t pfp_id, const art::Event &evt,
             std::vector<double> &dqdx,
+            std::vector<float> &dqdx_cali,
             std::vector<double> &dqdx_hits,
             double m_dQdxRectangleLength, double m_dQdxRectangleWidth,
             std::string _pfp_producer);
@@ -98,6 +102,10 @@ private:
 
   art::ServiceHandle<geo::Geometry> geo;
   detinfo::DetectorProperties const *detprop;  GeometryHelper geoHelper;
+
+  //handle to tpc energy calibration provider
+  const lariov::TPCEnergyCalibProvider& energyCalibProvider
+    = art::ServiceHandle<lariov::TPCEnergyCalibService>()->GetProvider();
 };
 } // namespace lee
 

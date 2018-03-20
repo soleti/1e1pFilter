@@ -132,9 +132,11 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
     myTTree->Branch("shower_phi", "std::vector< double >", &_shower_phi);
 
     myTTree->Branch("shower_energy_hits", "std::vector< std::vector< double > >", &_shower_energy_hits);
+    myTTree->Branch("shower_energy_cali", "std::vector< std::vector< float > >", &_shower_energy_cali);
     myTTree->Branch("shower_energy_product", "std::vector< std::vector< double > >", &_shower_energy_product);
     myTTree->Branch("track_energy_dedx", "std::vector< double >", &_track_energy_dedx);
     myTTree->Branch("track_energy_hits", "std::vector< std::vector< double > >", &_track_energy_hits);
+    myTTree->Branch("track_energy_cali", "std::vector< std::vector< float > >", &_track_energy_cali);
 
     myTTree->Branch("track_dir_x", "std::vector< double >", &_track_dir_x);
     myTTree->Branch("track_dir_y", "std::vector< double >", &_track_dir_y);
@@ -177,15 +179,13 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
 
     myTTree->Branch("interaction_type", &_interaction_type, "interaction_type/i");
 
-    myTTree->Branch("shower_dQdx", "std::vector< std::vector< double > >",
-                    &_shower_dQdx);
-    myTTree->Branch("shower_dEdx", "std::vector< std::vector< double > >",
-                    &_shower_dEdx);
+    myTTree->Branch("shower_dQdx", "std::vector< std::vector< double > >", &_shower_dQdx);
+    myTTree->Branch("shower_dQdx_cali", "std::vector< std::vector< float > >", &_shower_dQdx_cali);
+    myTTree->Branch("shower_dEdx", "std::vector< std::vector< double > >", &_shower_dEdx);
 
-    myTTree->Branch("track_dQdx", "std::vector< std::vector< double > >",
-                    &_track_dQdx);
-    myTTree->Branch("track_dEdx", "std::vector< std::vector< double > >",
-                    &_track_dEdx);
+    myTTree->Branch("track_dQdx", "std::vector< std::vector< double > >", &_track_dQdx);
+    myTTree->Branch("track_dQdx_cali", "std::vector< std::vector< float > >", &_track_dQdx_cali);
+    myTTree->Branch("track_dEdx", "std::vector< std::vector< double > >", &_track_dEdx);
 
     myTTree->Branch("shower_open_angle", "std::vector< double >",
                     &_shower_open_angle);
@@ -382,11 +382,13 @@ void lee::PandoraLEEAnalyzer::clear()
     _shower_dQdx_hits.clear();
     _shower_dEdx_hits.clear();
     _shower_dQdx.clear();
+    _shower_dQdx_cali.clear();
     _shower_dEdx.clear();
 
     _track_dQdx_hits.clear();
     _track_dEdx_hits.clear();
     _track_dQdx.clear();
+    _track_dQdx_cali.clear();
     _track_dEdx.clear();
 
     _shower_sp_x.clear();
@@ -442,9 +444,11 @@ void lee::PandoraLEEAnalyzer::clear()
     _track_phi.clear();
 
     _shower_energy_hits.clear();
+    _shower_energy_cali.clear();
     _shower_energy_product.clear();
     _track_energy_dedx.clear();
     _track_energy_hits.clear();
+    _track_energy_cali.clear();
 
     _track_length.clear();
     _track_id.clear();
@@ -934,6 +938,8 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
 
         art::FindOneP<recob::Shower> shower_per_pfpart(pfparticle_handle, evt, m_pfp_producer);
         art::FindOneP<recob::Track> track_per_pfpart(pfparticle_handle, evt, m_pfp_producer);
+        art::FindMany<anab::ParticleID> fmpid(trackVecHandle, evt, m_pid_producer);
+
         art::FindManyP<anab::CosmicTag> dtAssns(trackVecHandle, evt, "decisiontreeid");
 
         art::FindManyP<recob::Cluster> clusters_per_pfpart(pfparticle_handle, evt, m_pfp_producer);
@@ -947,7 +953,6 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
         if (_n_tracks > 0)
         {
             _nu_track_ids = fElectronEventSelectionAlg.get_pfp_id_tracks_from_primary().at(ipf_candidate);
-
             for (auto &pf_id : _nu_track_ids)
             {
 
@@ -955,10 +960,12 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
                 _nu_track_daughters.push_back(pfparticle.Daughters());
 
                 std::vector<double> dqdx(3, std::numeric_limits<double>::lowest());
+                // Currently not used, reserved for calibrated variant.
+                std::vector<float> dqdx_cali(3, std::numeric_limits<float>::lowest());
                 std::vector<double> dedx(3, std::numeric_limits<double>::lowest());
                 std::vector<double> dqdx_hits_track;
 
-                energyHelper.dQdx(pf_id, evt, dqdx, dqdx_hits_track, m_dQdxRectangleLength, m_dQdxRectangleWidth, m_pfp_producer);
+                energyHelper.dQdx(pf_id, evt, dqdx, dqdx_cali, dqdx_hits_track, m_dQdxRectangleLength, m_dQdxRectangleWidth, m_pfp_producer);
                 _track_dQdx_hits.push_back(dqdx_hits_track);
                 std::vector<double> dedx_hits_track(dqdx_hits_track.size(), std::numeric_limits<double>::lowest());
 
@@ -970,20 +977,24 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
                 _track_dQdx.push_back(dqdx);
                 _track_dEdx.push_back(dedx);
 
-                auto const &track_obj = track_per_pfpart.at(pf_id);
+                art::Ptr<recob::Track> const &track_obj = track_per_pfpart.at(pf_id);
+
+                if (track_obj.isNull())
+                {
+                    std::cout << "[LEE Analyzer] track is Null" << std::endl;
+                    continue;
+                }
+
+                std::cout << "[LEE Analyzer]" << track_obj->Length() << std::endl;
 
                 double mean = std::numeric_limits<double>::lowest();
                 double stdev = std::numeric_limits<double>::lowest();
 
+                std::cout << "track object made0" << std::endl;
                 energyHelper.trackResiduals(evt, m_pfp_producer, track_obj, mean, stdev);
-
                 _track_res_mean.push_back(mean);
                 _track_res_std.push_back(stdev);
 
-                auto const &trackVecHandle =
-                    evt.getValidHandle<std::vector<recob::Track>>(m_pfp_producer);
-
-                art::FindMany<anab::ParticleID> fmpid(trackVecHandle, evt, m_pid_producer);
                 std::vector<const anab::ParticleID *> pids = fmpid.at(track_obj.key());
 
                 for (size_t ipid = 0; ipid < pids.size(); ++ipid)
@@ -1041,26 +1052,43 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
                 end_point.push_back(track_obj->End().Y());
                 end_point.push_back(track_obj->End().Z());
 
-                //_track_nhits_spacepoint filling:
+                // needed for amount of hits and charge weightd calibration constant
                 std::vector<art::Ptr<recob::SpacePoint>> spcpnts = spcpnts_per_pfpart.at(pf_id);
-                // Loop over the spacepoints and get the associated hits:
                 std::vector<int> nhits_spacepoint(3, 0);
+                std::vector<float> cali_corr(3, 0);
+                std::vector<float> total_charge(3, 0);
+
                 for (auto &_sps : spcpnts)
                 {
                     std::vector<art::Ptr<recob::Hit>> hits = hits_per_spcpnts.at(_sps.key());
-                    // Add the hits to the weighted average, if they are collection hits:
+                    const double *xyz = _sps->XYZ();
+
                     for (auto &hit : hits)
                     {
                         auto plane_nr = hit->View();
                         if (plane_nr > 2 || plane_nr < 0)
                             continue;
                         nhits_spacepoint[plane_nr]++;
+                        total_charge[plane_nr] += hit->Integral();
+                        float yzcorrection = energyCalibProvider.YZdqdxCorrection(plane_nr, xyz[1], xyz[2]);
+                        float xcorrection = energyCalibProvider.XdqdxCorrection(plane_nr, xyz[0]);
+                        if (!yzcorrection)
+                            yzcorrection = 1.0;
+                        if (!xcorrection)
+                            xcorrection = 1.0;
+                        cali_corr[plane_nr] += yzcorrection * xcorrection * hit->Integral();
                     }
                 }
+                for (unsigned short i = 0; i < 3; ++i)
+                {
+                    cali_corr[i] /= total_charge[i];
+                }
+                _track_energy_cali.push_back(cali_corr);
                 _track_nhits_spacepoint.push_back(nhits_spacepoint);
 
                 std::vector<double> this_energy;
                 std::vector<int> this_nhits;
+
                 energyHelper.energyFromHits(pfparticle, this_nhits, this_energy, evt, m_pfp_producer);
 
                 for (int i = 0; i < 3; ++i)
@@ -1137,6 +1165,8 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
             _nu_shower_daughters.push_back(pfparticle.Daughters());
 
             std::vector<double> dqdx(3, std::numeric_limits<double>::lowest());
+            // Currently not used, reserved for calibrated variant.
+            std::vector<float> dqdx_cali(3, std::numeric_limits<float>::lowest());
             std::vector<double> dedx(3, std::numeric_limits<double>::lowest());
             std::vector<double> dqdx_hits_shower;
             _matched_showers.push_back(std::numeric_limits<int>::lowest());
@@ -1144,7 +1174,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
 
             _matched_showers_energy.push_back(std::numeric_limits<double>::lowest());
 
-            energyHelper.dQdx(pf_id, evt, dqdx, dqdx_hits_shower, m_dQdxRectangleLength,
+            energyHelper.dQdx(pf_id, evt, dqdx, dqdx_cali, dqdx_hits_shower, m_dQdxRectangleLength,
                               m_dQdxRectangleWidth, m_pfp_producer);
 
             _shower_dQdx_hits.push_back(dqdx_hits_shower);
@@ -1187,22 +1217,38 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
             _shower_phi.push_back(shower_obj->Direction().Phi());
             _shower_theta.push_back(shower_obj->Direction().Theta());
 
-            //_shower_nhits_spacepoint filling:
+            // needed for amount of hits and charge weightd calibration constant
             std::vector<art::Ptr<recob::SpacePoint>> spcpnts = spcpnts_per_pfpart.at(pf_id);
-            // Loop over the spacepoints and get the associated hits:
             std::vector<int> nhits_spacepoint(3, 0);
+            std::vector<float> cali_corr(3, 0);
+            std::vector<float> total_charge(3, 0);
+
             for (auto &_sps : spcpnts)
             {
                 std::vector<art::Ptr<recob::Hit>> hits = hits_per_spcpnts.at(_sps.key());
-                // Add the hits to the weighted average, if they are collection hits:
+                const double *xyz = _sps->XYZ();
+
                 for (auto &hit : hits)
                 {
                     auto plane_nr = hit->View();
                     if (plane_nr > 2 || plane_nr < 0)
                         continue;
                     nhits_spacepoint[plane_nr]++;
+                    total_charge[plane_nr] += hit->Integral();
+                    float yzcorrection = energyCalibProvider.YZdqdxCorrection(plane_nr, xyz[1], xyz[2]);
+                    float xcorrection = energyCalibProvider.XdqdxCorrection(plane_nr, xyz[0]);
+                    if (!yzcorrection)
+                        yzcorrection = 1.0;
+                    if (!xcorrection)
+                        xcorrection = 1.0;
+                    cali_corr[plane_nr] += yzcorrection * xcorrection * hit->Integral();
                 }
             }
+            for (unsigned short i = 0; i < 3; ++i)
+            {
+                cali_corr[i] /= total_charge[i];
+            }
+            _shower_energy_cali.push_back(cali_corr);
             _shower_nhits_spacepoint.push_back(nhits_spacepoint);
 
             std::vector<double> this_energy;

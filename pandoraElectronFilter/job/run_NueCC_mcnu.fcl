@@ -32,6 +32,7 @@ physics: {
   reco: [ decisiontreeid, @sequence::ubxsec_mc_producers ]
 
   path0 : [ wouterNueCC ]
+  path1 : []
 
   trigger_paths: [ reco ]
 

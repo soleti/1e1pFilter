@@ -108,6 +108,8 @@ private:
   const anab::CosmicTagID_t TAGID_CS = anab::CosmicTagID_t::kGeometry_XY;
 
   lee::ElectronEventSelectionAlg fElectronEventSelectionAlg;
+  //handle to tpc energy calibration provider
+  const lariov::TPCEnergyCalibProvider &energyCalibProvider = art::ServiceHandle<lariov::TPCEnergyCalibService>()->GetProvider();
 
   EnergyHelper energyHelper;
   GeometryHelper geoHelper;
@@ -205,12 +207,14 @@ private:
   std::vector<std::vector<double>> _shower_dEdx_hits;
 
   std::vector<std::vector<double>> _shower_dQdx;
+  std::vector<std::vector<float>> _shower_dQdx_cali;
   std::vector<std::vector<double>> _shower_dEdx;
 
   std::vector<std::vector<double>> _track_dQdx_hits;
   std::vector<std::vector<double>> _track_dEdx_hits;
 
   std::vector<std::vector<double>> _track_dQdx;
+  std::vector<std::vector<float>> _track_dQdx_cali;
   std::vector<std::vector<double>> _track_dEdx;
 
   std::vector<size_t> _nu_track_ids;
@@ -233,6 +237,7 @@ private:
   std::vector<double> _shower_phi;
 
   std::vector<std::vector<double>> _shower_energy_hits;
+  std::vector<std::vector<float>> _shower_energy_cali;
   std::vector<std::vector<double>> _shower_energy_product;
 
   std::vector<double> _track_dir_x;
@@ -257,6 +262,7 @@ private:
 
   std::vector<double> _track_energy_dedx;
   std::vector<std::vector<double>> _track_energy_hits;
+  std::vector<std::vector<float>> _track_energy_cali;
 
   std::vector<double> _track_pidchi;
   std::vector<double> _track_pidchipr;

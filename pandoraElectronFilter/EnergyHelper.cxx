@@ -39,7 +39,6 @@ void EnergyHelper::trackResiduals(const art::Event &e,
       }
     }
   }
-
   // Collect track points
   for (size_t i = 0; i < candidate_track->NumberTrajectoryPoints(); i++)
   {
@@ -57,6 +56,7 @@ void EnergyHelper::trackResiduals(const art::Event &e,
     }
     catch (...)
     {
+      std::cout << "[EnergyHelper] Problem with track NumberTrajectoryPoints" << std::endl;
       continue;
     }
   }
@@ -217,6 +217,7 @@ void EnergyHelper::PCA(size_t pfp_id,
 void EnergyHelper::dQdx(size_t pfp_id,
                         const art::Event &evt,
                         std::vector<double> &dqdx,
+                        std::vector<float> &dqdx_cali,
                         std::vector<double> &dqdx_hits,
                         double m_dQdxRectangleLength,
                         double m_dQdxRectangleWidth,
@@ -240,6 +241,12 @@ void EnergyHelper::dQdx(size_t pfp_id,
 
   TVector3 pfp_dir;
 
+  // Field needed for calibration factor
+  double x_start, y_start, z_start;
+  double x_middle, y_middle, z_middle;
+  double x_end, y_end, z_end;
+  float start_corr, middle_corr, end_corr;
+
   //For a shower
   if (pfparticle_handle->at(pfp_id).PdgCode() == 11)
   {
@@ -252,6 +259,10 @@ void EnergyHelper::dQdx(size_t pfp_id,
       pfp_dir.SetX(shower_obj->Direction().X());
       pfp_dir.SetY(shower_obj->Direction().Y());
       pfp_dir.SetZ(shower_obj->Direction().Z());
+
+      x_start = shower_obj->ShowerStart().X();
+      y_start = shower_obj->ShowerStart().Y();
+      z_start = shower_obj->ShowerStart().Z();
     }
     catch (...)
     {
@@ -268,14 +279,53 @@ void EnergyHelper::dQdx(size_t pfp_id,
     pfp_dir.SetX(track_obj->StartDirection().X());
     pfp_dir.SetY(track_obj->StartDirection().Y());
     pfp_dir.SetZ(track_obj->StartDirection().Z());
-  }
-  art::FindManyP<recob::Cluster> clusters_per_pfpart(pfparticle_handle, evt,
-                                                     _pfp_producer);
-  art::FindManyP<recob::Hit> hits_per_clusters(cluster_handle, evt,
-                                               _pfp_producer);
 
-  std::vector<art::Ptr<recob::Cluster>> clusters =
-      clusters_per_pfpart.at(pfp_id);
+    x_start = track_obj->Start().X();
+    y_start = track_obj->Start().Y();
+    z_start = track_obj->Start().Z();
+  }
+  pfp_dir.SetMag(2.); //Go 2cm along the direction of the object.
+  x_middle = x_start + pfp_dir.X();
+  y_middle = y_start + pfp_dir.Y();
+  z_middle = z_start + pfp_dir.Z();
+  x_end = x_middle + pfp_dir.X();
+  y_end = y_middle + pfp_dir.Y();
+  z_end = z_middle + pfp_dir.Z();
+  pfp_dir.SetMag(1.); //Normalise again for safety (not needed).
+
+  for (int plane_nr = 0; plane_nr < 3; ++plane_nr)
+  {
+    float yzcorrection_start = energyCalibProvider.YZdqdxCorrection(plane_nr, y_start, z_start);
+    float xcorrection_start = energyCalibProvider.XdqdxCorrection(plane_nr, x_start);
+    if (!yzcorrection_start)
+      yzcorrection_start = 1.0;
+    if (!xcorrection_start)
+      xcorrection_start = 1.0;
+    start_corr = yzcorrection_start * xcorrection_start;
+
+    float yzcorrection_middle = energyCalibProvider.YZdqdxCorrection(plane_nr, y_middle, z_middle);
+    float xcorrection_middle = energyCalibProvider.XdqdxCorrection(plane_nr, x_middle);
+    if (!yzcorrection_middle)
+      yzcorrection_middle = 1.0;
+    if (!xcorrection_middle)
+      xcorrection_middle = 1.0;
+    middle_corr = yzcorrection_middle * xcorrection_middle;
+
+    float yzcorrection_end = energyCalibProvider.YZdqdxCorrection(plane_nr, y_end, z_end);
+    float xcorrection_end = energyCalibProvider.XdqdxCorrection(plane_nr, x_end);
+    if (!yzcorrection_end)
+      yzcorrection_end = 1.0;
+    if (!xcorrection_end)
+      xcorrection_end = 1.0;
+    end_corr = yzcorrection_end * xcorrection_end;
+
+    dqdx_cali.push_back((start_corr+middle_corr+end_corr)/3);
+  }
+
+  art::FindManyP<recob::Cluster> clusters_per_pfpart(pfparticle_handle, evt, _pfp_producer);
+  art::FindManyP<recob::Hit> hits_per_clusters(cluster_handle, evt, _pfp_producer);
+
+  std::vector<art::Ptr<recob::Cluster>> clusters = clusters_per_pfpart.at(pfp_id);
 
   double drift = detprop->DriftVelocity() * 1e-3;
   std::cout << "[dQdx] Clusters size " << clusters.size() << std::endl;
