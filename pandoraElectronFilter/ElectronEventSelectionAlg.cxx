@@ -353,7 +353,7 @@ const std::map<size_t, int> ElectronEventSelectionAlg::opticalfilter(const art::
   auto const &optical_handle = evt.getValidHandle<std::vector<recob::OpFlash>>(optical_tag);
 
   // Loop over pfp neutrino candidates and flashes.
-  std::cout << "startbeamtime " << m_startbeamtime << " endbeamtime" << m_endbeamtime << std::endl;
+  //std::cout << "startbeamtime " << m_startbeamtime << " endbeamtime" << m_endbeamtime << std::endl;
   for (size_t pfp_i : pfplist)
   {
     result[pfp_i] = -1;
@@ -372,12 +372,12 @@ const std::map<size_t, int> ElectronEventSelectionAlg::opticalfilter(const art::
         // Cut on the z position
         double absolute = std::abs(flash.ZCenter() - ChargeCenter[2]);
         double sigma = absolute / flash.ZWidth();
-        std::cout << "z_diff: " << absolute << " sigma: " << sigma << std::endl;
+        //std::cout << "z_diff: " << absolute << " sigma: " << sigma << std::endl;
 
         if (absolute < m_absoluteflashdist || sigma < 1. / m_fractionsigmaflashwidth)
         {
           result[pfp_i] = ifl;
-          std::cout << "candidate " << pfp_i << " passed opt cut with flash " << ifl << std::endl;
+          //std::cout << "candidate " << pfp_i << " passed opt cut with flash " << ifl << std::endl;
         }
       }
     }
@@ -422,8 +422,8 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt)
   }
 
   _n_neutrino_candidates = _primary_indexes.size();
-  std::cout << "[ElectronEventSelectionAlg] "
-            << "Primary PFParticles " << _n_neutrino_candidates << std::endl;
+  //std::cout << "[ElectronEventSelectionAlg] "
+  //          << "Primary PFParticles " << _n_neutrino_candidates << std::endl;
   // For each of the primary particles, determine if it and it's daughters pass
   // the cuts:
 
@@ -433,13 +433,13 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt)
 
   for (auto &_i_primary : _primary_indexes)
   {
-    unsigned int numDaughters = pfparticle_handle->at(_i_primary).NumDaughters();
-    std::cout << "[ElectronEventSelectionAlg] "
-              << "Primary PDG " << pfparticle_handle->at(_i_primary).PdgCode()
-              << std::endl;
-    std::cout << "[ElectronEventSelectionAlg] "
-              << "N. of Daughters "
-              << numDaughters << std::endl;
+    //unsigned int numDaughters = pfparticle_handle->at(_i_primary).NumDaughters();
+    //std::cout << "[ElectronEventSelectionAlg] "
+    //         << "Primary PDG " << pfparticle_handle->at(_i_primary).PdgCode()
+    //          << std::endl;
+    //std::cout << "[ElectronEventSelectionAlg] "
+    //          << "N. of Daughters "
+    //          << numDaughters << std::endl;
 
     _neutrino_candidate_passed[_i_primary] = true;
     _neutrino_vertex[_i_primary] = TVector3(0, 0, 0);
@@ -461,13 +461,6 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt)
       _neutrino_vertex.at(_i_primary).SetX(neutrino_vertex[0]);
       _neutrino_vertex.at(_i_primary).SetY(neutrino_vertex[1]);
       _neutrino_vertex.at(_i_primary).SetZ(neutrino_vertex[2]);
-
-      if (!geoHelper.isFiducial(_neutrino_vertex.at(_i_primary)))
-      {
-        _neutrino_candidate_passed[_i_primary] = false;
-        std::cout << "[ElectronEventSelectionAlg] "
-                  << "Neutrino vertex not within fiducial volume" << std::endl;
-      }
     }
     catch (...)
     {
@@ -486,9 +479,9 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt)
 
     for (auto const &pfdaughter : daughters_id)
     {
-      std::cout << "[ElectronEventSelectionAlg] "
-                << "Daughter ID: " << pfdaughter << " PDG "
-                << pfparticle_handle->at(pfdaughter).PdgCode() << std::endl;
+      //std::cout << "[ElectronEventSelectionAlg] "
+      //          << "Daughter ID: " << pfdaughter << " PDG "
+      //          << pfparticle_handle->at(pfdaughter).PdgCode() << std::endl;
 
       if (pfparticle_handle->at(pfdaughter).PdgCode() == 11)
       {
@@ -601,8 +594,8 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt)
   {
     if (val.second)
     {
-      std::cout << "[ElectronEventSelectionAlg] "
-                << "EVENT SELECTED" << std::endl;
+      //std::cout << "[ElectronEventSelectionAlg] "
+      //          << "EVENT SELECTED" << std::endl;
       return true;
     }
   }

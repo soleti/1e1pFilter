@@ -318,7 +318,7 @@ void EnergyHelper::dQdx(size_t pfp_id,
     if (!xcorrection_end)
       xcorrection_end = 1.0;
     end_corr = yzcorrection_end * xcorrection_end;
-    std::cout << "[EnergyHelper] dqdx_cali " << start_corr << middle_corr << end_corr << std::endl;
+    //std::cout << "[EnergyHelper] dqdx_cali " << start_corr << middle_corr << end_corr << std::endl;
     dqdx_cali[plane_nr] = (start_corr+middle_corr+end_corr)/3;
   }
 
@@ -328,20 +328,20 @@ void EnergyHelper::dQdx(size_t pfp_id,
   std::vector<art::Ptr<recob::Cluster>> clusters = clusters_per_pfpart.at(pfp_id);
 
   double drift = detprop->DriftVelocity() * 1e-3;
-  std::cout << "[dQdx] Clusters size " << clusters.size() << std::endl;
+  //std::cout << "[dQdx] Clusters size " << clusters.size() << std::endl;
 
   for (size_t icl = 0; icl < clusters.size(); icl++)
   {
     std::vector<art::Ptr<recob::Hit>> hits =
         hits_per_clusters.at(clusters[icl].key());
 
-    std::cout << "[dQdx] "
-              << "Cluster " << icl << std::endl;
+    //std::cout << "[dQdx] "
+    //          << "Cluster " << icl << std::endl;
 
-    std::cout << "[dQdx] "
-              << "Wire coordinate " << clusters[icl]->StartWire() << std::endl;
-    std::cout << "[dQdx] "
-              << "Tick coordinate " << clusters[icl]->StartTick() << std::endl;
+    //std::cout << "[dQdx] "
+    //          << "Wire coordinate " << clusters[icl]->StartWire() << std::endl;
+    //std::cout << "[dQdx] "
+    //          << "Tick coordinate " << clusters[icl]->StartTick() << std::endl;
 
     // TODO Use variable from detector properties!
     // To get the time in ns -> 4.8 ms / 9600 ticks * 1e6 = 500
@@ -370,10 +370,10 @@ void EnergyHelper::dQdx(size_t pfp_id,
     geoHelper.buildRectangle(m_dQdxRectangleLength, m_dQdxRectangleWidth,
                              cluster_start, cluster_axis, points);
 
-    std::cout << "[dQdx] Point 1 " << points[0][0] << " " << points[0][1] << std::endl;
-    std::cout << "[dQdx] Point 2 " << points[1][0] << " " << points[1][1] << std::endl;
-    std::cout << "[dQdx] Point 3 " << points[2][0] << " " << points[2][1] << std::endl;
-    std::cout << "[dQdx] Point 4 " << points[3][0] << " " << points[3][1] << std::endl;
+    //std::cout << "[dQdx] Point 1 " << points[0][0] << " " << points[0][1] << std::endl;
+    //std::cout << "[dQdx] Point 2 " << points[1][0] << " " << points[1][1] << std::endl;
+    //std::cout << "[dQdx] Point 3 " << points[2][0] << " " << points[2][1] << std::endl;
+    //std::cout << "[dQdx] Point 4 " << points[3][0] << " " << points[3][1] << std::endl;
 
     std::vector<double> dqdxs;
 
@@ -417,10 +417,10 @@ void EnergyHelper::dQdx(size_t pfp_id,
     std::nth_element(dqdxs.begin(), dqdxs.begin() + n, dqdxs.end());
     if (n > 0)
     {
-      std::cout << "[dQdx] Plane dQdx " << clusters[icl]->Plane().Plane << " "
-                << icl << " "
-                << dqdxs[n] << " " << dqdxs[n] * (23. / 1e6) / 0.62
-                << std::endl;
+      //std::cout << "[dQdx] Plane dQdx " << clusters[icl]->Plane().Plane << " "
+      //          << icl << " "
+      //          << dqdxs[n] << " " << dqdxs[n] * (23. / 1e6) / 0.62
+      //          << std::endl;
 
       dqdx[clusters[icl]->Plane().Plane] = dqdxs[n];
     }

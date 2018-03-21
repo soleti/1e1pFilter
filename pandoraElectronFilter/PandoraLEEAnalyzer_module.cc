@@ -21,6 +21,10 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
 
     myPOTTTree = tfs->make<TTree>("pot", "POT Tree");
 
+    myPOTTTree->Branch("run", &_run_sr, "run/i");
+    myPOTTTree->Branch("subrun", &_subrun_sr, "subrun/i");
+    myPOTTTree->Branch("pot", &_pot, "pot/d");
+
     myTTree->Branch("category", &_category, "category/i");
     myTTree->Branch("reconstructed_energy", "std::vector< double >", &_energy);
 
@@ -92,9 +96,9 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
     myTTree->Branch("nu_shower_ids", "std::vector< size_t >",
                     &_nu_shower_ids);
 
-    myTTree->Branch("nu_shower_daughters", "std::vector< std::vector< size_t > >",
+    myTTree->Branch("nu_shower_daughters", "std::vector< std::vector< int > >",
                     &_nu_shower_daughters);
-    myTTree->Branch("nu_track_daughters", "std::vector< std::vector< size_t > >",
+    myTTree->Branch("nu_track_daughters", "std::vector< std::vector< int > >",
                     &_nu_track_daughters);
 
     myTTree->Branch("event", &_event, "event/i");
@@ -166,10 +170,6 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
     myTTree->Branch("track_res_std", "std::vector< double >", &_track_res_std);
 
     myTTree->Branch("nu_pdg", &_nu_pdg, "nu_pdg/i");
-
-    myPOTTTree->Branch("run", &_run_sr, "run/i");
-    myPOTTTree->Branch("subrun", &_subrun_sr, "subrun/i");
-    myPOTTTree->Branch("pot", &_pot, "pot/d");
 
     myTTree->Branch("predict_p", "std::vector< double >", &_predict_p);
     myTTree->Branch("predict_mu", "std::vector< double >", &_predict_mu);
@@ -609,9 +609,9 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
     _subrun = evt.subRun();
     _event = evt.id().event();
 
-    std::cout << "[PandoraLEE] "
-              << "RUN " << _run << " SUBRUN " << _subrun << " EVENT " << _event
-              << std::endl;
+    //std::cout << "[PandoraLEE] "
+    //          << "RUN " << _run << " SUBRUN " << _subrun << " EVENT " << _event
+    //          << std::endl;
 
     std::vector<size_t> nu_candidates;
 
@@ -642,17 +642,17 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
         _numu_passed = int(selection_v.at(0)->GetSelectionStatus());
         if (selection_v.at(0)->GetSelectionStatus())
         {
-            std::cout << "[PandoraLEEAnalyzer] Event is selected by UBXSec" << std::endl;
+            //std::cout << "[PandoraLEEAnalyzer] Event is selected by UBXSec" << std::endl;
         }
         else
         {
-            std::cout << "[PandoraLEEAnalyzer] Event is not selected by UBXSec" << std::endl;
-            std::cout << "[PandoraLEEAnalyzer] Failure reason " << selection_v.at(0)->GetFailureReason() << std::endl;
+            //std::cout << "[PandoraLEEAnalyzer] Event is not selected by UBXSec" << std::endl;
+            //std::cout << "[PandoraLEEAnalyzer] Failure reason " << selection_v.at(0)->GetFailureReason() << std::endl;
         }
         std::map<std::string, bool> failure_map = selection_v.at(0)->GetCutFlowStatus();
         for (auto iter : failure_map)
         {
-            std::cout << "[PandoraLEEAnalyzer] UBXSec Cut: " << iter.first << "  >>>  " << (iter.second ? "PASSED" : "NOT PASSED") << std::endl;
+            //std::cout << "[PandoraLEEAnalyzer] UBXSec Cut: " << iter.first << "  >>>  " << (iter.second ? "PASSED" : "NOT PASSED") << std::endl;
             if (iter.second)
             {
                 _numu_cuts += 1;
@@ -709,12 +709,12 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
         _n_true_nu = generator.size();
 
         bool there_is_a_neutrino = false;
-        std::cout << "[PandoraLEEAnalyzer] Generator size " << generator.size() << std::endl;
+        //std::cout << "[PandoraLEEAnalyzer] Generator size " << generator.size() << std::endl;
         if (generator.size() > 0)
         {
             for (auto &gen : generator)
             {
-                std::cout << "[PandoraLEEAnalyzer] Generator origin " << gen.Origin() << std::endl;
+                //std::cout << "[PandoraLEEAnalyzer] Generator origin " << gen.Origin() << std::endl;
 
                 if (gen.Origin() == simb::kBeamNeutrino)
                 {
@@ -832,13 +832,13 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
                 _true_shower_y_sce.push_back(y_det + SCE->GetPosOffsets(x_det, y_det, z_det)[1]);
                 _true_shower_z_sce.push_back(z_det + SCE->GetPosOffsets(x_det, y_det, z_det)[2]);
 
-                std::cout << "[PandoraLEE] "
-                          << "MCShower End: (" << x_det - SCE->GetPosOffsets(x_det, y_det, z_det)[0] + 0.7
-                          << "," << y_det + SCE->GetPosOffsets(x_det, y_det, z_det)[1]
-                          << "," << z_det + SCE->GetPosOffsets(x_det, y_det, z_det)[2] << ")" << std::endl;
+                //std::cout << "[PandoraLEE] "
+                //          << "MCShower End: (" << x_det - SCE->GetPosOffsets(x_det, y_det, z_det)[0] + 0.7
+                //          << "," << y_det + SCE->GetPosOffsets(x_det, y_det, z_det)[1]
+                //          << "," << z_det + SCE->GetPosOffsets(x_det, y_det, z_det)[2] << ")" << std::endl;
 
-                std::cout << "[PandoraLEE] "
-                          << "TrueVTX: (" << _true_vx_sce << "," << _true_vy_sce << "," << _true_vz_sce << ")" << std::endl;
+                //std::cout << "[PandoraLEE] "
+                //          << "TrueVTX: (" << _true_vx_sce << "," << _true_vy_sce << "," << _true_vz_sce << ")" << std::endl;
             }
         }
 
@@ -860,10 +860,10 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
         _category = k_data;
     }
 
-    std::cout << "[PandoraLEE] "
-              << "True neutrino PDG " << _nu_pdg << std::endl;
-    std::cout << "[PandoraLEE] "
-              << "Nu energy " << _nu_energy << std::endl;
+    //std::cout << "[PandoraLEE] "
+    //          << "True neutrino PDG " << _nu_pdg << std::endl;
+    //std::cout << "[PandoraLEE] "
+    //          << "Nu energy " << _nu_energy << std::endl;
 
     std::vector<art::Ptr<recob::PFParticle>> neutrino_pf;
     std::vector<art::Ptr<recob::PFParticle>> cosmic_pf;
@@ -908,8 +908,8 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
         ipf_candidate = choose_candidate(nu_candidates, evt);
         recob::PFParticle const &pfpneutrino = pfparticle_handle->at(ipf_candidate);
 
-        std::cout << "[PandoraLEE] "
-                  << "Neutrino candidate " << ipf_candidate << std::endl;
+        //std::cout << "[PandoraLEE] "
+        //          << "Neutrino candidate " << ipf_candidate << std::endl;
         _chosen_candidate = ipf_candidate;
         _candidate_pdg = pfpneutrino.PdgCode();
         _energy.resize(3, 0); //Total reconstructed energy for three planes, will be filled for tracks and showers.
@@ -957,7 +957,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
             {
 
                 recob::PFParticle const &pfparticle = pfparticle_handle->at(pf_id);
-                _nu_track_daughters.push_back(pfparticle.Daughters());
+                _nu_track_daughters.push_back(vectorCast(pfparticle.Daughters()));
 
                 std::vector<double> dqdx(3, std::numeric_limits<double>::lowest());
                 // Currently not used, reserved for calibrated variant.
@@ -986,12 +986,9 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
                     continue;
                 }
 
-                std::cout << "[LEE Analyzer]" << track_obj->Length() << std::endl;
-
                 double mean = std::numeric_limits<double>::lowest();
                 double stdev = std::numeric_limits<double>::lowest();
 
-                std::cout << "track object made0" << std::endl;
                 energyHelper.trackResiduals(evt, m_pfp_producer, track_obj, mean, stdev);
                 _track_res_mean.push_back(mean);
                 _track_res_std.push_back(stdev);
@@ -1135,7 +1132,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
                 _track_pca.push_back(weighted_pca);
                 _track_nhits_cluster.push_back(this_nhits);
 
-                std::cout << "[PCA] Track " << pca[2][0] << " " << pca[2][1] << std::endl;
+                //std::cout << "[PCA] Track " << pca[2][0] << " " << pca[2][1] << std::endl;
             }
         }
 
@@ -1158,12 +1155,12 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
             auto const &shower_obj = shower_per_pfpart.at(pf_id);
             if (shower_obj.isNull())
             {
-                std::cout << "[PandoraLEEAnalyzer] Shower pointer " << pf_id << " is null, exiting" << std::endl;
+                std::cout << "[PandoraLEEAnalyzer]  aranShower pointer " << pf_id << " is null, exiting" << std::endl;
                 continue;
             }
 
             recob::PFParticle const &pfparticle = pfparticle_handle->at(pf_id);
-            _nu_shower_daughters.push_back(pfparticle.Daughters());
+            _nu_shower_daughters.push_back(vectorCast(pfparticle.Daughters()));
 
             std::vector<double> dqdx(3, std::numeric_limits<double>::lowest());
             // Currently not used, reserved for calibrated variant.
@@ -1180,7 +1177,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
 
             _shower_dQdx_hits.push_back(dqdx_hits_shower);
             _shower_dQdx_cali.push_back(dqdx_cali);
-            std::cout << "[dQdx] nohits " << dqdx_hits_shower.size() << " " << dqdx[0] << " " << dqdx[1] << " " << dqdx[2] << std::endl;
+            //std::cout << "[dQdx] nohits " << dqdx_hits_shower.size() << " " << dqdx[0] << " " << dqdx[1] << " " << dqdx[2] << std::endl;
 
             std::vector<double> dedx_hits_shower(dqdx_hits_shower.size(), std::numeric_limits<double>::lowest());
 
@@ -1281,7 +1278,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
             _shower_pca.push_back(weighted_pca);
             _shower_nhits_cluster.push_back(this_nhits);
 
-            std::cout << "[PCA] Shower " << pca[2][0] << " " << pca[2][1] << std::endl;
+            //std::cout << "[PCA] Shower " << pca[2][0] << " " << pca[2][1] << std::endl;
 
             for (auto &_sps : spcpnts)
             {

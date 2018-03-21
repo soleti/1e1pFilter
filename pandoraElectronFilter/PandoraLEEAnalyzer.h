@@ -220,8 +220,8 @@ private:
   std::vector<size_t> _nu_track_ids;
   std::vector<size_t> _nu_shower_ids;
 
-  std::vector<std::vector<size_t>> _nu_track_daughters;
-  std::vector<std::vector<size_t>> _nu_shower_daughters;
+  std::vector<std::vector<int>> _nu_track_daughters;
+  std::vector<std::vector<int>> _nu_shower_daughters;
 
   std::vector<double> _shower_open_angle;
   std::vector<double> _shower_length;
