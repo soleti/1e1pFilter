@@ -1,8 +1,7 @@
-
 #include "decisiontreeid.fcl"
 #include "lee_selection_alg.fcl"
+#include "ubxsec_mc_common.fcl"
 #include "pandora_lee_ana_common.fcl"
-
 
 lee_pandora_analyzer:
 {

@@ -774,10 +774,15 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
 
         for (auto &mcparticle : mcparticles)
         {
-            if (mcparticle.Process() == "primary" and mcparticle.T() != 0 and
-                mcparticle.StatusCode() == 1)
-            {
+            if (!(mcparticle.Process() == "primary" &&
+                  mcparticle.T() != 0 &&
+                  mcparticle.StatusCode() == 1))
+                continue;
 
+            const auto mc_truth = pandoraHelper.TrackIDToMCTruth(evt, "largeant", mcparticle.TrackId());
+            if (mc_truth->Origin() == simb::kBeamNeutrino)
+            {
+                std::cout << "Neutrino Daughter with pdg code " << mcparticle.PdgCode() << std::endl;
                 _nu_daughters_E.push_back(mcparticle.E());
                 _nu_daughters_pdg.push_back(mcparticle.PdgCode());
 
@@ -1079,7 +1084,11 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
                 }
                 for (unsigned short i = 0; i < 3; ++i)
                 {
-                    cali_corr[i] /= total_charge[i];
+                    if (total_charge[i] > 0)
+                    {
+                        cali_corr[i] /= total_charge[i];
+                    }
+                    //Else the value is zero
                 }
                 _track_energy_cali.push_back(cali_corr);
                 _track_nhits_spacepoint.push_back(nhits_spacepoint);
@@ -1245,7 +1254,11 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
             }
             for (unsigned short i = 0; i < 3; ++i)
             {
-                cali_corr[i] /= total_charge[i];
+                if (total_charge[i] > 0)
+                {
+                    cali_corr[i] /= total_charge[i];
+                }
+                //Else the value is zero
             }
             _shower_energy_cali.push_back(cali_corr);
             _shower_nhits_spacepoint.push_back(nhits_spacepoint);
@@ -1506,10 +1519,10 @@ void lee::PandoraLEEAnalyzer::reconfigure(fhicl::ParameterSet const &pset)
     fElectronEventSelectionAlg.reconfigure(
         pset.get<fhicl::ParameterSet>("ElectronSelectionAlg"));
 
-    m_hitfinderLabel = pset.get<std::string>("HitFinderLabel", "pandoraCosmicHitRemoval::PandoraLEEAnalyzer");
-    m_pid_producer = pset.get<std::string>("ParticleIDModuleLabel", "pandoraNupid::PandoraLEEAnalyzer");
-    m_pfp_producer = pset.get<std::string>("PFParticleLabel", "pandoraNu::PandoraLEEAnalyzer");
-    m_spacepointLabel = pset.get<std::string>("SpacePointLabel", "pandoraNu::PandoraLEEAnalyzer");
+    m_hitfinderLabel = pset.get<std::string>("HitFinderLabel", "pandoraCosmicHitRemoval::McRecoStage2");
+    m_pid_producer = pset.get<std::string>("ParticleIDModuleLabel", "pandoraNupid::McRecoStage2");
+    m_pfp_producer = pset.get<std::string>("PFParticleLabel", "pandoraNu::McRecoStage2");
+    m_spacepointLabel = pset.get<std::string>("SpacePointLabel", "pandoraNu::McRecoStage2");
     //m_spacepointLabel = pset.get<std::string>("SpacePointLabel", "pandoraNu::McRecoStage2");
 
     m_printDebug = pset.get<bool>("PrintDebug", false);
