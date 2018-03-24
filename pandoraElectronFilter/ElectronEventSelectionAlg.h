@@ -73,6 +73,11 @@ namespace lee {
     void reconfigure(fhicl::ParameterSet const & p) ;
 
 
+    void GetFlashLocation(std::vector<double> pePerOpChannel, 
+                                     double& Ycenter, 
+                                     double& Zcenter, 
+                                     double& Ywidth, 
+                                     double& Zwidth);
 
     /**
     * @brief Checks if there is a flash within the 3.2-4.8 ms window and compatible with the center of charge
@@ -267,6 +272,10 @@ namespace lee {
     double m_cut_ywidth;
     double m_cut_sigywidth;
     double m_charge_light_ratio;
+
+    // Fixing the PMT wrong ids
+    bool _do_opdet_swap;                 ///< If true swaps reconstructed OpDets according to _opdet_swap_map
+    std::vector<int> _opdet_swap_map;    ///< The OpDet swap map for reco flashes
 
     bool m_flashmatching;
     bool m_FM_all;

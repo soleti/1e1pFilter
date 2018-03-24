@@ -543,9 +543,11 @@ void lee::PandoraLEEAnalyzer::categorizePFParticles(
     lar_pandora::PFParticlesToMCParticles matchedParticles;
 
     std::cout << "[PandoraLEE] Before configure " << std::endl;
+    std::cout << "[PandoraLEE]" << m_pfp_producer << m_spacepointLabel << m_hitfinderLabel << _geantModuleLabel << _mcpHitAssLabel << std::endl;
 
     pandoraHelper.Configure(evt, m_pfp_producer, m_spacepointLabel,
                             m_hitfinderLabel, _geantModuleLabel, _mcpHitAssLabel);
+
     std::cout << "[PandoraLEE] Before GetRecoToTrueMatches " << std::endl;
 
     pandoraHelper.GetRecoToTrueMatches(matchedParticles);
@@ -609,9 +611,9 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
     _subrun = evt.subRun();
     _event = evt.id().event();
 
-    //std::cout << "[PandoraLEE] "
-    //          << "RUN " << _run << " SUBRUN " << _subrun << " EVENT " << _event
-    //          << std::endl;
+    std::cout << "[PandoraLEE] "
+              << "RUN " << _run << " SUBRUN " << _subrun << " EVENT " << _event
+              << std::endl;
 
     std::vector<size_t> nu_candidates;
 
@@ -782,7 +784,6 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
             const auto mc_truth = pandoraHelper.TrackIDToMCTruth(evt, "largeant", mcparticle.TrackId());
             if (mc_truth->Origin() == simb::kBeamNeutrino)
             {
-                std::cout << "Neutrino Daughter with pdg code " << mcparticle.PdgCode() << std::endl;
                 _nu_daughters_E.push_back(mcparticle.E());
                 _nu_daughters_pdg.push_back(mcparticle.PdgCode());
 
@@ -1035,7 +1036,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
                     if (dttag->CosmicType() == TAGID_P)
                         _predict_p.push_back(dttag->CosmicScore());
                     else if (dttag->CosmicType() == TAGID_MU)
-                        _predict_mu.push_back(dttag->CosmicScore());
+                        _predict_mu.push_back(dttag->CosmicScore());         
                     else if (dttag->CosmicType() == TAGID_PI)
                         _predict_pi.push_back(dttag->CosmicScore());
                     else if (dttag->CosmicType() == TAGID_EM)
@@ -1418,8 +1419,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
 
         _n_primaries = _primary_indexes.size();
 
-        if (
-            !track_cr_found && _nu_matched_tracks == 0 && !shower_cr_found && _nu_matched_showers == 0 && _category != k_dirt && _category != k_data)
+        if (!track_cr_found && _nu_matched_tracks == 0 && !shower_cr_found && _nu_matched_showers == 0 && _category != k_dirt && _category != k_data)
         {
             _category = k_other;
             std::cout << "[PandoraLEE] "
@@ -1515,15 +1515,13 @@ void lee::PandoraLEEAnalyzer::reconfigure(fhicl::ParameterSet const &pset)
 
     // TODO: add an external fcl file to change configuration
     // add what you want to read, and default values of your labels etc. example:
-    //  m_particleLabel = pset.get<std::string>("PFParticleModule","pandoraNu");
-    fElectronEventSelectionAlg.reconfigure(
-        pset.get<fhicl::ParameterSet>("ElectronSelectionAlg"));
+    fElectronEventSelectionAlg.reconfigure(pset.get<fhicl::ParameterSet>("ElectronSelectionAlg"));
 
-    m_hitfinderLabel = pset.get<std::string>("HitFinderLabel", "pandoraCosmicHitRemoval::McRecoStage2");
-    m_pid_producer = pset.get<std::string>("ParticleIDModuleLabel", "pandoraNupid::McRecoStage2");
-    m_pfp_producer = pset.get<std::string>("PFParticleLabel", "pandoraNu::McRecoStage2");
-    m_spacepointLabel = pset.get<std::string>("SpacePointLabel", "pandoraNu::McRecoStage2");
-    //m_spacepointLabel = pset.get<std::string>("SpacePointLabel", "pandoraNu::McRecoStage2");
+    m_hitfinderLabel = pset.get<std::string>("HitFinderLabel", "pandoraCosmicHitRemoval::PandoraLEEAnalyzer");
+    m_pid_producer = pset.get<std::string>("ParticleIDModuleLabel", "pandoraNupid::PandoraLEEAnalyzer");
+    m_pfp_producer = pset.get<std::string>("PFParticleLabel", "pandoraNu::PandoraLEEAnalyzer");
+    m_spacepointLabel = pset.get<std::string>("SpacePointLabel", "pandoraNu::PandoraLEEAnalyzer");
+    //m_spacepointLabel = pset.get<std::string>("SpacePointLabel", "pandoraNu::PandoraLEEAnalyzer");
 
     m_printDebug = pset.get<bool>("PrintDebug", false);
 

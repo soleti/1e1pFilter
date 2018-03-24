@@ -64,7 +64,7 @@ void ElectronEventSelectionAlg::reconfigure(fhicl::ParameterSet const &p)
 
   m_fidvolZstart = p.get<double>("fidvolZstart", 10);
   m_fidvolZend = p.get<double>("fidvolZend", 50);
-  m_pfp_producer = p.get<std::string>("PFParticleLabel", "pandoraNu::McRecoStage2");
+  m_pfp_producer = p.get<std::string>("PFParticleLabel", "pandoraNu::PandoraLEEAnalyzer");
 
   geoHelper.setFiducialVolumeCuts(m_fidvolXstart, m_fidvolXend, m_fidvolYstart,
                                   m_fidvolYend, m_fidvolZstart, m_fidvolZend);
@@ -84,6 +84,9 @@ void ElectronEventSelectionAlg::reconfigure(fhicl::ParameterSet const &p)
   m_flashmatching = p.get<bool>("Flashmatching", true);
   m_FM_all = p.get<bool>("Flashmatching_first", true);
 
+  _do_opdet_swap           = p.get<bool>("DoOpDetSwap", false);
+  _opdet_swap_map          = p.get<std::vector<int> >("OpDetSwapMap");
+
   m_isCosmicInTime = p.get<bool>("isCosmicInTime", false);
   m_mgr.Configure(p.get<flashana::Config_t>("FlashMatchConfig"));
   fOpticalFlashFinderLabel = p.get<std::string>("OpticalFlashFinderLabel", "simpleFlashBeam");
@@ -98,8 +101,8 @@ void ElectronEventSelectionAlg::reconfigure(fhicl::ParameterSet const &p)
   // std::cout << "fractionsigmaflashwidth\t" << m_fractionsigmaflashwidth << std::endl;
   // std::cout << "absoluteflashdist\t" << m_absoluteflashdist << std::endl;
 
-  // std::cout << "startbeamtime\t" << m_startbeamtime << std::endl;
-  // std::cout << "endbeamtime\t" << m_endbeamtime << std::endl;
+  std::cout << "[EventSelectionAlg] startbeamtime\t" << m_startbeamtime << std::endl;
+  std::cout << "[EventSelectionAlg] endbeamtime\t" << m_endbeamtime << std::endl;
   // std::cout << "PE_threshold\t" << m_PE_threshold << std::endl;
 
   // std::cout << "cut_zwidth\t" << m_cut_zwidth << std::endl;
@@ -110,6 +113,52 @@ void ElectronEventSelectionAlg::reconfigure(fhicl::ParameterSet const &p)
   // std::cout << "Flashmatching\t" << m_flashmatching << std::endl;
   // std::cout << "Flashmatching_first\t" << m_FM_all << std::endl;
 
+}
+
+
+
+void ElectronEventSelectionAlg::GetFlashLocation(std::vector<double> pePerOpChannel, 
+                                     double& Ycenter, 
+                                     double& Zcenter, 
+                                     double& Ywidth, 
+                                     double& Zwidth)
+{
+
+  // Reset variables
+  Ycenter = Zcenter = 0.;
+  Ywidth  = Zwidth  = -999.;
+  double totalPE = 0.;
+  double sumy = 0., sumz = 0., sumy2 = 0., sumz2 = 0.;
+
+  for (unsigned int opch = 0; opch < pePerOpChannel.size(); opch++) {
+
+    if (opch > 31 && opch < 200){
+      //  std::cout << "Ignoring channel " << opch << " as it's not a real channel" << std::endl;                                                                                             
+      continue;
+    }
+
+    // Get physical detector location for this opChannel
+    double PMTxyz[3];
+    m_geo->OpDetGeoFromOpChannel(opch).GetCenter(PMTxyz); 
+
+    // Add up the position, weighting with PEs
+    sumy    += pePerOpChannel[opch]*PMTxyz[1];
+    sumy2   += pePerOpChannel[opch]*PMTxyz[1]*PMTxyz[1];
+    sumz    += pePerOpChannel[opch]*PMTxyz[2];
+    sumz2   += pePerOpChannel[opch]*PMTxyz[2]*PMTxyz[2];
+
+    totalPE += pePerOpChannel[opch];
+  }
+
+  Ycenter = sumy/totalPE;
+  Zcenter = sumz/totalPE;
+
+  // This is just sqrt(<x^2> - <x>^2)
+  if ( (sumy2*totalPE - sumy*sumy) > 0. ) 
+    Ywidth = std::sqrt(sumy2*totalPE - sumy*sumy)/totalPE;
+  
+  if ( (sumz2*totalPE - sumz*sumz) > 0. ) 
+    Zwidth = std::sqrt(sumz2*totalPE - sumz*sumz)/totalPE;
 }
 
 const std::map<size_t, int> ElectronEventSelectionAlg::flashBasedSelection(const art::Event &evt,
@@ -161,7 +210,6 @@ const std::map<size_t, int> ElectronEventSelectionAlg::flashBasedSelection(const
   // Else means we have a good flash
   else
   {
-
     // Store what I want to know about the flash
     recob::OpFlash const &flash = optical_handle->at(maxIndex);
     ::flashana::Flash_t f;
@@ -173,11 +221,13 @@ const std::map<size_t, int> ElectronEventSelectionAlg::flashBasedSelection(const
     f.pe_v.resize(m_geo->NOpDets());
     f.pe_err_v.resize(m_geo->NOpDets());
     f.time = flash.Time();
-    for (unsigned int ipmt = 0; ipmt < m_geo->NOpDets(); ++ipmt)
-    {
-      unsigned int opdet = m_geo->OpDetFromOpChannel(ipmt);
-      f.pe_v[opdet] = flash.PE(ipmt);
-      f.pe_err_v[opdet] = sqrt(flash.PE(ipmt));
+    for (unsigned int i = 0; i < f.pe_v.size(); i++) {
+      unsigned int opdet = m_geo->OpDetFromOpChannel(i);
+      if (_do_opdet_swap && evt.isRealData()) {
+        opdet = _opdet_swap_map.at(opdet);
+      }
+      f.pe_v[opdet] = flash.PE(i);
+      f.pe_err_v[opdet] = sqrt(flash.PE(i));
     }
 
     // Loop over the neutrino candidates to do prematching cuts
@@ -369,7 +419,6 @@ const std::map<size_t, int> ElectronEventSelectionAlg::opticalfilter(const art::
 
         ChargeCenter = pandoraHelper.calculateChargeCenter(pfp_i, pfparticle_handle, evt, m_pfp_producer);
 
-        // Cut on the z position
         double absolute = std::abs(flash.ZCenter() - ChargeCenter[2]);
         double sigma = absolute / flash.ZWidth();
         //std::cout << "z_diff: " << absolute << " sigma: " << sigma << std::endl;

@@ -29,7 +29,7 @@ physics: {
      # ParameterSets for zero or more filter modules
   }
 
-  reco: [ decisiontreeid, @sequence::ubxsec_mc_producers ]
+  reco: [@sequence::ubxsec_mc_producers,decisiontreeid ]
 
   path0 : [ wouterNueCC ]
   path1 : []
@@ -80,19 +80,17 @@ physics.producers.RecoTrueMatcher.MCPHitAssProducer:          "pandoraCosmicHitR
 physics.producers.RecoTrueMatcher.HitProducer:                "pandoraCosmicHitRemoval::PandoraLEEAnalyzer"
 
 physics.producers.CandidateConsistency.TrackProducer:         "pandoraNu::PandoraLEEAnalyzer"
-physics.producers.CandidateConsistency.ShowerProducer:        "pandoraNu::PandoraLEEAnalyzer"
-physics.producers.CandidateConsistency.TPCObjectProducer:     "TPCObjectMaker::PandoraLEEAnalyzer"
+physics.producers.CandidateConsistency.ShowerProducer:         "pandoraNu::PandoraLEEAnalyzer"
+physics.producers.CandidateConsistency.TPCObjectProducer:         "TPCObjectMaker::PandoraLEEAnalyzer"
 
 physics.producers.TPCObjectMaker.TrackProducer:               "pandoraNu::PandoraLEEAnalyzer"
-physics.producers.TPCObjectMaker.ShowerProducer:              "pandoraNu::PandoraLEEAnalyzer"
-physics.producers.TPCObjectMaker.VertexProducer:              "pandoraNu::PandoraLEEAnalyzer"
-physics.producers.TPCObjectMaker.PFParticleProducer:          "pandoraNu::PandoraLEEAnalyzer"
+physics.producers.TPCObjectMaker.ShowerProducer:               "pandoraNu::PandoraLEEAnalyzer"
+physics.producers.TPCObjectMaker.VertexProducer:               "pandoraNu::PandoraLEEAnalyzer"
+physics.producers.TPCObjectMaker.PFParticleProducer:           "pandoraNu::PandoraLEEAnalyzer"
 physics.producers.TPCObjectMaker.HitProducer:                 "pandoraCosmicHitRemoval::PandoraLEEAnalyzer"
-physics.producers.TPCObjectMaker.SpacePointProducer:          "pandoraNu::PandoraLEEAnalyzer"
-physics.producers.TPCObjectMaker.MCPHitAssProducer:           "pandoraCosmicHitRemoval::PandoraLEEAnalyzer"
+physics.producers.TPCObjectMaker.SpacePointProducer:                 "pandoraNu::PandoraLEEAnalyzer"
+physics.producers.TPCObjectMaker.MCPHitAssProducer:                 "pandoraCosmicHitRemoval::PandoraLEEAnalyzer"
 
-physics.producers.pandoraNuGeoCosmicTag.TrackProducer:        "pandoraNu::PandoraLEEAnalyzer"
-physics.producers.pandoraNuGeoCosmicTag.PFParticleProducer:   "pandoraNu::PandoraLEEAnalyzer"
-physics.producers.pandoraNu.HitFinderModuleLabel:             "pandoraCosmicHitRemoval::PandoraLEEAnalyzer"
-physics.producers.pandoraCosmicStoppingMu.TrackProducer:      "pandoraNu::PandoraLEEAnalyzer"
-physics.producers.pandoraCosmicStoppingMu.PFParticleProducer: "pandoraNu::PandoraLEEAnalyzer"
+physics.producers.pandoraNuGeoCosmicTag.TrackProducer:              "pandoraNu::PandoraLEEAnalyzer"
+physics.producers.pandoraNuGeoCosmicTag.PFParticleProducer:         "pandoraNu::PandoraLEEAnalyzer"
+physics.producers.pandoraNu.HitFinderModuleLabel:                   "pandoraCosmicHitRemoval::PandoraLEEAnalyzer"

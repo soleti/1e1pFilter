@@ -93,7 +93,7 @@ private:
   std::string m_pid_producer;
   std::string m_spacepointLabel;
   std::string _mctruthLabel = "generator";
-  std::string _mcpHitAssLabel = "crHitRemovalTruthMatch";
+  std::string _mcpHitAssLabel = "pandoraCosmicHitRemoval::PandoraLEEAnalyzer";
 
   std::vector<double> _predict_p;
   std::vector<double> _predict_mu;
