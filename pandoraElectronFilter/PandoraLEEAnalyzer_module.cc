@@ -543,7 +543,6 @@ void lee::PandoraLEEAnalyzer::categorizePFParticles(
     lar_pandora::PFParticlesToMCParticles matchedParticles;
 
     std::cout << "[PandoraLEE] Before configure " << std::endl;
-    std::cout << "[PandoraLEE]" << m_pfp_producer << m_spacepointLabel << m_hitfinderLabel << _geantModuleLabel << _mcpHitAssLabel << std::endl;
 
     pandoraHelper.Configure(evt, m_pfp_producer, m_spacepointLabel,
                             m_hitfinderLabel, _geantModuleLabel, _mcpHitAssLabel);
@@ -662,7 +661,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
         }
     }
 
-    if ((!evt.isRealData() || m_isOverlaidSample) && !m_isCosmicInTime)
+    if ((!evt.isRealData() || m_isOverlaidSample))
     {
         _gain = 200;
 
@@ -882,7 +881,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
     std::vector<std::string> cosmic_process;
     std::vector<double> cosmic_energy;
 
-    if ((!evt.isRealData() || m_isOverlaidSample) && !m_isCosmicInTime)
+    if ((!evt.isRealData() || m_isOverlaidSample))
     {
 
         categorizePFParticles(evt,
@@ -1030,11 +1029,10 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
                 _matched_tracks_energy.push_back(std::numeric_limits<double>::lowest());
 
                 std::vector<art::Ptr<anab::CosmicTag>> dtVec = dtAssns.at(track_obj.key());
-
                 for (auto const &dttag : dtVec)
                 {
-                    if (dttag->CosmicType() == TAGID_P)
-                        _predict_p.push_back(dttag->CosmicScore());
+                    if (dttag->CosmicType() == TAGID_P){
+                        _predict_p.push_back(dttag->CosmicScore());}
                     else if (dttag->CosmicType() == TAGID_MU)
                         _predict_mu.push_back(dttag->CosmicScore());         
                     else if (dttag->CosmicType() == TAGID_PI)

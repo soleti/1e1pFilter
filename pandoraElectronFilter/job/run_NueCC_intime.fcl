@@ -34,12 +34,14 @@ physics: {
   filters : {
      # ParameterSets for zero or more filter modules
   }
-  reco: [ decisiontreeid, @sequence::ubxsec_mc_producers ]
 
-  path0 : [ @sequence::ubxsec_mc_analyzers, wouterNueCC ]
+  reco: [@sequence::ubxsec_mc_producers,decisiontreeid ]
 
-  #here, just a shorthand: could have done ana: [ wouterNueCC ] then end_paths: [ ana ]
-  trigger_paths: [ reco]
+  path0 : [ wouterNueCC ]
+  path1 : []
+
+  trigger_paths: [ reco ]
+
   end_paths: [ path0 ]
 
 }

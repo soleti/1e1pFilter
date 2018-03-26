@@ -21,7 +21,7 @@
     <larsoft>
         <tag>&version;</tag>
         <qual>&qualifier;</qual>
-        <local>/pnfs/uboone/resilient/users/&user;/submission/MCC87_3_24_1s0t.tar</local>
+        <local>/pnfs/uboone/resilient/users/&user;/submission/MCC87_3_25_1s0t.tar</local>
     </larsoft>
 
     <!--  Project stages  -->
@@ -34,8 +34,8 @@
         <bookdir>/uboone/data/users/&user;/book/&version;/&name;</bookdir>>
         <inputdef>&dataset;</inputdef>
         <numjobs>276</numjobs>
-        <disk>8GB</disk>
-        <memory>2750</memory>
+        <disk>4GB</disk>
+        <memory>1500</memory>
         <maxfilesperjob>14</maxfilesperjob>
         <jobsub>--expected-lifetime=7h -Q --append_condor_requirements='(TARGET.HAS_CVMFS_uboone_opensciencegrid_org==true)'</jobsub>
         <jobsub_start>--append_condor_requirements='(TARGET.HAS_CVMFS_uboone_opensciencegrid_org==true)'</jobsub_start> 
