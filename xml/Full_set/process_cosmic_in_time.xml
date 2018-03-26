@@ -35,7 +35,7 @@
         <inputdef>&dataset;</inputdef>
         <numjobs>2208</numjobs>
         <disk>4GB</disk>
-        <memory>2300</memory>
+        <memory>2700</memory>
         <maxfilesperjob>14</maxfilesperjob>
         <jobsub>--expected-lifetime=7h -Q --append_condor_requirements='(TARGET.HAS_CVMFS_uboone_opensciencegrid_org==true)'</jobsub>
         <jobsub_start>--append_condor_requirements='(TARGET.HAS_CVMFS_uboone_opensciencegrid_org==true)'</jobsub_start> 
