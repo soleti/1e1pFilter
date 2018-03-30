@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <!DOCTYPE project [
-<!ENTITY name "bnb_filter_data_ubxsec_b">
+<!ENTITY name "bnb_filter_data_ubxsec_a">
 <!ENTITY larsoft_version "v06_26_01_10">
 <!ENTITY version "v06_26_01_11">
 <!ENTITY qualifier "e10:prof">
-<!ENTITY dataset "prod_reco_optfilter_bnb_v11_unblind_mcc8b">
+<!ENTITY dataset "prod_reco_optfilter_bnb_v11_unblind_mcc8a">
 <!ENTITY user "srsoleti">
 ]>
 
@@ -34,7 +34,7 @@
         <workdir>/pnfs/uboone/scratch/users/&user;/work/lee/&name;</workdir>
         <inputdef>&dataset;</inputdef>
 
-        <numjobs>771</numjobs>
+        <numjobs>52</numjobs>
         <disk>10GB</disk>
         <memory>4096</memory>
         <maxfilesperjob>5</maxfilesperjob>

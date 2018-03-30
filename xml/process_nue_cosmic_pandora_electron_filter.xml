@@ -2,7 +2,7 @@
 <!DOCTYPE project [
 <!ENTITY name "bnb_nue_cosmic_pandora_electron_filter">
 <!ENTITY larsoft_version "v06_26_01_10">
-<!ENTITY version "v06_26_01_11">
+<!ENTITY version "v06_26_01_12">
 <!ENTITY qualifier "e10:prof">
 <!ENTITY dataset "prodgenie_bnb_intrinsic_nue_cosmic_uboone_mcc8.7_reco2">
 <!ENTITY user "srsoleti">
@@ -32,10 +32,10 @@
         <logdir>/pnfs/uboone/scratch/users/&user;/&version;/lee/&name;</logdir>
         <workdir>/pnfs/uboone/scratch/users/&user;/work/lee/&name;</workdir>
         <inputdef>&dataset;</inputdef>
-        <numjobs>400</numjobs>
+        <numjobs>100</numjobs>
         <disk>16GB</disk>
-        <memory>4096</memory>
-        <maxfilesperjob>20</maxfilesperjob>
+        <memory>8192</memory>
+        <maxfilesperjob>10</maxfilesperjob>
         <datatier>filtered</datatier>
         <jobsub>--expected-lifetime=24h -Q --append_condor_requirements='(TARGET.HAS_CVMFS_uboone_opensciencegrid_org==true)'</jobsub>
         <jobsub_start>--append_condor_requirements='(TARGET.HAS_CVMFS_uboone_opensciencegrid_org==true)'</jobsub_start>

@@ -613,6 +613,50 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
 
   _event_passed = int(fElectronEventSelectionAlg.eventSelected(evt));
 
+  if (_event_passed && !evt.isRealData()) {
+    art::Handle<std::vector<simb::GTruth>> gTruthHandle;
+    evt.getByLabel("generator", gTruthHandle);
+    if (!gTruthHandle.isValid())
+      return;
+    std::vector<art::Ptr<simb::GTruth>> gTruthVec;
+    art::fill_ptr_vector(gTruthVec, gTruthHandle);
+    if (gTruthVec.size() == 0)
+    {
+      std::cout << "\n[NUMUSEL] No GTruth Information" << std::endl;
+      return;
+    }
+
+    art::Handle<std::vector<simb::MCFlux>> mcFluxHandle;
+    evt.getByLabel("generator", mcFluxHandle);
+    if (!mcFluxHandle.isValid())
+      return;
+    std::vector<art::Ptr<simb::MCFlux>> mcFluxVec;
+    art::fill_ptr_vector(mcFluxVec, mcFluxHandle);
+    if (mcFluxVec.size() == 0)
+    {
+      std::cout << "\n[NUMUSEL] No MCFlux Information" << std::endl;
+      return;
+    }
+
+    art::Handle<std::vector<simb::MCTruth>> mcTruthHandle;
+    evt.getByLabel("generator", mcTruthHandle);
+    if (!mcTruthHandle.isValid())
+      return;
+    std::vector<art::Ptr<simb::MCTruth>> mcTruthVec;
+    art::fill_ptr_vector(mcTruthVec, mcTruthHandle);
+    if (mcTruthVec.size() == 0)
+    {
+      std::cout << "\n[NUMUSEL] No MCTruth Information" << std::endl;
+      return;
+    }
+
+    const art::Ptr<simb::MCFlux> mcFlux = mcFluxVec.at(0);
+    const art::Ptr<simb::GTruth> gTruth = gTruthVec.at(0);
+    const art::Ptr<simb::MCTruth> mcTruth = mcTruthVec.at(0);
+
+    ewutil.WriteTree(evt, mcFlux, mcTruth, gTruth);
+  }
+
   _flash_PE = fElectronEventSelectionAlg.get_flash_PE();
   _flash_time = fElectronEventSelectionAlg.get_flash_time();
 
@@ -892,7 +936,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
   size_t ipf_candidate = std::numeric_limits<size_t>::lowest();
   if (_event_passed)
   {
-
+  
     for (auto &inu : fElectronEventSelectionAlg.get_primary_indexes())
     {
       if (fElectronEventSelectionAlg.get_neutrino_candidate_passed().at(inu))

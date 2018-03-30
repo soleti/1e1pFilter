@@ -63,6 +63,8 @@
 #include "larcore/Geometry/WireGeo.h"
 #include "lardata/DetectorInfoServices/DetectorPropertiesService.h"
 
+#include "uboone/EventWeight/EventWeightTreeUtility.h"
+
 namespace lee {
 
 class PandoraLEEAnalyzer : public art::EDAnalyzer {
@@ -109,6 +111,7 @@ private:
   EnergyHelper energyHelper;
   GeometryHelper geoHelper;
   PandoraInterfaceHelper pandoraHelper;
+  uboone::EWTreeUtil ewutil;
 
   TFile *myTFile;
   TTree *myTTree;
