@@ -219,6 +219,7 @@ void EnergyHelper::dQdx(size_t pfp_id,
                         std::vector<double> &dqdx,
                         std::vector<float> &dqdx_cali,
                         std::vector<double> &dqdx_hits,
+                        std::vector<int> &dqdx_wires,
                         double m_dQdxRectangleLength,
                         double m_dQdxRectangleWidth,
                         std::string _pfp_producer)
@@ -404,6 +405,7 @@ void EnergyHelper::dQdx(size_t pfp_id,
         if (clusters[icl]->Plane().Plane == 2)
         {
           dqdx_hits.push_back(q / pitch);
+          dqdx_wires.push_back(hit->WireID().Wire);
         }
       }
       first = false;

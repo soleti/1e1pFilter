@@ -42,6 +42,6 @@ lee_electron_alg: {
 # Re-use flash
 lee_electron_alg.FlashMatchConfig.FlashMatchManager.AllowReuseFlash: true
 lee_electron_alg.FlashMatchConfig.FlashMatchManager.CustomAlgo:         ["LightCharge"]
-lee_electron_alg.FlashMatchConfig.QLLMatch.NormalizeHypothesis:         true
+lee_electron_alg.FlashMatchConfig.QLLMatch.NormalizeHypothesis:         false
 
 END_PROLOG

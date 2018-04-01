@@ -8,14 +8,15 @@ lee_pandora_analyzer:
     module_type:                "PandoraLEEAnalyzer"
     ElectronSelectionAlg:       @local::lee_electron_alg
     PrintDebug:                 false
-    HitFinderLabel:             "pandoraCosmicHitRemoval::PandoraLEEAnalyzer"
-    PFParticleLabel:            "pandoraNu::PandoraLEEAnalyzer"
-    SpacePointLabel:            "pandoraNu::PandoraLEEAnalyzer"
-    ParticleIDModuleLabel:      "pandoraNupid::PandoraLEEAnalyzer" 
+    HitFinderLabel:             "pandoraCosmicHitRemoval::McRecoStage2"
+    PFParticleLabel:            "pandoraNu::McRecoStage2"
+    SpacePointLabel:            "pandoraNu::McRecoStage2"
+    ParticleIDModuleLabel:      "pandoraNupid::McRecoStage2" 
 }
 
 lee_pandora_analyzer.ElectronSelectionAlg.startbeamtime: 3.65
 lee_pandora_analyzer.ElectronSelectionAlg.endbeamtime: 5.25
+lee_pandora_analyzer.ElectronSelectionAlg.PFParticleLabel:  "pandoraNu::McRecoStage2"
 
 physics: {
 
@@ -35,7 +36,7 @@ physics: {
      # ParameterSets for zero or more filter modules
   }
 
-  reco: [@sequence::ubxsec_mc_producers,decisiontreeid ]
+  reco: [decisiontreeid ]
 
   path0 : [ wouterNueCC ]
   path1 : []

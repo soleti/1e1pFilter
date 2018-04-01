@@ -182,10 +182,12 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
     myTTree->Branch("shower_dQdx", "std::vector< std::vector< double > >", &_shower_dQdx);
     myTTree->Branch("shower_dQdx_cali", "std::vector< std::vector< float > >", &_shower_dQdx_cali);
     myTTree->Branch("shower_dEdx", "std::vector< std::vector< double > >", &_shower_dEdx);
+    myTTree->Branch("shower_dQdx_wires", "std::vector< std::vector< int > >", &_shower_dQdx_wires);
 
     myTTree->Branch("track_dQdx", "std::vector< std::vector< double > >", &_track_dQdx);
     myTTree->Branch("track_dQdx_cali", "std::vector< std::vector< float > >", &_track_dQdx_cali);
     myTTree->Branch("track_dEdx", "std::vector< std::vector< double > >", &_track_dEdx);
+    myTTree->Branch("track_dQdx_wires", "std::vector< std::vector< int > >", &_track_dQdx_wires);
 
     myTTree->Branch("shower_open_angle", "std::vector< double >",
                     &_shower_open_angle);
@@ -383,12 +385,14 @@ void lee::PandoraLEEAnalyzer::clear()
     _shower_dEdx_hits.clear();
     _shower_dQdx.clear();
     _shower_dQdx_cali.clear();
+    _shower_dQdx_wires.clear();
     _shower_dEdx.clear();
 
     _track_dQdx_hits.clear();
     _track_dEdx_hits.clear();
     _track_dQdx.clear();
     _track_dQdx_cali.clear();
+    _track_dQdx_wires.clear();
     _track_dEdx.clear();
 
     _shower_sp_x.clear();
@@ -627,6 +631,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
     std::vector<double> true_neutrino_vertex(3);
     std::cout << "[PandoraLEEAnalyzer] Real data " << evt.isRealData() << std::endl;
 
+    /*
     art::Handle<std::vector<ubana::SelectionResult>> selection_h;
     evt.getByLabel("UBXSec", selection_h);
 
@@ -660,7 +665,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
             }
         }
     }
-
+    */
     if ((!evt.isRealData() || m_isOverlaidSample))
     {
         _gain = 200;
@@ -969,10 +974,13 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
                 std::vector<float> dqdx_cali(3, std::numeric_limits<float>::lowest());
                 std::vector<double> dedx(3, std::numeric_limits<double>::lowest());
                 std::vector<double> dqdx_hits_track;
+                std::vector<int> dqdx_wires_track;
 
-                energyHelper.dQdx(pf_id, evt, dqdx, dqdx_cali, dqdx_hits_track, m_dQdxRectangleLength, m_dQdxRectangleWidth, m_pfp_producer);
+                energyHelper.dQdx(pf_id, evt, dqdx, dqdx_cali, dqdx_hits_track, dqdx_wires_track, m_dQdxRectangleLength, m_dQdxRectangleWidth, m_pfp_producer);
                 _track_dQdx_cali.push_back(dqdx_cali);
                 _track_dQdx_hits.push_back(dqdx_hits_track);
+                _track_dQdx_wires.push_back(dqdx_wires_track);
+                
                 std::vector<double> dedx_hits_track(dqdx_hits_track.size(), std::numeric_limits<double>::lowest());
 
                 energyHelper.dEdxFromdQdx(dedx, dqdx);
@@ -1031,10 +1039,12 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
                 std::vector<art::Ptr<anab::CosmicTag>> dtVec = dtAssns.at(track_obj.key());
                 for (auto const &dttag : dtVec)
                 {
-                    if (dttag->CosmicType() == TAGID_P){
-                        _predict_p.push_back(dttag->CosmicScore());}
+                    if (dttag->CosmicType() == TAGID_P)
+                    {
+                        _predict_p.push_back(dttag->CosmicScore());
+                    }
                     else if (dttag->CosmicType() == TAGID_MU)
-                        _predict_mu.push_back(dttag->CosmicScore());         
+                        _predict_mu.push_back(dttag->CosmicScore());
                     else if (dttag->CosmicType() == TAGID_PI)
                         _predict_pi.push_back(dttag->CosmicScore());
                     else if (dttag->CosmicType() == TAGID_EM)
@@ -1175,16 +1185,19 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
             std::vector<float> dqdx_cali(3, std::numeric_limits<float>::lowest());
             std::vector<double> dedx(3, std::numeric_limits<double>::lowest());
             std::vector<double> dqdx_hits_shower;
+            std::vector<int> dqdx_wires_shower;
+
             _matched_showers.push_back(std::numeric_limits<int>::lowest());
             _matched_showers_process.push_back("");
 
             _matched_showers_energy.push_back(std::numeric_limits<double>::lowest());
 
-            energyHelper.dQdx(pf_id, evt, dqdx, dqdx_cali, dqdx_hits_shower, m_dQdxRectangleLength,
+            energyHelper.dQdx(pf_id, evt, dqdx, dqdx_cali, dqdx_hits_shower,dqdx_wires_shower, m_dQdxRectangleLength,
                               m_dQdxRectangleWidth, m_pfp_producer);
 
             _shower_dQdx_hits.push_back(dqdx_hits_shower);
             _shower_dQdx_cali.push_back(dqdx_cali);
+            _shower_dQdx_wires.push_back(dqdx_wires_shower);
             //std::cout << "[dQdx] nohits " << dqdx_hits_shower.size() << " " << dqdx[0] << " " << dqdx[1] << " " << dqdx[2] << std::endl;
 
             std::vector<double> dedx_hits_shower(dqdx_hits_shower.size(), std::numeric_limits<double>::lowest());
@@ -1515,10 +1528,10 @@ void lee::PandoraLEEAnalyzer::reconfigure(fhicl::ParameterSet const &pset)
     // add what you want to read, and default values of your labels etc. example:
     fElectronEventSelectionAlg.reconfigure(pset.get<fhicl::ParameterSet>("ElectronSelectionAlg"));
 
-    m_hitfinderLabel = pset.get<std::string>("HitFinderLabel", "pandoraCosmicHitRemoval::PandoraLEEAnalyzer");
-    m_pid_producer = pset.get<std::string>("ParticleIDModuleLabel", "pandoraNupid::PandoraLEEAnalyzer");
-    m_pfp_producer = pset.get<std::string>("PFParticleLabel", "pandoraNu::PandoraLEEAnalyzer");
-    m_spacepointLabel = pset.get<std::string>("SpacePointLabel", "pandoraNu::PandoraLEEAnalyzer");
+    m_hitfinderLabel = pset.get<std::string>("HitFinderLabel", "pandoraCosmicHitRemoval::McRecoStage2");
+    m_pid_producer = pset.get<std::string>("ParticleIDModuleLabel", "pandoraNupid::McRecoStage2");
+    m_pfp_producer = pset.get<std::string>("PFParticleLabel", "pandoraNu::McRecoStage2");
+    m_spacepointLabel = pset.get<std::string>("SpacePointLabel", "pandoraNu::McRecoStage2");
     //m_spacepointLabel = pset.get<std::string>("SpacePointLabel", "pandoraNu::PandoraLEEAnalyzer");
 
     m_printDebug = pset.get<bool>("PrintDebug", false);

@@ -69,6 +69,7 @@ public:
             std::vector<double> &dqdx,
             std::vector<float> &dqdx_cali,
             std::vector<double> &dqdx_hits,
+            std::vector<int> &dqdx_wires,
             double m_dQdxRectangleLength, double m_dQdxRectangleWidth,
             std::string _pfp_producer);
 

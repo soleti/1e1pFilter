@@ -93,7 +93,7 @@ private:
   std::string m_pid_producer;
   std::string m_spacepointLabel;
   std::string _mctruthLabel = "generator";
-  std::string _mcpHitAssLabel = "pandoraCosmicHitRemoval::PandoraLEEAnalyzer";
+  std::string _mcpHitAssLabel = "crHitRemovalTruthMatch";//"pandoraCosmicHitRemoval::PandoraLEEAnalyzer";
 
   std::vector<double> _predict_p;
   std::vector<double> _predict_mu;
@@ -205,6 +205,7 @@ private:
 
   std::vector<std::vector<double>> _shower_dQdx_hits;
   std::vector<std::vector<double>> _shower_dEdx_hits;
+  std::vector<std::vector<int>> _shower_dQdx_wires;
 
   std::vector<std::vector<double>> _shower_dQdx;
   std::vector<std::vector<float>> _shower_dQdx_cali;
@@ -212,6 +213,7 @@ private:
 
   std::vector<std::vector<double>> _track_dQdx_hits;
   std::vector<std::vector<double>> _track_dEdx_hits;
+  std::vector<std::vector<int>> _track_dQdx_wires;
 
   std::vector<std::vector<double>> _track_dQdx;
   std::vector<std::vector<float>> _track_dQdx_cali;

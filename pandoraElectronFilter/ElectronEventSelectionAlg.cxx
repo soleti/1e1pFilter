@@ -54,6 +54,11 @@ TVector3 ElectronEventSelectionAlg::spaceChargeTrueToReco(const TVector3 &xyz)
 
 void ElectronEventSelectionAlg::reconfigure(fhicl::ParameterSet const &p)
 {
+  m_ly_map = {{2212, m_ly_proton*m_chE_proton},
+              {11, m_ly_electron*m_chE_electron},
+              {13, m_ly_muon*m_chE_muon},
+              {22, m_ly_gamma*m_chE_gamma}};
+
   // Implementation of optional member function here.
   m_nTracks = p.get<int>("nTracks", 1);
   m_fidvolXstart = p.get<double>("fidvolXstart", 10);
@@ -64,7 +69,7 @@ void ElectronEventSelectionAlg::reconfigure(fhicl::ParameterSet const &p)
 
   m_fidvolZstart = p.get<double>("fidvolZstart", 10);
   m_fidvolZend = p.get<double>("fidvolZend", 50);
-  m_pfp_producer = p.get<std::string>("PFParticleLabel", "pandoraNu::PandoraLEEAnalyzer");
+  m_pfp_producer = p.get<std::string>("PFParticleLabel", "pandoraNu::McRecoStage2");
 
   geoHelper.setFiducialVolumeCuts(m_fidvolXstart, m_fidvolXend, m_fidvolYstart,
                                   m_fidvolYend, m_fidvolZstart, m_fidvolZend);
@@ -88,30 +93,32 @@ void ElectronEventSelectionAlg::reconfigure(fhicl::ParameterSet const &p)
   _opdet_swap_map          = p.get<std::vector<int> >("OpDetSwapMap");
 
   m_isCosmicInTime = p.get<bool>("isCosmicInTime", false);
+
   m_mgr.Configure(p.get<flashana::Config_t>("FlashMatchConfig"));
+
   fOpticalFlashFinderLabel = p.get<std::string>("OpticalFlashFinderLabel", "simpleFlashBeam");
 
-  // std::cout << "fidvolXstart\t" << m_fidvolXstart << std::endl;
-  // std::cout << "fidvolXend\t" << m_fidvolXend   << std::endl;
-  // std::cout << "fidvolYstart\t" << m_fidvolYstart <<std::endl;
-  // std::cout << "fidvolYend\t" << m_fidvolYend   <<std::endl;
-  // std::cout << "fidvolZstart\t" << m_fidvolZstart <<std::endl;
-  // std::cout << "fidvolZend\t" << m_fidvolZend   <<std::endl;
+  std::cout << "fidvolXstart\t" << m_fidvolXstart << std::endl;
+  std::cout << "fidvolXend\t" << m_fidvolXend   << std::endl;
+  std::cout << "fidvolYstart\t" << m_fidvolYstart <<std::endl;
+  std::cout << "fidvolYend\t" << m_fidvolYend   <<std::endl;
+  std::cout << "fidvolZstart\t" << m_fidvolZstart <<std::endl;
+  std::cout << "fidvolZend\t" << m_fidvolZend   <<std::endl;
 
-  // std::cout << "fractionsigmaflashwidth\t" << m_fractionsigmaflashwidth << std::endl;
-  // std::cout << "absoluteflashdist\t" << m_absoluteflashdist << std::endl;
+  std::cout << "fractionsigmaflashwidth\t" << m_fractionsigmaflashwidth << std::endl;
+  std::cout << "absoluteflashdist\t" << m_absoluteflashdist << std::endl;
 
   std::cout << "[EventSelectionAlg] startbeamtime\t" << m_startbeamtime << std::endl;
   std::cout << "[EventSelectionAlg] endbeamtime\t" << m_endbeamtime << std::endl;
-  // std::cout << "PE_threshold\t" << m_PE_threshold << std::endl;
+  std::cout << "PE_threshold\t" << m_PE_threshold << std::endl;
 
-  // std::cout << "cut_zwidth\t" << m_cut_zwidth << std::endl;
-  // std::cout << "cut_sigzwidth\t" << m_cut_sigzwidth << std::endl;
-  // std::cout << "cut_ywidth\t" << m_cut_ywidth << std::endl;
-  // std::cout << "cut_sigywidth\t" << m_cut_sigywidth << std::endl;
-  // std::cout << "charge_light_ratio\t" << m_charge_light_ratio << std::endl;
-  // std::cout << "Flashmatching\t" << m_flashmatching << std::endl;
-  // std::cout << "Flashmatching_first\t" << m_FM_all << std::endl;
+  std::cout << "cut_zwidth\t" << m_cut_zwidth << std::endl;
+  std::cout << "cut_sigzwidth\t" << m_cut_sigzwidth << std::endl;
+  std::cout << "cut_ywidth\t" << m_cut_ywidth << std::endl;
+  std::cout << "cut_sigywidth\t" << m_cut_sigywidth << std::endl;
+  std::cout << "charge_light_ratio\t" << m_charge_light_ratio << std::endl;
+  std::cout << "Flashmatching\t" << m_flashmatching << std::endl;
+  std::cout << "Flashmatching_first\t" << m_FM_all << std::endl;
 
 }
 
@@ -224,7 +231,7 @@ const std::map<size_t, int> ElectronEventSelectionAlg::flashBasedSelection(const
     for (unsigned int i = 0; i < f.pe_v.size(); i++) {
       unsigned int opdet = m_geo->OpDetFromOpChannel(i);
       if (_do_opdet_swap && evt.isRealData()) {
-        std::cout << "[ElectronEventSelectionAlg] Switching the PMT mapping before flashmatching!"
+        std::cout << "[ElectronEventSelectionAlg] Switching the PMT mapping before flashmatching!" << std::endl;
         opdet = _opdet_swap_map.at(opdet);
       }
       f.pe_v[opdet] = flash.PE(i);
@@ -356,9 +363,9 @@ const flashana::QCluster_t ElectronEventSelectionAlg::collect3DHits(
 
   for (auto &pfpindex : pfplist)
   {
-    //unsigned short pdgcode = pfparticle_handle->at(pfpindex).PdgCode();
-    // double lycoef = m_ly_map[pdgcode];
-    double lycoef = 1.0;
+    unsigned short pdgcode = pfparticle_handle->at(pfpindex).PdgCode();
+    double lycoef = m_ly_map[pdgcode];
+    //double lycoef = 1.0;
 
     std::vector<flashana::Hit3D_t> hitlist;
     std::vector<art::Ptr<recob::SpacePoint>> spcpnts = spcpnts_per_pfpart.at(pfpindex);
