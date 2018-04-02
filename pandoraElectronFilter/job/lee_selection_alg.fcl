@@ -3,18 +3,9 @@
 BEGIN_PROLOG
 
 lee_electron_alg: {
-    nTracks:                    0
-    fidvolXstart:               0  #10
-    fidvolXend:                 0  #10
-    fidvolYstart:               0  #20
-    fidvolYend:                 0  #20
-    fidvolZstart:               0  #10
-    fidvolZend:                 0  #50
-
     # Old optical selection parameters
     fractionsigmaflashwidth:    2.0
     absoluteflashdist:          50.0
-
 
     # New optical selection parameters 
     #(switch between the two optical selections using the bool)
@@ -25,6 +16,7 @@ lee_electron_alg: {
     endbeamtime:                 4.8 # 4.8 for nue mc, 4.9 for on beam, 5.25 for off beam and mc intime
     PE_threshold:                50
 
+    # Apply marco"s new PMT mapping
     DoOpDetSwap:                 true
     OpDetSwapMap:                [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 31, 26, 28, 29, 30, 25, 27]
 
@@ -37,6 +29,21 @@ lee_electron_alg: {
 
     # Configuration of the flashmatchmanager
     FlashMatchConfig: @local::flashmatch_config
+
+
+
+    Topological_cut:            false
+    nTracks:                    0
+
+    Fiducial_cut:               true
+    fidvolXstart:               10
+    fidvolXend:                 10
+    fidvolYstart:               20
+    fidvolYend:                 20
+    fidvolZstart:               10
+    fidvolZend:                 50
+
+    
 }
 
 # Re-use flash

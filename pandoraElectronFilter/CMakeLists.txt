@@ -82,7 +82,9 @@ art_make(
                         uboonecode_uboone_SelectionTool_OpT0FinderBase
                         uboonecode_uboone_SelectionTool_OpT0FinderAlgorithms
                         uboone_UBFlashFinder
-uboonecode_uboone_UBXSec_Algorithms)
+                        uboonecode_uboone_UBXSec_Algorithms
+                        EventWeight
+)
 
 add_subdirectory(job)
 

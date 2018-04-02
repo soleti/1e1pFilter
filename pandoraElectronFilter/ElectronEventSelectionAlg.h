@@ -145,7 +145,13 @@ public:
   const std::map<size_t, bool> &get_neutrino_candidate_passed() const { return _neutrino_candidate_passed; }
 
   /**
-    * @brief Return the index of the flash matched with the pfparticle
+    * @brief Informs whether the selected candidate passed or failed the fiducial cut
+    * @return bool
+    */
+  bool get_neutrino_candidate_fiducial() const { return _neutrino_candidate_fiducial; }
+
+  /**
+    * @brief Return the index of the flash matched with the pfparticle, -1 if it is not the selected candidate.
     * @details [long description]
     * @return [description]
     */
@@ -193,16 +199,14 @@ public:
     * @details [long description]
     * @return [description]
     */
-  const std::vector<double> &
-  get_flash_PE() const { return _flash_PE; }
+  const std::vector<double> &get_flash_PE() const { return _flash_PE; }
 
   /**
     * @brief Return the list of times of the flashes
     * @details [long description]
     * @return [description]
     */
-  const std::vector<double> &
-  get_flash_time() const { return _flash_time; }
+  const std::vector<double> &get_flash_time() const { return _flash_time; }
 
   const double &get_flash_x() const { return _flash_x; }
 
@@ -215,6 +219,7 @@ protected:
   size_t _n_neutrino_candidates;
   std::vector<size_t> _primary_indexes;
   std::map<size_t, bool> _neutrino_candidate_passed;
+  bool _neutrino_candidate_fiducial;
   std::map<size_t, int> _op_flash_indexes;
   std::map<size_t, TVector3> _neutrino_vertex;
   std::map<size_t, int> _n_showers;
@@ -258,9 +263,10 @@ protected:
   bool _do_opdet_swap;              ///< If true swaps reconstructed OpDets according to _opdet_swap_map
   std::vector<int> _opdet_swap_map; ///< The OpDet swap map for reco flashes
 
-  bool m_flashmatching;
-  bool m_FM_all;
-  double m_isCosmicInTime;
+  bool m_flashmatching; ///< Use flashmatching or the old set of cuts
+  bool m_FM_all;        ///< Use flashmatching for all candidates or only the ones passing the topological cut
+  bool m_topological;   ///< Use a topological cut of 1 shower + N tracks
+  bool m_fiducial;      ///< Use a fiducial cut
 
   // std::map<unsigned short, double> m_ly_map;
 

@@ -60,6 +60,9 @@
 
 #include "EnergyHelper.h"
 #include "GeometryHelper.h"
+#include "FeatureHelper.h"
+
+//#include "uboone/EventWeight/EventWeightTreeUtility.h"
 
 #include "larcore/Geometry/WireGeo.h"
 #include "lardata/DetectorInfoServices/DetectorPropertiesService.h"
@@ -114,6 +117,8 @@ private:
   EnergyHelper energyHelper;
   GeometryHelper geoHelper;
   PandoraInterfaceHelper pandoraHelper;
+  FeatureHelper featureHelper;
+  //uboone::EWTreeUtil ewutil;
 
   TFile *myTFile;
   TTree *myTTree;
@@ -143,6 +148,7 @@ private:
   double _vx;
   double _vy;
   double _vz;
+  int _fiducial;
 
   double _true_vx;
   double _true_vy;
@@ -167,7 +173,6 @@ private:
   int _run;
   int _subrun;
   int _event;
-  int _n_candidates;
   int _n_true_nu;
   int _run_sr;
   int _subrun_sr;
@@ -230,6 +235,7 @@ private:
   std::vector<double> _shower_dir_x;
   std::vector<double> _shower_dir_y;
   std::vector<double> _shower_dir_z;
+  
 
   std::vector<double> _shower_start_x;
   std::vector<double> _shower_start_y;
@@ -245,8 +251,6 @@ private:
   std::vector<double> _track_dir_x;
   std::vector<double> _track_dir_y;
   std::vector<double> _track_dir_z;
-  std::vector<int> _track_is_fiducial;
-  std::vector<int> _shower_is_fiducial;
 
   std::vector<double> _track_start_x;
   std::vector<double> _track_start_y;
@@ -308,14 +312,20 @@ private:
   std::vector<std::vector<int>> _track_nhits_spacepoint;
   std::vector<double> _track_res_mean;
   std::vector<double> _track_res_std;
+
+  // Features from the featurehelper
+  int _true_1eX_signal;
+  std::vector<double> _shower_maxangle;
+  std::vector<double> _track_maxangle;
+  std::vector<int> _track_daughter;
+  std::vector<int> _track_is_daughter;
+  std::vector<int> _shower_daughter;
+  std::vector<int> _shower_is_daughter;
+
   double m_dQdxRectangleWidth;
   double m_dQdxRectangleLength;
 
-  size_t choose_candidate(std::vector<size_t> &candidates,
-                          const art::Event &evt);
   void clear();
-  art::Ptr<recob::Track>
-  get_longest_track(std::vector<art::Ptr<recob::Track>> &tracks);
 
   /**
   * @brief Conversion between two different types of vectors
