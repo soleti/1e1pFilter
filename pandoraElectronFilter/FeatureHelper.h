@@ -52,13 +52,41 @@ public:
 
   /**
    * @brief      Returns the total charge inside and outside the fiducial volume of the spacepoint array that it gets. 
-   * @return     double,double
+   * @return     float, float
    */
   void reco_spacepoint_containment(size_t pf_id, const art::Event &evt, std::string _pfp_producer,
-                                   double &in_fidvol_q, double &out_fidvol_q);
+                                   float &in_fidvol_q, float &out_fidvol_q);
 
-  void reco_spacepoint_dqdx(double vertex[], std::vector<size_t> &_nu_object_ids, const art::Event &evt, std::string _pfp_producer,
-                          std::vector<float> &sps_dqdx_distance, std::vector<float> &sps_dqdx_integral);
+  /**
+   * @brief      Returns two arrays, one carring the projected distances of the spacepoints, 
+   *             the other the collection plane integrals. 
+   * @return     float array, actual return value of function is the maximum distance.
+   */
+  float reco_spacepoint_dqdx(size_t object_id, const art::Event &evt, std::string _pfp_producer,
+                             std::vector<float> &sps_dqdx_distance, std::vector<float> &sps_dqdx_integral);
+
+  /**
+   * @brief      Returns two arrays, the containment ratios, 
+   *             the other the dqdx from sps ratios. Both for a list of ids 
+   * @return     double,double
+   */
+  void reco_spacepoint_ratios(std::vector<size_t> _nu_object_ids, const art::Event &evt, std::string _pfp_producer,
+                              std::vector<float> &object_containment, std::vector<float> &object_dqdx_ratio);
+
+  /**
+   * @brief      Returns the PE and time of the flash used for matching. 
+   * @return     double,double
+   */
+  void reco_flash_info(std::vector<int> &_flash_passed, std::vector<double> &_flash_PE, std::vector<double> &_flash_time,
+                       double &_flash_PE_max, double &_flash_time_max);
+
+  /**
+   * @brief      Fixes the matching for the daughter particles. 
+   * @return     _matched_tracks,_matched_showers
+   */
+  void reco_match_daughters(const art::Event &evt, std::string _pfp_producer,
+                            std::vector<size_t> &_nu_shower_ids, std::vector<size_t> &_nu_track_ids,
+                            std::vector<int> &_matched_showers, std::vector<int> &_matched_tracks);
 
 private:
   double mass_e = 0.00511;           // electron mass in GeV

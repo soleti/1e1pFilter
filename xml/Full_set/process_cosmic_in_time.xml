@@ -1,3 +1,4 @@
+
 <?xml version="1.0"?>
 <!DOCTYPE project [
 <!ENTITY name "cosmic_intime_1s0t">
@@ -21,7 +22,7 @@
     <larsoft>
         <tag>&version;</tag>
         <qual>&qualifier;</qual>
-        <local>/pnfs/uboone/resilient/users/&user;/submission/MCC87_3_28_1s0t.tar</local>
+        <local>/pnfs/uboone/resilient/users/&user;/submission/MCC87_4_10_1s0t.tar</local>
     </larsoft>
 
     <!--  Project stages  -->

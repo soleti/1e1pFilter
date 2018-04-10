@@ -144,7 +144,6 @@ private:
 
   int _n_tracks;
   int _n_showers;
-  double _gain;
   double _vx;
   double _vy;
   double _vz;
@@ -153,6 +152,8 @@ private:
   double _true_vx;
   double _true_vy;
   double _true_vz;
+  double _lepton_E;
+  double _lepton_theta;
 
   double _true_vx_sce;
   double _true_vy_sce;
@@ -321,6 +322,12 @@ private:
   std::vector<int> _track_is_daughter;
   std::vector<int> _shower_daughter;
   std::vector<int> _shower_is_daughter;
+  std::vector<float> _shower_fidvol_ratio;
+  std::vector<float> _shower_spacepoint_dqdx_ratio;
+  std::vector<float> _track_spacepoint_dqdx_ratio;
+  double _flash_time_max;
+  double _flash_PE_max;
+
 
   double m_dQdxRectangleWidth;
   double m_dQdxRectangleLength;

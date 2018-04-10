@@ -53,6 +53,8 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
     myTTree->Branch("true_vx_sce", &_true_vx_sce, "true_vx_sce/d");
     myTTree->Branch("true_vy_sce", &_true_vy_sce, "true_vy_sce/d");
     myTTree->Branch("true_vz_sce", &_true_vz_sce, "true_vz_sce/d");
+    myTTree->Branch("lepton_E", &_lepton_E, "lepton_E/d");
+    myTTree->Branch("lepton_theta", &_lepton_theta, "lepton_theta/d");
 
     myTTree->Branch("nu_E", &_nu_energy, "nu_E/d");
     myTTree->Branch("passed", &_event_passed, "passed/I");
@@ -237,10 +239,10 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
                     &_track_nhits_spacepoint);
 
     // Do not store all the hits/spacepoints any longer.
-    // myTTree->Branch("shower_sp_x", "std::vector< float >", &_shower_sp_x);
-    // myTTree->Branch("shower_sp_y", "std::vector< float >", &_shower_sp_y);
-    // myTTree->Branch("shower_sp_z", "std::vector< float >", &_shower_sp_z);
-    // myTTree->Branch("shower_sp_int", "std::vector< float >", &_shower_sp_int);
+    myTTree->Branch("shower_sp_x", "std::vector< float >", &_shower_sp_x);
+    myTTree->Branch("shower_sp_y", "std::vector< float >", &_shower_sp_y);
+    myTTree->Branch("shower_sp_z", "std::vector< float >", &_shower_sp_z);
+    myTTree->Branch("shower_sp_int", "std::vector< float >", &_shower_sp_int);
 
     // Features from the feature helper:
     myTTree->Branch("true_1eX_signal", &_true_1eX_signal, "true_1eX_signal/i");
@@ -252,6 +254,13 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
     myTTree->Branch("track_is_daughter", "std::vector< int >", &_track_is_daughter);
     myTTree->Branch("shower_daughter", "std::vector< int >", &_shower_daughter);
     myTTree->Branch("shower_is_daughter", "std::vector< int >", &_shower_is_daughter);
+
+    myTTree->Branch("shower_fidvol_ratio", "std::vector<float>", &_shower_fidvol_ratio);
+    myTTree->Branch("shower_spacepoint_dqdx_ratio", "std::vector<float>", &_shower_spacepoint_dqdx_ratio);
+    myTTree->Branch("track_spacepoint_dqdx_ratio", "std::vector<float>", &_track_spacepoint_dqdx_ratio);
+
+    myTTree->Branch("flash_time_max", &_flash_time_max, "flash_time_max/d");
+    myTTree->Branch("flash_PE_max", &_flash_PE_max, "flash_PE_max/d");
 
     this->reconfigure(pset);
 }
@@ -446,6 +455,8 @@ void lee::PandoraLEEAnalyzer::clear()
     _true_vy = std::numeric_limits<double>::lowest();
     _true_vz = std::numeric_limits<double>::lowest();
     _true_nu_is_fiducial = std::numeric_limits<int>::lowest();
+    _lepton_E = std::numeric_limits<double>::lowest();
+    _lepton_theta = std::numeric_limits<double>::lowest();
 
     _true_vx_sce = std::numeric_limits<double>::lowest();
     _true_vy_sce = std::numeric_limits<double>::lowest();
@@ -464,8 +475,8 @@ void lee::PandoraLEEAnalyzer::clear()
     _n_matched = std::numeric_limits<int>::lowest();
     _pot = std::numeric_limits<double>::lowest();
     _event_passed = 0;
-    _numu_passed = 0;
     _numu_cuts = 0;
+    _numu_passed = 0;
     _distance = std::numeric_limits<double>::lowest();
 
     _flash_x = std::numeric_limits<double>::lowest();
@@ -495,6 +506,11 @@ void lee::PandoraLEEAnalyzer::clear()
     _track_is_daughter.clear();
     _shower_daughter.clear();
     _shower_is_daughter.clear();
+    _shower_fidvol_ratio.clear();
+    _shower_spacepoint_dqdx_ratio.clear();
+    _track_spacepoint_dqdx_ratio.clear();
+    _flash_PE_max = std::numeric_limits<double>::lowest();
+    _flash_time_max = std::numeric_limits<double>::lowest();
 }
 
 void lee::PandoraLEEAnalyzer::categorizePFParticles(
@@ -633,7 +649,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
     ewutil.WriteTree(evt, mcFlux, mcTruth, gTruth);
     }
     */
-   
+
     _flash_PE = fElectronEventSelectionAlg.get_flash_PE();
     _flash_time = fElectronEventSelectionAlg.get_flash_time();
 
@@ -643,10 +659,43 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
     std::vector<double> true_neutrino_vertex(3);
     std::cout << "[PandoraLEEAnalyzer] Real data " << evt.isRealData() << std::endl;
 
+    // Get info from Marco's analyzer
+    art::Handle<std::vector<ubana::SelectionResult>> selection_h;
+    evt.getByLabel("UBXSec", selection_h);
+
+    if (!selection_h.isValid() || selection_h->empty())
+    {
+        std::cout << "[PandoraLEEAnalyzer] SelectionResult handle is not valid or empty." << std::endl;
+    }
+
+    std::vector<art::Ptr<ubana::SelectionResult>> selection_v;
+    art::fill_ptr_vector(selection_v, selection_h);
+
+    if (selection_v.size() > 0)
+    {
+        _numu_passed = int(selection_v.at(0)->GetSelectionStatus());
+        if (selection_v.at(0)->GetSelectionStatus())
+        {
+            std::cout << "[PandoraLEEAnalyzer] Event is selected by UBXSec" << std::endl;
+        }
+        else
+        {
+            std::cout << "[PandoraLEEAnalyzer] Event is not selected by UBXSec" << std::endl;
+            std::cout << "[PandoraLEEAnalyzer] Failure reason " << selection_v.at(0)->GetFailureReason() << std::endl;
+        }
+        std::map<std::string, bool> failure_map = selection_v.at(0)->GetCutFlowStatus();
+        for (auto iter : failure_map)
+        {
+            std::cout << "[PandoraLEEAnalyzer] UBXSec Cut: " << iter.first << "  >>>  " << (iter.second ? "PASSED" : "NOT PASSED") << std::endl;
+            if (iter.second)
+            {
+                _numu_cuts += 1;
+            }
+        }
+    }
+
     if ((!evt.isRealData() || m_isOverlaidSample))
     {
-        _gain = 200;
-
         // nu_e flux must be corrected by event weight
 
         try
@@ -708,6 +757,8 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
                     _ccnc = gen.GetNeutrino().CCNC();
                     _qsqr = gen.GetNeutrino().QSqr();
                     _theta = gen.GetNeutrino().Theta();
+                    _lepton_E = gen.GetNeutrino().Lepton().E();
+                    _lepton_theta = gen.GetNeutrino().Lepton().Momentum().Theta();
 
                     if (_ccnc == simb::kNC)
                     {
@@ -829,7 +880,6 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
     }
     else
     {
-        _gain = 240;
         _category = k_data;
     }
 
@@ -1309,6 +1359,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
 
             for (size_t ish = 0; ish < pfp_showers_id.size(); ish++)
             {
+
                 for (size_t ipf = 0; ipf < neutrino_pf.size(); ipf++)
                 {
 
@@ -1322,6 +1373,8 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
                             _matched_showers[ish] = neutrino_pdg[ipf];
                             _matched_showers_process[ish] = neutrino_process[ipf];
                             _matched_showers_energy[ish] = neutrino_energy[ipf];
+
+                            // Also fill the daugthers with this info:
                         }
                     }
                 }
@@ -1386,8 +1439,6 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
             }
         }
 
-        _n_primaries = _primary_indexes.size();
-
         if (!track_cr_found && _nu_matched_tracks == 0 && !shower_cr_found && _nu_matched_showers == 0 && _category != k_dirt && _category != k_data)
         {
             _category = k_other;
@@ -1415,6 +1466,33 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
 
         std::cout << "[PandoraLEE] "
                   << "Category " << _category << std::endl;
+
+        //Fill the FeatureHelper fields:
+        _true_1eX_signal = featureHelper.true_thresholds_1eX(_true_nu_is_fiducial, _nu_daughters_pdg, _nu_daughters_E);
+
+        featureHelper.reco_maxangle(_shower_dir_x, _shower_dir_y, _shower_dir_z,
+                                    _track_dir_x, _track_dir_y, _track_dir_z,
+                                    _track_maxangle, _shower_maxangle);
+
+        featureHelper.reco_hierarchy(_nu_track_ids, evt, m_pfp_producer,
+                                     _track_daughter, _track_is_daughter);
+
+        featureHelper.reco_hierarchy(_nu_shower_ids, evt, m_pfp_producer,
+                                     _shower_daughter, _shower_is_daughter);
+
+        featureHelper.reco_spacepoint_ratios(_nu_shower_ids, evt, m_pfp_producer,
+                                             _shower_fidvol_ratio, _shower_spacepoint_dqdx_ratio);
+
+        std::vector<float> _track_fidvol_ratio; // Dummy variable, not saving this field.
+        featureHelper.reco_spacepoint_ratios(_nu_track_ids, evt, m_pfp_producer,
+                                             _track_fidvol_ratio, _track_spacepoint_dqdx_ratio);
+
+        featureHelper.reco_flash_info(_flash_passed, _flash_PE, _flash_time,
+                                      _flash_PE_max, _flash_time_max);
+
+        featureHelper.reco_match_daughters(evt, m_pfp_producer,
+                                           _nu_shower_ids, _nu_track_ids,
+                                           _matched_showers, _matched_tracks);
     }
     else
     {
@@ -1466,21 +1544,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
                 _track_passed.push_back(pass_track);
             }
         }
-
         _n_primaries = _primary_indexes.size();
-
-        //Fill the FeatureHelper fields:
-        _true_1eX_signal = featureHelper.true_thresholds_1eX(_true_nu_is_fiducial, _nu_daughters_pdg, _nu_daughters_E);
-
-        featureHelper.reco_maxangle(_shower_dir_x, _shower_dir_y, _shower_dir_z,
-                                    _track_dir_x, _track_dir_y, _track_dir_z,
-                                    _track_maxangle, _shower_maxangle);
-
-        featureHelper.reco_hierarchy(_nu_track_ids, evt, m_pfp_producer,
-                                     _track_daughter, _track_is_daughter);
-
-        featureHelper.reco_hierarchy(_nu_shower_ids, evt, m_pfp_producer,
-                                     _shower_daughter, _shower_is_daughter);
     }
 
     myTTree->Fill();

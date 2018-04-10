@@ -239,7 +239,7 @@ const std::map<size_t, int> ElectronEventSelectionAlg::flashBasedSelection(const
     else if (qcvec.size() == 1)
     {
       std::cout << "[ElectronEventSelectionAlg] "
-                << "Candidate " << PFPIDvector[0] << "passed optical selection!" << std::endl;
+                << "Candidate " << PFPIDvector[0] << " passed optical selection!" << std::endl;
       chosen_index = PFPIDvector[0];
     }
     else
@@ -252,7 +252,7 @@ const std::map<size_t, int> ElectronEventSelectionAlg::flashBasedSelection(const
         flashana::QCluster_t clusterCopy = cluster;
         m_mgr.Emplace(std::move(clusterCopy));
       }
-
+      //m_mgr.PrintConfig();
       matchvec = m_mgr.Match();
 
       if (matchvec.size() == 0)
@@ -275,6 +275,7 @@ const std::map<size_t, int> ElectronEventSelectionAlg::flashBasedSelection(const
             scorevector.emplace_back(match.score);
             TPC_x_vector.emplace_back(match.tpc_point.x);
             TPCIDvector.emplace_back(match.tpc_id);
+            //std::cout << "Score: " << match.score << " TPC_x: " << match.tpc_point.x << " TPC_id: " <<  match.tpc_id << std::endl;
           }
         }
 
@@ -284,7 +285,7 @@ const std::map<size_t, int> ElectronEventSelectionAlg::flashBasedSelection(const
         _flash_x = TPC_x_vector[0];
         std::cout << "[ElectronEventSelectionAlg] "
                   << "Candidate " << PFPIDvector[TPCIDvector[0]]
-                  << "passed optical selection! TPC_X: " << _TPC_x << " flash_x " << _flash_x << std::endl;
+                  << "passed optical selection! TPC_X: " << _TPC_x << " flash_x: " << _flash_x << std::endl;
       } // Else means we have a match
 
     } // Else run flashmatching in the remaining cases
@@ -521,8 +522,8 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt)
     }
     _n_tracks[_i_primary] = tracks;
     _n_showers[_i_primary] = showers;
-    std::cout << "[ElectronEventSelectionAlg] "
-              << "Showers tracks " << showers << " " << tracks << std::endl;
+    std::cout << "[ElectronEventSelectionAlg] " << "Showers tracks " << showers << " " << tracks << std::endl;
+    std::cout << "[ElectronEventSelectionAlg] " << "shower_daughters tracks_daughters " << shower_daughters << " " << track_daughters << std::endl;
 
     // Cut on the topology to select 1e Np like signal
     if (m_topological)
