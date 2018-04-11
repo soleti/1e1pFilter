@@ -316,6 +316,7 @@ private:
 
   // Features from the featurehelper
   int _true_1eX_signal;
+  int _track_bdt_precut;
   std::vector<double> _shower_maxangle;
   std::vector<double> _track_maxangle;
   std::vector<int> _track_daughter;

@@ -34,6 +34,20 @@ public:
                           std::vector<int> &_nu_daughters_pdg, std::vector<double> &_nu_daughters_E);
 
   /**
+   * @brief      Fixes the matching for the daughter particles. 
+   * @return     _matched_tracks,_matched_showers
+   */
+  void true_match_daughters(const art::Event &evt, std::string _pfp_producer,
+                            std::vector<size_t> &_nu_shower_ids, std::vector<size_t> &_nu_track_ids,
+                            std::vector<int> &_matched_showers, std::vector<int> &_matched_tracks);
+
+  /**
+   * @brief      Requires that a passed event does not have a track with a muon/cosmic score above threshold. 
+   * @return     int, 0 or 1
+   */
+  int reco_bdt_track_precut(std::vector<double> &_predict_mu, std::vector<double> &_predict_cos, int &_n_tracks);
+
+  /**
    * @brief      Returns two arrays, maxangle array track and maxangle array shower. 
    * @return     void, needs two empty arrays.
    */
@@ -80,17 +94,11 @@ public:
   void reco_flash_info(std::vector<int> &_flash_passed, std::vector<double> &_flash_PE, std::vector<double> &_flash_time,
                        double &_flash_PE_max, double &_flash_time_max);
 
-  /**
-   * @brief      Fixes the matching for the daughter particles. 
-   * @return     _matched_tracks,_matched_showers
-   */
-  void reco_match_daughters(const art::Event &evt, std::string _pfp_producer,
-                            std::vector<size_t> &_nu_shower_ids, std::vector<size_t> &_nu_track_ids,
-                            std::vector<int> &_matched_showers, std::vector<int> &_matched_tracks);
-
 private:
   double mass_e = 0.00511;           // electron mass in GeV
   double min_e_kinE = 0.02 + mass_e; // minimum kinetic energy threshold for electrons
+  double max_cosmic_score = 0.9;     // reco_bdt_track_precut 
+  double max_muon_score = 0.9;       // reco_bdt_track_precut
                                      //art::ServiceHandle<geo::Geometry> geo;
                                      //detinfo::DetectorProperties const *detprop;
   GeometryHelper geoHelper;

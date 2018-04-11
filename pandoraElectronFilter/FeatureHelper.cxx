@@ -127,7 +127,7 @@ int FeatureHelper::true_thresholds_1eX(int &_true_nu_is_fiducial,
 {
   if (_true_nu_is_fiducial)
   {
-    for (unsigned int i = 0; i < _nu_daughters_pdg.size(); ++i)
+    for (uint i = 0; i < _nu_daughters_pdg.size(); ++i)
     {
       if (_nu_daughters_pdg[i] == 11)
       {
@@ -139,6 +139,18 @@ int FeatureHelper::true_thresholds_1eX(int &_true_nu_is_fiducial,
     }
   }
   return 0;
+}
+
+int FeatureHelper::reco_bdt_track_precut(std::vector<double> &_predict_mu, std::vector<double> &_predict_cos, int &_n_tracks)
+{
+  for (int i = 0; i < _n_tracks; ++i)
+  {
+    if (_predict_mu[i] > max_muon_score || _predict_cos[i] > max_cosmic_score)
+    {
+      return 0;
+    }
+  }
+  return 1;
 }
 
 void FeatureHelper::reco_maxangle(std::vector<double> &_shower_dir_x, std::vector<double> &_shower_dir_y, std::vector<double> &_shower_dir_z,
@@ -441,7 +453,7 @@ void FeatureHelper::reco_flash_info(std::vector<int> &_flash_passed, std::vector
   }
 }
 
-void FeatureHelper::reco_match_daughters(const art::Event &evt, std::string _pfp_producer,
+void FeatureHelper::true_match_daughters(const art::Event &evt, std::string _pfp_producer,
                                          std::vector<size_t> &_nu_shower_ids, std::vector<size_t> &_nu_track_ids,
                                          std::vector<int> &_matched_showers, std::vector<int> &_matched_tracks)
 {

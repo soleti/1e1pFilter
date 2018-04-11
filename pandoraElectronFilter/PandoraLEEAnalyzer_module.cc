@@ -246,6 +246,7 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
 
     // Features from the feature helper:
     myTTree->Branch("true_1eX_signal", &_true_1eX_signal, "true_1eX_signal/i");
+    myTTree->Branch("track_bdt_precut", &_track_bdt_precut, "track_bdt_precut/i");
 
     myTTree->Branch("track_maxangle", "std::vector< double >", &_track_maxangle);
     myTTree->Branch("shower_maxangle", "std::vector< double >", &_shower_maxangle);
@@ -477,6 +478,7 @@ void lee::PandoraLEEAnalyzer::clear()
     _event_passed = 0;
     _numu_cuts = 0;
     _numu_passed = 0;
+    _track_bdt_precut = 0;
     _distance = std::numeric_limits<double>::lowest();
 
     _flash_x = std::numeric_limits<double>::lowest();
@@ -499,7 +501,7 @@ void lee::PandoraLEEAnalyzer::clear()
 
     _bnbweight = std::numeric_limits<int>::lowest();
 
-    _true_1eX_signal = std::numeric_limits<int>::lowest();
+    _true_1eX_signal = 0;
     _shower_maxangle.clear();
     _track_maxangle.clear();
     _track_daughter.clear();
@@ -877,6 +879,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
                 _category = k_nu_mu;
             }
         }
+        _true_1eX_signal = featureHelper.true_thresholds_1eX(_true_nu_is_fiducial, _nu_daughters_pdg, _nu_daughters_E);
     }
     else
     {
@@ -1468,8 +1471,6 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
                   << "Category " << _category << std::endl;
 
         //Fill the FeatureHelper fields:
-        _true_1eX_signal = featureHelper.true_thresholds_1eX(_true_nu_is_fiducial, _nu_daughters_pdg, _nu_daughters_E);
-
         featureHelper.reco_maxangle(_shower_dir_x, _shower_dir_y, _shower_dir_z,
                                     _track_dir_x, _track_dir_y, _track_dir_z,
                                     _track_maxangle, _shower_maxangle);
@@ -1490,9 +1491,15 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
         featureHelper.reco_flash_info(_flash_passed, _flash_PE, _flash_time,
                                       _flash_PE_max, _flash_time_max);
 
-        featureHelper.reco_match_daughters(evt, m_pfp_producer,
-                                           _nu_shower_ids, _nu_track_ids,
-                                           _matched_showers, _matched_tracks);
+        _track_bdt_precut = featureHelper.reco_bdt_track_precut(_predict_mu, _predict_cos, _n_tracks);
+
+        // Should work on overlaidsample
+        if (!evt.isRealData())
+        {
+            featureHelper.true_match_daughters(evt, m_pfp_producer,
+                                               _nu_shower_ids, _nu_track_ids,
+                                               _matched_showers, _matched_tracks);
+        }
     }
     else
     {
@@ -1544,6 +1551,8 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
                 _track_passed.push_back(pass_track);
             }
         }
+
+        // Fill fields that do not depend on passed or not passed.
         _n_primaries = _primary_indexes.size();
     }
 

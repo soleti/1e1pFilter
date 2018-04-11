@@ -22,7 +22,7 @@
     <larsoft>
         <tag>&version;</tag>
         <qual>&qualifier;</qual>
-        <local>/pnfs/uboone/resilient/users/&user;/submission/MCC87_4_10_1s0t.tar</local>
+        <local>/pnfs/uboone/resilient/users/&user;/submission/MCC87_4_11_0s0t_oldremoval.tar</local>
     </larsoft>
 
     <!--  Project stages  -->
