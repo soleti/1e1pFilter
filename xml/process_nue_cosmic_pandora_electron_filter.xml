@@ -32,10 +32,10 @@
         <logdir>/pnfs/uboone/scratch/users/&user;/&version;/lee/&name;</logdir>
         <workdir>/pnfs/uboone/scratch/users/&user;/work/lee/&name;</workdir>
         <inputdef>&dataset;</inputdef>
-        <numjobs>100</numjobs>
-        <disk>16GB</disk>
-        <memory>8192</memory>
-        <maxfilesperjob>10</maxfilesperjob>
+        <numjobs>400</numjobs>
+        <disk>8GB</disk>
+        <memory>4096</memory>
+        <maxfilesperjob>20</maxfilesperjob>
         <datatier>filtered</datatier>
         <jobsub>--expected-lifetime=24h -Q --append_condor_requirements='(TARGET.HAS_CVMFS_uboone_opensciencegrid_org==true)'</jobsub>
         <jobsub_start>--append_condor_requirements='(TARGET.HAS_CVMFS_uboone_opensciencegrid_org==true)'</jobsub_start>
