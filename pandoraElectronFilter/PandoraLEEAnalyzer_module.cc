@@ -613,7 +613,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
 
   _event_passed = int(fElectronEventSelectionAlg.eventSelected(evt));
 
-  if (_event_passed && !evt.isRealData()) {
+  if (_event_passed && !evt.isRealData() && m_save_flux_info) {
     art::Handle<std::vector<simb::GTruth>> gTruthHandle;
     evt.getByLabel("generator", gTruthHandle);
     if (!gTruthHandle.isValid())
@@ -1490,6 +1490,7 @@ void lee::PandoraLEEAnalyzer::reconfigure(fhicl::ParameterSet const &pset)
   m_isData = pset.get<bool>("isData", false);
   m_isCosmicInTime = pset.get<bool>("isCosmicInTime", false);
   m_isOverlaidSample = pset.get<bool>("isOverlaidSample", false);
+  m_save_flux_info = pset.get<bool>("saveFluxInfo", false);
 
   m_dQdxRectangleWidth = pset.get<double>("dQdxRectangleWidth", 1);
   m_dQdxRectangleLength = pset.get<double>("dQdxRectangleLength", 4);
