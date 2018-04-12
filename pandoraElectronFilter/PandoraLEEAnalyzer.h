@@ -123,6 +123,7 @@ private:
   bool m_isCosmicInTime;
   bool m_printDebug;
   bool m_isOverlaidSample;
+  bool m_save_flux_info;
   const int k_cosmic = 1;
   const int k_nu_e = 2;
   const int k_nu_mu = 3;
