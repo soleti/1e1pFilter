@@ -29,7 +29,7 @@ physics: {
      # ParameterSets for zero or more filter modules
   }
 
-  reco: [decisiontreeid, @sequence::ubxsec_mc_producers ]
+  reco: [decisiontreeid, @sequence::ubxsec_mc_producers]
 
   path0 : [ wouterNueCC ]
   path1 : []

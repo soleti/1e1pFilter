@@ -28,7 +28,7 @@
     <stage name="selection">
         <fcl>run_NueCC_intime.fcl</fcl>
         
-        <outdir>/uboone/data/users/&user;/&version;/&name;</outdir>
+        <outdir>/pnfs/uboone/resilient/users/&user;/&version;/&name;</outdir>
         <logdir>/pnfs/uboone/scratch/users/&user;/log/&version;/&name;</logdir>
         <workdir>/pnfs/uboone/resilient/users/&user;/work/&version;/&name;</workdir>
         <bookdir>/uboone/data/users/&user;/book/&version;/&name;</bookdir>>

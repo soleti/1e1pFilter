@@ -64,10 +64,10 @@ class PandoraInterfaceHelper : public HelperBase
    * @return vector with: lowest x_sps, center in y, z, and total deposited charge on the collection plane.
    */
     std::vector<double> calculateChargeCenter(
-        size_t ipf,
-        const art::ValidHandle<std::vector<recob::PFParticle>> pfparticles,
-        const art::Event &evt,
-        std::string _pfp_producer);
+                                            size_t ipf,
+                                            const art::ValidHandle<std::vector<recob::PFParticle>> pfparticles,
+                                            const art::Event &evt,
+                                            std::string _pfp_producer);
 
     void get_daughter_tracks(std::vector<size_t> pf_ids, const art::Event &evt,
                              std::vector<art::Ptr<recob::Track>> &tracks,

@@ -3,7 +3,7 @@
 <!ENTITY name "data_bnb_a_1s0t">
 <!ENTITY version "v06_26_01_12">
 <!ENTITY qualifier "e10:prof">
-<!ENTITY dataset "prod_reco_optfilter_bnb_v12_unblind_mcc8a">
+<!ENTITY dataset "wvdp_prod_reco_optfilter_bnb_v12_unblind_mcc8a_ok">
 <!ENTITY user "wvdp">
 ]>
 <project name="&name;">

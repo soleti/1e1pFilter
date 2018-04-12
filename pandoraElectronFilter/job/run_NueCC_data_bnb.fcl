@@ -35,7 +35,7 @@ physics: {
   filters : {
      # ParameterSets for zero or more filter modules
   }
-  reco: [decisiontreeid, @sequence::ubxsec_data_producers ]
+  reco: [decisiontreeid ,@sequence::ubxsec_data_producers]
 
   path0 : [ wouterNueCC ]
   path1 : []

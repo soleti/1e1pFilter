@@ -96,7 +96,7 @@ private:
   std::string m_pid_producer;
   std::string m_spacepointLabel;
   std::string _mctruthLabel = "generator";
-  std::string _mcpHitAssLabel = "crHitRemovalTruthMatch";//"pandoraCosmicHitRemoval::PandoraLEEAnalyzer";
+  std::string _mcpHitAssLabel = "crHitRemovalTruthMatch"; //  "pandoraCosmicHitRemoval::PandoraLEEAnalyzer"; // 
 
   std::vector<double> _predict_p;
   std::vector<double> _predict_mu;
@@ -319,6 +319,8 @@ private:
   int _track_bdt_precut;
   std::vector<double> _shower_maxangle;
   std::vector<double> _track_maxangle;
+  std::vector<double> _shower_vtxdistance;
+  std::vector<double> _track_vtxdistance;
   std::vector<int> _track_daughter;
   std::vector<int> _track_is_daughter;
   std::vector<int> _shower_daughter;
@@ -326,8 +328,15 @@ private:
   std::vector<float> _shower_fidvol_ratio;
   std::vector<float> _shower_spacepoint_dqdx_ratio;
   std::vector<float> _track_spacepoint_dqdx_ratio;
+  std::vector<int> _track_containment;
+  std::vector<int> _shower_cle;
+  std::vector<int> _track_cle;
   double _flash_time_max;
   double _flash_PE_max;
+  float _chargecenter_x;
+  float _chargecenter_y;
+  float _chargecenter_z;
+  float _total_spacepoint_containment;
 
 
   double m_dQdxRectangleWidth;

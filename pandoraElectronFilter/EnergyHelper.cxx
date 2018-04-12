@@ -320,7 +320,7 @@ void EnergyHelper::dQdx(size_t pfp_id,
       xcorrection_end = 1.0;
     end_corr = yzcorrection_end * xcorrection_end;
     //std::cout << "[EnergyHelper] dqdx_cali " << start_corr << middle_corr << end_corr << std::endl;
-    dqdx_cali[plane_nr] = (start_corr+middle_corr+end_corr)/3;
+    dqdx_cali[plane_nr] = (start_corr + middle_corr + end_corr) / 3;
   }
 
   art::FindManyP<recob::Cluster> clusters_per_pfpart(pfparticle_handle, evt, _pfp_producer);
@@ -351,9 +351,15 @@ void EnergyHelper::dQdx(size_t pfp_id,
     double fromTickToNs = 4.8 / detprop->ReadOutWindowSize() * 1e6;
     double wireSpacing = 0.3;
 
+    std::vector<double> cluster_axis = {cos(clusters[icl]->StartAngle()),
+                                        sin(clusters[icl]->StartAngle())};
+
+    double pitch =
+        geoHelper.getPitch(pfp_dir, clusters[icl]->Plane().Plane);
+
     std::vector<double> cluster_start = {
-        clusters[icl]->StartWire() * wireSpacing,
-        drift * clusters[icl]->StartTick() * fromTickToNs};
+        clusters[icl]->StartWire() * wireSpacing - cluster_axis[0] * pitch,
+        drift * clusters[icl]->StartTick() * fromTickToNs - cluster_axis[1] * pitch};
     std::vector<double> cluster_end = {clusters[icl]->EndWire() * wireSpacing,
                                        drift * clusters[icl]->EndTick() *
                                            fromTickToNs};
@@ -362,9 +368,6 @@ void EnergyHelper::dQdx(size_t pfp_id,
                                  pow(cluster_end[1] - cluster_start[1], 2));
     if (cluster_length <= 0)
       continue;
-
-    std::vector<double> cluster_axis = {cos(clusters[icl]->StartAngle()),
-                                        sin(clusters[icl]->StartAngle())};
 
     // Build rectangle 4 x 1 cm around the cluster axis
     std::vector<std::vector<double>> points;
@@ -378,7 +381,7 @@ void EnergyHelper::dQdx(size_t pfp_id,
 
     std::vector<double> dqdxs;
 
-    bool first = true;
+    bool first = false;
 
     for (auto &hit : hits)
     {
@@ -389,9 +392,6 @@ void EnergyHelper::dQdx(size_t pfp_id,
 
       std::vector<double> hit_pos = {hit->WireID().Wire * wireSpacing,
                                      fromTickToNs * drift * hit->PeakTime()};
-
-      double pitch =
-          geoHelper.getPitch(pfp_dir, clusters[icl]->Plane().Plane);
 
       bool is_within = geoHelper.isInside(hit_pos, points);
 

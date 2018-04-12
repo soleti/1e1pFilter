@@ -33,53 +33,6 @@ float dot_product2(float dir1[], float dir2[])
   return nominator / denominator;
 }
 
-// Method to calculate the centre of charge position for vector of pf_ids
-bool calculateChargeCenter(size_t &object_id, const art::Event &evt, std::string _pfp_producer,
-                           float chargecenter[])
-{
-  auto const &pfparticle_handle = evt.getValidHandle<std::vector<recob::PFParticle>>(_pfp_producer);
-  auto const &spacepoint_handle = evt.getValidHandle<std::vector<recob::SpacePoint>>(_pfp_producer);
-  art::FindManyP<recob::SpacePoint> spcpnts_per_pfpart(pfparticle_handle, evt, _pfp_producer);
-  art::FindManyP<recob::Hit> hits_per_spcpnts(spacepoint_handle, evt, _pfp_producer);
-
-  float totalweight = 0;
-
-  // Get the associated spacepoints:
-  std::vector<art::Ptr<recob::SpacePoint>> spcpnts = spcpnts_per_pfpart.at(object_id);
-
-  // Loop over the spacepoints and get the associated hits:
-  for (auto &_sps : spcpnts)
-  {
-    auto xyz = _sps->XYZ();
-    std::vector<art::Ptr<recob::Hit>> hits = hits_per_spcpnts.at(_sps.key());
-    // Add the hits to the weighted average, if they are collection hits:
-    for (auto &hit : hits)
-    {
-      if (hit->View() == geo::kZ)
-      {
-        // Collection hits only
-        float weight = hit->Integral();
-        chargecenter[0] += (xyz[0]) * weight;
-        chargecenter[1] += (xyz[1]) * weight;
-        chargecenter[2] += (xyz[2]) * weight;
-        totalweight += weight;
-      } // if collection
-    }   // hits
-  }     // spacepoints
-  // Normalize
-  if (totalweight > 0)
-  {
-    chargecenter[0] /= totalweight;
-    chargecenter[1] /= totalweight;
-    chargecenter[2] /= totalweight;
-    return true;
-  }
-  else
-  {
-    return false;
-  }
-}
-
 // Method to return the pdgcode the parent is matched to given pf_id of the daughter
 int daughterMatchHelper(const art::Event &evt, std::string _pfp_producer,
                         std::vector<size_t> &_nu_shower_ids, std::vector<size_t> &_nu_track_ids,
@@ -121,7 +74,21 @@ int daughterMatchHelper(const art::Event &evt, std::string _pfp_producer,
   return 0;
 }
 
+bool isContained(double x, double y, double z, double border)
+{
+  art::ServiceHandle<geo::Geometry> geo;
+  std::vector<double> bnd = {
+      0., 2. * geo->DetHalfWidth(), -geo->DetHalfHeight(), geo->DetHalfHeight(),
+      0., geo->DetLength()};
+
+  bool is_x = x > (bnd[0] + border) && x < (bnd[1] - border);
+  bool is_y = y > (bnd[2] + border) && y < (bnd[3] - border);
+  bool is_z = z > (bnd[4] + border) && z < (bnd[5] - border);
+  return is_x && is_y && is_z;
+}
+
 //////////////////////////////////////////////////////
+
 int FeatureHelper::true_thresholds_1eX(int &_true_nu_is_fiducial,
                                        std::vector<int> &_nu_daughters_pdg, std::vector<double> &_nu_daughters_E)
 {
@@ -141,6 +108,55 @@ int FeatureHelper::true_thresholds_1eX(int &_true_nu_is_fiducial,
   return 0;
 }
 
+void FeatureHelper::true_closest_electron_matched(std::vector<int> &_matched_showers, std::vector<int> &_matched_tracks,
+                                                  double &_true_vx_sce, double &_true_vy_sce, double &_true_vz_sce,
+                                                  std::vector<double> &_shower_start_x, std::vector<double> &_shower_start_y, std::vector<double> &_shower_start_z,
+                                                  std::vector<double> &_track_start_x, std::vector<double> &_track_start_y, std::vector<double> &_track_start_z,
+                                                  std::vector<int> &_shower_cle, std::vector<int> &_track_cle)
+{
+  _shower_cle.resize(_matched_showers.size(), 0);
+  _track_cle.resize(_matched_tracks.size(), 0);
+  // If there is no electron matched object closer than 10cm from the true vertex, than do not consisder any object.
+  float dist = 10;
+  int sh_i = -1;
+  int tr_i = -1;
+  if (std::find(_matched_tracks.begin(), _matched_tracks.end(), 11) != _matched_tracks.end())
+  {
+    std::vector<double> vtxdist = reco_vtxdistance(_true_vx_sce, _true_vy_sce, _true_vz_sce, _track_start_x, _track_start_y, _track_start_z);
+    /* _matched_tracks contains 11 */
+    for (uint i = 0; i < _matched_tracks.size(); ++i)
+    {
+      if (_matched_tracks[i] == 11 && dist > vtxdist[i])
+      {
+        dist = vtxdist[i];
+        tr_i = i;
+      }
+    }
+  }
+  if (std::find(_matched_showers.begin(), _matched_showers.end(), 11) != _matched_showers.end())
+  {
+    std::vector<double> vtxdist = reco_vtxdistance(_true_vx_sce, _true_vy_sce, _true_vz_sce, _shower_start_x, _shower_start_y, _shower_start_z);
+    /* _matched_showers contains 11 */
+    for (uint i = 0; i < _matched_showers.size(); ++i)
+    {
+      if (_matched_showers[i] == 11 && dist > vtxdist[i])
+      {
+        dist = vtxdist[i];
+        sh_i = i;
+        tr_i = -1;
+      }
+    }
+  }
+  if (sh_i != -1)
+  {
+    _shower_cle[sh_i] = 1;
+  }
+  else if (tr_i != -1)
+  {
+    _track_cle[tr_i] = 1;
+  }
+}
+
 int FeatureHelper::reco_bdt_track_precut(std::vector<double> &_predict_mu, std::vector<double> &_predict_cos, int &_n_tracks)
 {
   for (int i = 0; i < _n_tracks; ++i)
@@ -151,6 +167,94 @@ int FeatureHelper::reco_bdt_track_precut(std::vector<double> &_predict_mu, std::
     }
   }
   return 1;
+}
+
+// Method to calculate the centre of charge position for vector of pf_ids
+float FeatureHelper::reco_calculateChargeCenter(size_t &object_id, const art::Event &evt, std::string _pfp_producer,
+                                                float chargecenter[])
+{
+  auto const &pfparticle_handle = evt.getValidHandle<std::vector<recob::PFParticle>>(_pfp_producer);
+  auto const &spacepoint_handle = evt.getValidHandle<std::vector<recob::SpacePoint>>(_pfp_producer);
+  art::FindManyP<recob::SpacePoint> spcpnts_per_pfpart(pfparticle_handle, evt, _pfp_producer);
+  art::FindManyP<recob::Hit> hits_per_spcpnts(spacepoint_handle, evt, _pfp_producer);
+
+  float totalweight = 0;
+
+  // Get the associated spacepoints:
+  std::vector<art::Ptr<recob::SpacePoint>> spcpnts = spcpnts_per_pfpart.at(object_id);
+
+  // Loop over the spacepoints and get the associated hits:
+  for (auto &_sps : spcpnts)
+  {
+    auto xyz = _sps->XYZ();
+    std::vector<art::Ptr<recob::Hit>> hits = hits_per_spcpnts.at(_sps.key());
+    // Add the hits to the weighted average, if they are collection hits:
+    for (auto &hit : hits)
+    {
+      if (hit->View() == geo::kZ)
+      {
+        // Collection hits only
+        float weight = hit->Integral();
+        chargecenter[0] += (xyz[0]) * weight;
+        chargecenter[1] += (xyz[1]) * weight;
+        chargecenter[2] += (xyz[2]) * weight;
+        totalweight += weight;
+      } // if collection
+    }   // hits
+  }     // spacepoints
+  return totalweight;
+}
+
+void FeatureHelper::reco_totalChargeCenter(std::vector<size_t> &shower_ids, std::vector<size_t> &track_ids, const art::Event &evt, std::string _pfp_producer,
+                                           float &chargecenter_x, float &chargecenter_y, float &chargecenter_z)
+{
+  float chargecenter[3] = {0, 0, 0};
+  float totalweight = 0;
+
+  for (size_t shower_id : shower_ids)
+  {
+    // reco_calculateChargeCenter does not reset the chargecenter
+    totalweight += reco_calculateChargeCenter(shower_id, evt, _pfp_producer, chargecenter);
+  }
+  for (size_t track_id : track_ids)
+  {
+    // reco_calculateChargeCenter does not reset the chargecenter
+    totalweight += reco_calculateChargeCenter(track_id, evt, _pfp_producer, chargecenter);
+  }
+
+  chargecenter_x = chargecenter[0] / totalweight;
+  chargecenter_y = chargecenter[1] / totalweight;
+  chargecenter_z = chargecenter[2] / totalweight;
+}
+
+float FeatureHelper::reco_total_spacepoint_containment(std::vector<size_t> &shower_ids, std::vector<size_t> &track_ids, const art::Event &evt, std::string _pfp_producer)
+{
+  float in_fidvol_q_total = 0;
+  float out_fidvol_q_total = 0;
+  float in_fidvol_q;
+  float out_fidvol_q;
+  for (size_t shower_id : shower_ids)
+  {
+    // reco_spacepoint_containment does reset the counters
+    reco_spacepoint_containment(shower_id, evt, _pfp_producer, in_fidvol_q, out_fidvol_q);
+    in_fidvol_q_total += in_fidvol_q;
+    out_fidvol_q_total += out_fidvol_q;
+  }
+  for (size_t track_id : track_ids)
+  {
+    // reco_spacepoint_containment does reset the counters
+    reco_spacepoint_containment(track_id, evt, _pfp_producer, in_fidvol_q, out_fidvol_q);
+    in_fidvol_q_total += in_fidvol_q;
+    out_fidvol_q_total += out_fidvol_q;
+  }
+  if (in_fidvol_q_total > 0)
+  {
+    return in_fidvol_q_total / (in_fidvol_q_total + out_fidvol_q_total);
+  }
+  else
+  {
+    return -1;
+  }
 }
 
 void FeatureHelper::reco_maxangle(std::vector<double> &_shower_dir_x, std::vector<double> &_shower_dir_y, std::vector<double> &_shower_dir_z,
@@ -322,8 +426,12 @@ float FeatureHelper::reco_spacepoint_dqdx(size_t object_id, const art::Event &ev
                                           std::vector<float> &sps_dqdx_distance, std::vector<float> &sps_dqdx_integral)
 {
   float chargecenter[3] = {0, 0, 0};
-  if (calculateChargeCenter(object_id, evt, _pfp_producer, chargecenter))
+  float totalweight = reco_calculateChargeCenter(object_id, evt, _pfp_producer, chargecenter);
+  if (totalweight > 0)
   {
+    chargecenter[0] /= totalweight;
+    chargecenter[1] /= totalweight;
+    chargecenter[2] /= totalweight;
     auto const &pfparticle_handle = evt.getValidHandle<std::vector<recob::PFParticle>>(_pfp_producer);
     auto const &spacepoint_handle = evt.getValidHandle<std::vector<recob::SpacePoint>>(_pfp_producer);
     art::FindManyP<recob::SpacePoint> spcpnts_per_pfpart(pfparticle_handle, evt, _pfp_producer);
@@ -479,6 +587,29 @@ void FeatureHelper::true_match_daughters(const art::Event &evt, std::string _pfp
                                                  _nu_track_ids[itr]);
     }
   }
+}
+
+void FeatureHelper::reco_track_containment(std::vector<double> &_track_end_x, std::vector<double> &_track_end_y, std::vector<double> &_track_end_z,
+                                           std::vector<int> &_track_containment)
+{
+  uint n_tracks = _track_end_x.size();
+  _track_containment.resize(n_tracks);
+  for (uint i = 0; i < n_tracks; ++i)
+  {
+    _track_containment[i] = isContained(_track_end_x[i], _track_end_y[i], _track_end_z[i], track_containment_border);
+  }
+}
+
+std::vector<double> FeatureHelper::reco_vtxdistance(double &vx, double &vy, double &vz,
+                                                    std::vector<double> &start_x, std::vector<double> &start_y, std::vector<double> &start_z)
+{
+  uint n_objects = start_x.size();
+  std::vector<double> object_dist(n_objects);
+  for (uint i = 0; i < n_objects; ++i)
+  {
+    object_dist[i] = sqrt(((vx - start_x[i]) * (vx - start_x[i])) + ((vy - start_y[i]) * (vy - start_y[i])) + ((vz - start_z[i]) * (vz - start_z[i])));
+  }
+  return object_dist;
 }
 
 } // namespace lee

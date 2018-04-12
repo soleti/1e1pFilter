@@ -248,6 +248,9 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
     myTTree->Branch("true_1eX_signal", &_true_1eX_signal, "true_1eX_signal/i");
     myTTree->Branch("track_bdt_precut", &_track_bdt_precut, "track_bdt_precut/i");
 
+    myTTree->Branch("shower_vtxdistance", "std::vector< double >", &_shower_vtxdistance);
+    myTTree->Branch("track_vtxdistance", "std::vector< double >", &_track_vtxdistance);
+
     myTTree->Branch("track_maxangle", "std::vector< double >", &_track_maxangle);
     myTTree->Branch("shower_maxangle", "std::vector< double >", &_shower_maxangle);
 
@@ -256,12 +259,18 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
     myTTree->Branch("shower_daughter", "std::vector< int >", &_shower_daughter);
     myTTree->Branch("shower_is_daughter", "std::vector< int >", &_shower_is_daughter);
 
+    myTTree->Branch("shower_cle", "std::vector< int >", &_shower_cle);
+    myTTree->Branch("track_cle", "std::vector< int >", &_track_cle);
+
     myTTree->Branch("shower_fidvol_ratio", "std::vector<float>", &_shower_fidvol_ratio);
     myTTree->Branch("shower_spacepoint_dqdx_ratio", "std::vector<float>", &_shower_spacepoint_dqdx_ratio);
     myTTree->Branch("track_spacepoint_dqdx_ratio", "std::vector<float>", &_track_spacepoint_dqdx_ratio);
+    myTTree->Branch("track_containment", "std::vector<int>", &_track_containment);
 
-    myTTree->Branch("flash_time_max", &_flash_time_max, "flash_time_max/d");
-    myTTree->Branch("flash_PE_max", &_flash_PE_max, "flash_PE_max/d");
+    myTTree->Branch("chargecenter_x", &_chargecenter_x, "chargecenter_x/F");
+    myTTree->Branch("chargecenter_y", &_chargecenter_y, "chargecenter_y/F");
+    myTTree->Branch("chargecenter_z", &_chargecenter_z, "chargecenter_z/F");
+    myTTree->Branch("total_spacepoint_containment", &_total_spacepoint_containment, "total_spacepoint_containment/F");
 
     this->reconfigure(pset);
 }
@@ -372,8 +381,6 @@ void lee::PandoraLEEAnalyzer::clear()
     _shower_dir_x.clear();
     _shower_dir_y.clear();
     _shower_dir_z.clear();
-    _shower_dQdx.clear();
-    _shower_dEdx.clear();
 
     _nu_track_ids.clear();
     _nu_shower_ids.clear();
@@ -478,7 +485,6 @@ void lee::PandoraLEEAnalyzer::clear()
     _event_passed = 0;
     _numu_cuts = 0;
     _numu_passed = 0;
-    _track_bdt_precut = 0;
     _distance = std::numeric_limits<double>::lowest();
 
     _flash_x = std::numeric_limits<double>::lowest();
@@ -502,8 +508,13 @@ void lee::PandoraLEEAnalyzer::clear()
     _bnbweight = std::numeric_limits<int>::lowest();
 
     _true_1eX_signal = 0;
+    _track_bdt_precut = 0;
     _shower_maxangle.clear();
     _track_maxangle.clear();
+    _shower_vtxdistance.clear();
+    _track_vtxdistance.clear();
+    _shower_cle.clear();
+    _track_cle.clear();
     _track_daughter.clear();
     _track_is_daughter.clear();
     _shower_daughter.clear();
@@ -511,8 +522,13 @@ void lee::PandoraLEEAnalyzer::clear()
     _shower_fidvol_ratio.clear();
     _shower_spacepoint_dqdx_ratio.clear();
     _track_spacepoint_dqdx_ratio.clear();
+    _track_containment.clear();
     _flash_PE_max = std::numeric_limits<double>::lowest();
     _flash_time_max = std::numeric_limits<double>::lowest();
+    _chargecenter_x = std::numeric_limits<float>::lowest();
+    _chargecenter_y = std::numeric_limits<float>::lowest();
+    _chargecenter_z = std::numeric_limits<float>::lowest();
+    _total_spacepoint_containment = std::numeric_limits<float>::lowest();
 }
 
 void lee::PandoraLEEAnalyzer::categorizePFParticles(
@@ -1481,6 +1497,9 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
         featureHelper.reco_hierarchy(_nu_shower_ids, evt, m_pfp_producer,
                                      _shower_daughter, _shower_is_daughter);
 
+        _shower_vtxdistance = featureHelper.reco_vtxdistance(_vx, _vy, _vz, _shower_start_x, _shower_start_y, _shower_start_z);
+        _track_vtxdistance = featureHelper.reco_vtxdistance(_vx, _vy, _vz, _track_start_x, _track_start_y, _track_start_z);
+
         featureHelper.reco_spacepoint_ratios(_nu_shower_ids, evt, m_pfp_producer,
                                              _shower_fidvol_ratio, _shower_spacepoint_dqdx_ratio);
 
@@ -1493,9 +1512,22 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
 
         _track_bdt_precut = featureHelper.reco_bdt_track_precut(_predict_mu, _predict_cos, _n_tracks);
 
+        featureHelper.reco_track_containment(_track_end_x, _track_end_y, _track_end_z, _track_containment);
+
+        featureHelper.reco_totalChargeCenter(_nu_shower_ids, _nu_track_ids, evt, m_pfp_producer,
+                                             _chargecenter_x, _chargecenter_y, _chargecenter_z);
+
+        _total_spacepoint_containment = featureHelper.reco_total_spacepoint_containment(_nu_shower_ids, _nu_track_ids, evt, m_pfp_producer);
+
         // Should work on overlaidsample
         if (!evt.isRealData())
         {
+            featureHelper.true_closest_electron_matched(_matched_showers, _matched_tracks,
+                                                        _true_vx_sce, _true_vy_sce, _true_vz_sce,
+                                                        _shower_start_x, _shower_start_y, _shower_start_z,
+                                                        _track_start_x, _track_start_y, _track_start_z,
+                                                        _shower_cle, _track_cle);
+
             featureHelper.true_match_daughters(evt, m_pfp_producer,
                                                _nu_shower_ids, _nu_track_ids,
                                                _matched_showers, _matched_tracks);
