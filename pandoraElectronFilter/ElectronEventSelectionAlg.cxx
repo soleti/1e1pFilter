@@ -86,7 +86,9 @@ void ElectronEventSelectionAlg::reconfigure(fhicl::ParameterSet const &p)
 
   m_isCosmicInTime = p.get<bool>("isCosmicInTime", false);
   m_mgr.Configure(p.get<flashana::Config_t>("FlashMatchConfig"));
-  fOpticalFlashFinderLabel = p.get<std::string>("OpticalFlashFinderLabel", "simpleFlashBeam");
+  std::cout << "[ElectronEventSelectionAlg] config " << std::endl;
+  m_mgr.PrintConfig();
+  fOpticalFlashFinderLabel = p.get<std::string>("OpticalFlashFinderLabel", "simpleFlashBeam::McRecoStage1");
 
   // std::cout << "fidvolXstart\t" << m_fidvolXstart << std::endl;
   // std::cout << "fidvolXend\t" << m_fidvolXend   << std::endl;
@@ -202,6 +204,8 @@ const std::map<size_t, int> ElectronEventSelectionAlg::flashBasedSelection(const
         pandoraHelper.traversePFParticleTree(pfparticle_handle, pfpindex, daughters, m_pfp_producer);
         qcvec.emplace_back(collect3DHits(evt, daughters));
         PFPIDvector.emplace_back(pfpindex);
+        std::cout << "[ElectronEventSelectionAlg] pfpindex " << pfpindex << std::endl;
+
         chargexvector.emplace_back(ChargeCenter[0]);
         std::cout << "[ElectronEventSelectionAlg] "
                   << "Neutrino candidate " << pfpindex << " passed (prematching cuts)." << std::endl;
@@ -222,9 +226,9 @@ const std::map<size_t, int> ElectronEventSelectionAlg::flashBasedSelection(const
 
     //  Commented out for now to force flashmatching to make sure x-values are calculated.
 
-    else if(qcvec.size() ==1 )
+    else if (qcvec.size() ==1 )
     {
-      std::cout << "[ElectronEventSelectionAlg] " << "Candidate "<< PFPIDvector[0] <<"passed optical selection!" << std::endl;
+      std::cout << "[ElectronEventSelectionAlg] " << "Candidate " << PFPIDvector[0] << " passed optical selection!" << std::endl;
       chosen_index = PFPIDvector[0];
     }
     else
@@ -257,6 +261,10 @@ const std::map<size_t, int> ElectronEventSelectionAlg::flashBasedSelection(const
           }
           else
           {
+            // std::cout << "Match score " << match.score << std::endl;
+            // std::cout << "flash_x " << match.tpc_point.x << std::endl;
+            // std::cout << "TPC_x " << chargexvector[match.tpc_id] << std::endl;
+
             scorevector.emplace_back(match.score);
             TPC_x_vector.emplace_back(match.tpc_point.x);
             TPCIDvector.emplace_back(match.tpc_id);
@@ -331,7 +339,6 @@ const flashana::QCluster_t ElectronEventSelectionAlg::collect3DHits(
           double q = hit->Integral();
 
           hit3D.q = q;
-
           hitlist.emplace_back(hit3D);
         }
       }
@@ -371,12 +378,12 @@ const std::map<size_t, int> ElectronEventSelectionAlg::opticalfilter(const art::
         // Cut on the z position
         double absolute = std::abs(flash.ZCenter() - ChargeCenter[2]);
         double sigma = absolute / flash.ZWidth();
-        std::cout << "z_diff: " << absolute << " sigma: " << sigma << std::endl;
+        // std::cout << "z_diff: " << absolute << " sigma: " << sigma << std::endl;
 
         if (absolute < m_absoluteflashdist || sigma < 1. / m_fractionsigmaflashwidth)
         {
           result[pfp_i] = ifl;
-          std::cout << "candidate " << pfp_i << " passed opt cut with flash " << ifl << std::endl;
+          // std::cout << "candidate " << pfp_i << " passed opt cut with flash " << ifl << std::endl;
         }
       }
     }
@@ -388,8 +395,8 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt)
 {
 
   clear();
-  std::cout << "PFP PRODUCER " << m_pfp_producer << std::endl; 
-  std::cout << "START BEAM TIME " << m_startbeamtime << std::endl; 
+  // std::cout << "PFP PRODUCER " << m_pfp_producer << std::endl; 
+  std::cout << "[ElectronEventSelectionAlg] START BEAM TIME " << m_startbeamtime << std::endl; 
 
   // Get the list of pfparticles:
   auto const &pfparticle_handle =
@@ -415,6 +422,7 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt)
   }
 
   // If there are no particles flagged as primary, return false
+  std::cout << "[ElectronEventSelectionAlg] Primary index size " << _primary_indexes.size() << std::endl;
   if (_primary_indexes.size() == 0)
   {
     return false;
@@ -531,14 +539,19 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt)
     // Np: at least N direct track daughters
     // 1e: at least one direct shower or 1 direct track daughter with a shower connected to it
     if (track_daughters < m_nTracks){  
-      // There are less direct daughter tracks than we want protons, FAIL                   
+      // There are less direct daughter tracks than we want protons, FAIL   
+      std::cout << "There are less direct daughter tracks than we want protons, FAIL" << std::endl;             
       _neutrino_candidate_passed[_i_primary] = false;
     }
     if (showers==0){
       // There are no showers in the complete hierarchy, FAIL (this is probably where we lose LEE efficiency)
+      std::cout << "There are no showers in the complete hierarchy, FAIL" << std::endl;             
+
       _neutrino_candidate_passed[_i_primary] = false;
     }
     if (shower_daughters==0 && showers==1 && track_daughters < (m_nTracks+1) ){
+        std::cout << "There are no direct showers, but there is one shower in the hierarchy, this means we require N+1 direct tracks, otherwise, FAIL" << std::endl;             
+
       // There are no direct showers, but there is one shower in the hierarchy, this means we require N+1 direct tracks, otherwise, FAIL
       _neutrino_candidate_passed[_i_primary] = false;
     }
@@ -552,6 +565,7 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt)
   {
     // Do flashmatching for all candidates
     pfplist = _primary_indexes;
+    std::cout << "m_FM_all" << std::endl;
   }
   else
   {
@@ -586,10 +600,12 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt)
 
   for (auto &val : _neutrino_candidate_passed)
   {
+    std::cout << "Neutrino candidate val " << val.first <<  " " << val.second << std::endl;
     if (val.second)
     {
       if (_op_flash_indexes[val.first] < 0)
       {
+        std::cout << "negative op_flash_index " << _op_flash_indexes[val.first] << std::endl;             
         val.second = false;
       }
     }
@@ -598,6 +614,7 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt)
   // Last, determine if any primary particles passed:
   for (auto val : _neutrino_candidate_passed)
   {
+    std::cout << "[ElectronEventSelectionAlg] candidate " << val.second << std::endl;
     if (val.second)
     {
       std::cout << "[ElectronEventSelectionAlg] "
