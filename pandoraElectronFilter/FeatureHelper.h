@@ -10,6 +10,8 @@
 #include "HelperBase.h"
 
 #include <algorithm>
+#include <cmath>
+
 #include "GeometryHelper.h"
 
 #include "lardataobj/RecoBase/Hit.h"
@@ -139,12 +141,36 @@ public:
   std::vector<double> reco_vtxdistance(double &vx, double &vy, double &vz,
                                        std::vector<double> &start_x, std::vector<double> &start_y, std::vector<double> &start_z);
 
+  /**
+   * @brief      Function which converts the multiplane dedx info to related features on the collection plane only. 
+   * @return     void
+   */
+  void reco_dedx(std::vector<std::vector<double>> &_object_dEdx_hits,
+                 std::vector<std::vector<double>> &_object_dEdx,
+                 std::vector<std::vector<float>> &_object_dQdx_cali,
+                 std::vector<int> &_object_dedx_hits_w,
+                 std::vector<float> &_object_dedx_w,
+                 std::vector<float> &_object_dedx_best_w);
+
+  /**
+   * @brief      Function which converts the multiplane energy info to related features on the collection plane only. 
+   * @return     void
+   */
+  void reco_energy(std::vector<std::vector<double>> &_object_energy_hits,
+                 std::vector<std::vector<float>> &_object_energy_cali,
+                 std::vector<std::vector<int>> &_object_nhits_cluster,
+                 std::vector<std::vector<int>> &_object_nhits_spacepoint,
+                 std::vector<float> &_object_energy_w,
+                 std::vector<float> &_object_hitsratio_w,
+                 std::vector<int> &_object_hits_w);
+
 private:
   double mass_e = 0.00511;                // electron mass in GeV
   double min_e_kinE = 0.02 + mass_e;      // minimum kinetic energy threshold for electrons
   double max_cosmic_score = 0.9;          // reco_bdt_track_precut
   double max_muon_score = 0.9;            // reco_bdt_track_precut
   double track_containment_border = 10.0; // [cm] distance that the end of a track has to be from the borders to be considered contained.
+  float target_electron_dedx = 2.0;       // To find the best dedx, this is the target
   art::ServiceHandle<geo::Geometry> geo;
   //detinfo::DetectorProperties const *detprop;
   GeometryHelper geoHelper;

@@ -26,7 +26,6 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
     myPOTTTree->Branch("pot", &_pot, "pot/d");
 
     myTTree->Branch("category", &_category, "category/i");
-    myTTree->Branch("reconstructed_energy", "std::vector< double >", &_energy);
 
     myTTree->Branch("n_tracks", &_n_tracks, "n_tracks/i");
     myTTree->Branch("n_showers", &_n_showers, "n_showers/i");
@@ -272,6 +271,20 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
     myTTree->Branch("chargecenter_z", &_chargecenter_z, "chargecenter_z/F");
     myTTree->Branch("total_spacepoint_containment", &_total_spacepoint_containment, "total_spacepoint_containment/F");
 
+    myTTree->Branch("shower_dedx_hits_w", "std::vector<int>", &_shower_dedx_hits_w);
+    myTTree->Branch("shower_dedx_w", "std::vector<float>", &_shower_dedx_w);
+    myTTree->Branch("shower_dedx_best_w", "std::vector<float>", &_shower_dedx_best_w);
+    myTTree->Branch("track_dedx_hits_w", "std::vector<int>", &_track_dedx_hits_w);
+    myTTree->Branch("track_dedx_w", "std::vector<float>", &_track_dedx_w);
+    myTTree->Branch("track_dedx_best_w", "std::vector<float>", &_track_dedx_best_w);
+
+    myTTree->Branch("shower_hits_w", "std::vector<int>", &_shower_hits_w);
+    myTTree->Branch("shower_energy_w", "std::vector<float>", &_shower_energy_w);
+    myTTree->Branch("shower_hitsratio_w", "std::vector<float>", &_shower_hitsratio_w);
+    myTTree->Branch("track_hits_w", "std::vector<int>", &_track_hits_w);
+    myTTree->Branch("track_energy_w", "std::vector<float>", &_track_energy_w);
+    myTTree->Branch("track_hitsratio_w", "std::vector<float>", &_track_hitsratio_w);
+
     this->reconfigure(pset);
 }
 
@@ -447,8 +460,6 @@ void lee::PandoraLEEAnalyzer::clear()
     _candidate_pdg = std::numeric_limits<int>::lowest();
     _n_primaries = 0;
 
-    _energy.clear();
-
     _nu_energy = std::numeric_limits<double>::lowest();
 
     _n_tracks = std::numeric_limits<int>::lowest();
@@ -507,6 +518,7 @@ void lee::PandoraLEEAnalyzer::clear()
 
     _bnbweight = std::numeric_limits<int>::lowest();
 
+    // Features from the featurehelper
     _true_1eX_signal = 0;
     _track_bdt_precut = 0;
     _shower_maxangle.clear();
@@ -529,6 +541,19 @@ void lee::PandoraLEEAnalyzer::clear()
     _chargecenter_y = std::numeric_limits<float>::lowest();
     _chargecenter_z = std::numeric_limits<float>::lowest();
     _total_spacepoint_containment = std::numeric_limits<float>::lowest();
+
+    _shower_dedx_hits_w.clear();
+    _shower_dedx_w.clear();
+    _shower_dedx_best_w.clear();
+    _track_dedx_hits_w.clear();
+    _track_dedx_w.clear();
+    _track_dedx_best_w.clear();
+    _shower_energy_w.clear();
+    _shower_hitsratio_w.clear();
+    _shower_hits_w.clear();
+    _track_energy_w.clear();
+    _track_hitsratio_w.clear();
+    _track_hits_w.clear();
 }
 
 void lee::PandoraLEEAnalyzer::categorizePFParticles(
@@ -948,7 +973,6 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
 
         _chosen_candidate = ipf_candidate;
         _candidate_pdg = pfpneutrino.PdgCode();
-        _energy.resize(3, 0); //Total reconstructed energy for three planes, will be filled for tracks and showers.
 
         art::FindOneP<recob::Vertex> vertex_per_pfpart(pfparticle_handle, evt, m_pfp_producer);
         auto const &vertex_obj = vertex_per_pfpart.at(ipf_candidate);
@@ -1134,11 +1158,6 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
 
                 energyHelper.energyFromHits(pfparticle, this_nhits, this_energy, evt, m_pfp_producer);
 
-                for (int i = 0; i < 3; ++i)
-                {
-                    _energy[i] += this_energy[i];
-                }
-
                 _track_energy_hits.push_back(this_energy);
                 // Alternative way to calculate the energy using dedx.
                 _track_energy_dedx.push_back(energyHelper.trackEnergy_dedx(track_obj, evt, m_pfp_producer));
@@ -1306,12 +1325,6 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
             std::vector<int> this_nhits;
 
             energyHelper.energyFromHits(pfparticle, this_nhits, this_energy, evt, m_pfp_producer);
-
-            for (int i = 0; i < 3; ++i)
-            {
-                _energy[i] += this_energy[i];
-            }
-            _shower_energy_hits.push_back(this_energy);
 
             std::vector<std::vector<double>> pca;
             pca.resize(3, std::vector<double>(2));
@@ -1518,6 +1531,36 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
                                              _chargecenter_x, _chargecenter_y, _chargecenter_z);
 
         _total_spacepoint_containment = featureHelper.reco_total_spacepoint_containment(_nu_shower_ids, _nu_track_ids, evt, m_pfp_producer);
+
+        featureHelper.reco_dedx(_shower_dEdx_hits,
+                                _shower_dEdx,
+                                _shower_dQdx_cali,
+                                _shower_dedx_hits_w,
+                                _shower_dedx_w,
+                                _shower_dedx_best_w);
+
+        featureHelper.reco_dedx(_track_dEdx_hits,
+                                _track_dEdx,
+                                _track_dQdx_cali,
+                                _track_dedx_hits_w,
+                                _track_dedx_w,
+                                _track_dedx_best_w);
+
+        featureHelper.reco_energy(_shower_energy_hits,
+                                  _shower_energy_cali,
+                                  _shower_nhits_cluster,
+                                  _shower_nhits_spacepoint,
+                                  _shower_energy_w,
+                                  _shower_hitsratio_w,
+                                  _shower_hits_w);
+
+        featureHelper.reco_energy(_track_energy_hits,
+                                  _track_energy_cali,
+                                  _track_nhits_cluster,
+                                  _track_nhits_spacepoint,
+                                  _track_energy_w,
+                                  _track_hitsratio_w,
+                                  _track_hits_w);
 
         // Should work on overlaidsample
         if (!evt.isRealData())

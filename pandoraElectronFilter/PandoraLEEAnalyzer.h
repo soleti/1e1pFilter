@@ -138,7 +138,6 @@ private:
   const int k_data = 6;
   const int k_other = 0;
   const int k_mixed = 7;
-  std::vector<double> _energy;
   int _true_nu_is_fiducial;
   double _nu_energy;
 
@@ -337,6 +336,20 @@ private:
   float _chargecenter_y;
   float _chargecenter_z;
   float _total_spacepoint_containment;
+
+  std::vector<int> _shower_dedx_hits_w;
+  std::vector<float> _shower_dedx_w;
+  std::vector<float> _shower_dedx_best_w;
+  std::vector<int> _track_dedx_hits_w;
+  std::vector<float> _track_dedx_w;
+  std::vector<float> _track_dedx_best_w;
+  
+  std::vector<float> _shower_energy_w;
+  std::vector<float> _shower_hitsratio_w;
+  std::vector<int> _shower_hits_w;
+  std::vector<float> _track_energy_w;
+  std::vector<float> _track_hitsratio_w;
+  std::vector<int> _track_hits_w;
 
 
   double m_dQdxRectangleWidth;

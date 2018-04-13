@@ -612,6 +612,73 @@ std::vector<double> FeatureHelper::reco_vtxdistance(double &vx, double &vy, doub
   return object_dist;
 }
 
+void FeatureHelper::reco_dedx(std::vector<std::vector<double>> &_object_dEdx_hits,
+                              std::vector<std::vector<double>> &_object_dEdx,
+                              std::vector<std::vector<float>> &_object_dQdx_cali,
+                              std::vector<int> &_object_dedx_hits_w,
+                              std::vector<float> &_object_dedx_w,
+                              std::vector<float> &_object_dedx_best_w)
+{
+  uint n_objects = _object_dEdx.size();
+  _object_dedx_hits_w.resize(n_objects);
+  _object_dedx_w.resize(n_objects);
+  _object_dedx_best_w.resize(n_objects);
+
+  for (uint i = 0; i < n_objects; ++i)
+  {
+    _object_dedx_hits_w[i] = _object_dEdx_hits[i].size();
+    _object_dedx_w[i] = _object_dEdx[i][2] * _object_dQdx_cali[i][2]; // collection plane
+
+    double dedx_avg_collection = 0;
+    // Protect against no cluster hits on collection plane:
+    if (_object_dedx_hits_w[i] > 0)
+    {
+      dedx_avg_collection = std::accumulate(_object_dEdx_hits[i].begin(), _object_dEdx_hits[i].end(), 0.0) / _object_dedx_hits_w[i] * _object_dQdx_cali[i][2];
+    }
+
+    double dedx_choices[4] = {_object_dEdx[i][0] * _object_dQdx_cali[i][0] - target_electron_dedx,
+                              _object_dEdx[i][1] * _object_dQdx_cali[i][1] - target_electron_dedx,
+                              _object_dEdx[i][2] * _object_dQdx_cali[i][2] - target_electron_dedx,
+                              dedx_avg_collection - target_electron_dedx};
+    double min = dedx_choices[0];
+    for (uint j = 1; j < 4; ++j)
+    {
+      if (abs(min) > abs(dedx_choices[j]))
+      {
+        min = dedx_choices[j];
+        std::cout << "dedx_choices[j]" << dedx_choices[j] << std::endl;
+      }
+    }
+    _object_dedx_best_w[i] = (float)min;
+  }
+}
+
+void FeatureHelper::reco_energy(std::vector<std::vector<double>> &_object_energy_hits,
+                                std::vector<std::vector<float>> &_object_energy_cali,
+                                std::vector<std::vector<int>> &_object_nhits_cluster,
+                                std::vector<std::vector<int>> &_object_nhits_spacepoint,
+                                std::vector<float> &_object_energy_w,
+                                std::vector<float> &_object_hitsratio_w,
+                                std::vector<int> &_object_hits_w)
+{
+  uint n_objects = _object_energy_hits.size();
+  _object_energy_w.resize(n_objects);
+  _object_hitsratio_w.resize(n_objects);
+  _object_hits_w.resize(n_objects);
+  for (uint i = 0; i < n_objects; ++i)
+  {
+    _object_energy_w[i] = _object_energy_hits[i][2] * _object_energy_cali[i][2];
+    _object_hits_w[i] = _object_nhits_cluster[i][2];
+
+    _object_hitsratio_w[i] = 0;
+    // Protect against no cluster hits on collection plane:
+    if ( _object_hits_w[i] > 0)
+    {
+      _object_hitsratio_w[i] = _object_nhits_spacepoint[i][2] / _object_nhits_cluster[i][2];
+    }
+  }
+}
+
 } // namespace lee
 
 #endif
