@@ -88,7 +88,7 @@ void ElectronEventSelectionAlg::reconfigure(fhicl::ParameterSet const &p)
   m_mgr.Configure(p.get<flashana::Config_t>("FlashMatchConfig"));
   std::cout << "[ElectronEventSelectionAlg] config " << std::endl;
   m_mgr.PrintConfig();
-  fOpticalFlashFinderLabel = p.get<std::string>("OpticalFlashFinderLabel", "simpleFlashBeam::McRecoStage1");
+  fOpticalFlashFinderLabel = p.get<std::string>("OpticalFlashFinderLabel", "simpleFlashBeam");
 
   // std::cout << "fidvolXstart\t" << m_fidvolXstart << std::endl;
   // std::cout << "fidvolXend\t" << m_fidvolXend   << std::endl;
