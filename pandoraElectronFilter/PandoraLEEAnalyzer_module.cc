@@ -265,6 +265,9 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
     myTTree->Branch("shower_spacepoint_dqdx_ratio", "std::vector<float>", &_shower_spacepoint_dqdx_ratio);
     myTTree->Branch("track_spacepoint_dqdx_ratio", "std::vector<float>", &_track_spacepoint_dqdx_ratio);
     myTTree->Branch("track_containment", "std::vector<int>", &_track_containment);
+ 
+    myTTree->Branch("flash_PE_max", &_flash_PE_max, "flash_PE_max/d");
+    myTTree->Branch("flash_time_max", &_flash_time_max, "flash_time_max/d");
 
     myTTree->Branch("chargecenter_x", &_chargecenter_x, "chargecenter_x/F");
     myTTree->Branch("chargecenter_y", &_chargecenter_y, "chargecenter_y/F");
@@ -1325,6 +1328,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
             std::vector<int> this_nhits;
 
             energyHelper.energyFromHits(pfparticle, this_nhits, this_energy, evt, m_pfp_producer);
+            _shower_energy_hits.push_back(this_energy);
 
             std::vector<std::vector<double>> pca;
             pca.resize(3, std::vector<double>(2));

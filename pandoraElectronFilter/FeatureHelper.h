@@ -10,7 +10,6 @@
 #include "HelperBase.h"
 
 #include <algorithm>
-#include <cmath>
 
 #include "GeometryHelper.h"
 

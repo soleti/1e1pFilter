@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!DOCTYPE project [
-<!ENTITY name "data_bnb_a_1s0t">
+<!ENTITY name "data_bnb_a_0s0t">
 <!ENTITY version "v06_26_01_12">
 <!ENTITY qualifier "e10:prof">
 <!ENTITY dataset "wvdp_prod_reco_optfilter_bnb_v12_unblind_mcc8a_ok">
@@ -21,7 +21,7 @@
     <larsoft>
         <tag>&version;</tag>
         <qual>&qualifier;</qual>
-        <local>/pnfs/uboone/resilient/users/&user;/submission/MCC87_4_11_0s0t_oldremoval.tar</local>
+        <local>/pnfs/uboone/resilient/users/&user;/submission/MCC87_4_13_0s0t.tar</local>
     </larsoft>
 
     <!--  Project stages  -->

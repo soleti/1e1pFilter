@@ -521,7 +521,7 @@ void FeatureHelper::reco_spacepoint_ratios(std::vector<size_t> _nu_object_ids, c
     std::vector<float> sps_dqdx_integral;
     float maxdist = reco_spacepoint_dqdx(pf_id, evt, _pfp_producer, sps_dqdx_distance, sps_dqdx_integral);
     std::cout << "maxdist " << maxdist << std::endl;
-    if (maxdist == -1)
+    if (maxdist < 0.5)
     {
       object_dqdx_ratio.push_back(0.0);
       std::cout << "[FeatureHelper] PFP_id: " << pf_id << " had no spacepoint collection charge." << std::endl;
@@ -533,7 +533,7 @@ void FeatureHelper::reco_spacepoint_ratios(std::vector<size_t> _nu_object_ids, c
       float part_2 = 0;
       for (size_t i = 0; i < n_points; ++i)
       {
-        if (sps_dqdx_distance[i] < (maxdist / 2))
+        if (sps_dqdx_distance[i] < (maxdist / 2.0))
         {
           part_1 += sps_dqdx_integral[i];
         }
@@ -627,13 +627,13 @@ void FeatureHelper::reco_dedx(std::vector<std::vector<double>> &_object_dEdx_hit
   for (uint i = 0; i < n_objects; ++i)
   {
     _object_dedx_hits_w[i] = _object_dEdx_hits[i].size();
-    _object_dedx_w[i] = _object_dEdx[i][2] * _object_dQdx_cali[i][2]; // collection plane
 
     double dedx_avg_collection = 0;
     // Protect against no cluster hits on collection plane:
     if (_object_dedx_hits_w[i] > 0)
     {
-      dedx_avg_collection = std::accumulate(_object_dEdx_hits[i].begin(), _object_dEdx_hits[i].end(), 0.0) / _object_dedx_hits_w[i] * _object_dQdx_cali[i][2];
+      _object_dedx_w[i] = _object_dEdx[i][2] * _object_dQdx_cali[i][2]; // collection plane
+      dedx_avg_collection = std::accumulate(_object_dEdx_hits[i].begin(), _object_dEdx_hits[i].end(), 0.0) / (float)_object_dedx_hits_w[i] * _object_dQdx_cali[i][2];
     }
 
     double dedx_choices[4] = {_object_dEdx[i][0] * _object_dQdx_cali[i][0] - target_electron_dedx,
@@ -643,10 +643,9 @@ void FeatureHelper::reco_dedx(std::vector<std::vector<double>> &_object_dEdx_hit
     double min = dedx_choices[0];
     for (uint j = 1; j < 4; ++j)
     {
-      if (abs(min) > abs(dedx_choices[j]))
+      if (std::abs(min) > std::abs(dedx_choices[j]))
       {
         min = dedx_choices[j];
-        std::cout << "dedx_choices[j]" << dedx_choices[j] << std::endl;
       }
     }
     _object_dedx_best_w[i] = (float)min;
@@ -674,7 +673,7 @@ void FeatureHelper::reco_energy(std::vector<std::vector<double>> &_object_energy
     // Protect against no cluster hits on collection plane:
     if ( _object_hits_w[i] > 0)
     {
-      _object_hitsratio_w[i] = _object_nhits_spacepoint[i][2] / _object_nhits_cluster[i][2];
+      _object_hitsratio_w[i] = _object_nhits_spacepoint[i][2] / (float)_object_nhits_cluster[i][2];
     }
   }
 }

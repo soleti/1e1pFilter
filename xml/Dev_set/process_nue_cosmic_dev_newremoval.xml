@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!DOCTYPE project [
-<!ENTITY name "bnb_nue_cosmic_1s0t_dev_newremoval">
+<!ENTITY name "bnb_nue_cosmic_0s0t_dev_newremoval">
 <!ENTITY version "v06_26_01_12">
 <!ENTITY qualifier "e10:prof">
 <!ENTITY dataset "prodgenie_bnb_intrinsic_nue_cosmic_uboone_mcc8.7_reco2_dev">

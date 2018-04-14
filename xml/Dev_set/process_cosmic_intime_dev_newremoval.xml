@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!DOCTYPE project [
-<!ENTITY name "cosmic_intime_1s0t_dev_newremoval">
+<!ENTITY name "cosmic_intime_0s0t_dev_newremoval">
 <!ENTITY version "v06_26_01_12">
 <!ENTITY qualifier "e10:prof">
 <!ENTITY dataset "prodcosmics_corsika_cmc_uboone_intime_mcc8.7_reco2_dev">
