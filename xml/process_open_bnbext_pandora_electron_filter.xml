@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!DOCTYPE project [
 <!ENTITY name "bnbext_filter_data_a">
-<!ENTITY version "v06_26_01_11">
+<!ENTITY version "v06_26_01_12">
 <!ENTITY larsoft_version "v06_26_01_10">
 <!ENTITY qualifier "e10:prof">
 <!ENTITY dataset "prod_reco_optfilter_extbnb_v11_mcc8a">
@@ -23,7 +23,8 @@
     <larsoft>
         <tag>&larsoft_version;</tag>
         <qual>&qualifier;</qual>
-        <local>/pnfs/uboone/scratch/users/&user;/&version;.tar</local>
+        <fcldir>/uboone/app/users/&user;/&version;/srcs/1e1pFilter/pandoraElectronFilter/job</fcldir>
+        <local>/pnfs/uboone/resilient/users/&user;/&version;.tar</local> 
     </larsoft>
 
     <!--  Project stages  -->
@@ -31,7 +32,7 @@
         <fcl>run_PandoraOnly_data_extbnb.fcl</fcl>
         <outdir>/pnfs/uboone/scratch/users/&user;/&version;/lee/&name;</outdir>
         <logdir>/pnfs/uboone/scratch/users/&user;/&version;/lee/&name;</logdir>
-        <workdir>/pnfs/uboone/scratch/users/&user;/work/lee/&name;</workdir>
+        <workdir>/pnfs/uboone/resilient/users/&user;/work/lee/&name;</workdir>
         <inputdef>&dataset;</inputdef>
         <numjobs>175</numjobs>
         <disk>10GB</disk>
