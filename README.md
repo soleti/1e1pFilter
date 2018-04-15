@@ -9,6 +9,20 @@ There are two FCL files, one for data (`run_PandoraOnly_data.fcl`) and one for M
 - `uboonecode v06_26_01_10` (MCC8.6)
 - [XGBoost](http://xgboost.readthedocs.io/en/latest/). Follow the instructions in [DocDB 10685](https://microboone-docdb.fnal.gov/cgi-bin/private/ShowDocument?docid=10685).
 
+### How to setup uboonecode
+
+- go to your app folder: `/uboone/app/users/USER`
+- create Binaries and MyLarsoft: `mkdir Binaries/MyLarsoft/`
+- `source /grid/fermiapp/products/uboone/setup_uboone.sh` (must be redone every session)
+- look at the available versions of uboonecode: `ups list -aK+ uboonecode`
+- suppose you want `v06_26_01_13`
+- setup uboonecode: `setup uboonecode v06_26_01_13 -q e10:prof` (must be redone every session)
+- create a new dev: `mrb newDev` (in case you need references: https://cdcvs.fnal.gov/redmine/projects/mrb/wiki/MrbRefereceGuide)
+- `cd scrs`
+- clone the repository of uboonecode, checking out the correct version, which is one of the commit (tag) of the repository `mrb g -t v06_26_01_13 uboonecode`
+- `mrbsetenv` (must be redone everytime)
+- `mrb i -j 32`
+
 ### Instructions to set up xgboost
 
 - install XGboost in the $MRB_INSTALL/xgboost directory (usually it corresponds to the localProducts_*/xgboost directory) following the instructions here http://xgboost.readthedocs.io/en/latest/build.html, meaning:
