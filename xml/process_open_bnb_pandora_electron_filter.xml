@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <!DOCTYPE project [
-<!ENTITY name "bnb_filter_data_ubxsec_a">
+<!ENTITY name "bnb_filter_data_ubxsec_b">
 <!ENTITY version "v06_26_01_12">
 <!ENTITY larsoft_version "v06_26_01_10">
 <!ENTITY qualifier "e10:prof">
-<!ENTITY dataset "prod_reco_optfilter_bnb_v11_unblind_mcc8a">
+<!ENTITY dataset "prod_reco_optfilter_bnb_v11_unblind_mcc8b">
 <!ENTITY user "srsoleti">
 ]>
 
@@ -23,7 +23,7 @@
     <larsoft>
         <tag>&larsoft_version;</tag>
         <qual>&qualifier;</qual>
-        <fcldir>/uboone/app/users/&user;/&version;/srcs/1e1pFilter/pandoraElectronFilter/job</fcldir>
+        <fcldir>/uboone/app/users/&user;/v06_26_01_11/srcs/1e1pFilter/pandoraElectronFilter/job</fcldir>
         <local>/pnfs/uboone/resilient/users/&user;/&version;.tar</local> 
     </larsoft>
     
@@ -34,7 +34,7 @@
         <logdir>/pnfs/uboone/scratch/users/&user;/&version;/lee/&name;</logdir>
         <workdir>/pnfs/uboone/resilient/users/&user;/work/lee/&name;</workdir>
         <inputdef>&dataset;</inputdef>
-        <numjobs>52</numjobs>
+        <numjobs>771</numjobs>
         <disk>10GB</disk>
         <memory>4096</memory>
         <maxfilesperjob>5</maxfilesperjob>

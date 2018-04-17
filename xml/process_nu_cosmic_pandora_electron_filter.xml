@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <!DOCTYPE project [
-<!ENTITY name "bnb_nu_cosmic_pandora_electron_filter_ubxsec_3">
+<!ENTITY name "bnb_nu_cosmic_pandora_electron_filter_ubxsec_0">
 <!ENTITY version "v06_26_01_12">
 <!ENTITY larsoft_version "v06_26_01_10">
 <!ENTITY qualifier "e10:prof">
-<!ENTITY dataset "ahack379_mcc7_mcbnbcos_snapshot_14981403_oneFourth_3">
+<!ENTITY dataset "ahack379_mcc7_mcbnbcos_snapshot_14981403_oneFourth_0">
 <!ENTITY user "srsoleti">
 ]>
 
@@ -23,7 +23,7 @@
     <larsoft>
         <tag>&larsoft_version;</tag>
         <qual>&qualifier;</qual>
-        <fcldir>/uboone/app/users/&user;/&version;/srcs/1e1pFilter/pandoraElectronFilter/job</fcldir>
+        <fcldir>/uboone/app/users/&user;/v06_26_01_11/srcs/1e1pFilter/pandoraElectronFilter/job</fcldir>
         <local>/pnfs/uboone/resilient/users/&user;/&version;.tar</local> 
     </larsoft>
 
