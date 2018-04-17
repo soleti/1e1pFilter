@@ -312,8 +312,8 @@ void EnergyHelper::dQdx(size_t pfp_id,
         geoHelper.getPitch(pfp_dir, clusters[icl]->Plane().Plane);
 
     std::vector<double> cluster_start = {
-        clusters[icl]->StartWire() * wireSpacing - cluster_axis[0] * pitch,
-        drift * clusters[icl]->StartTick() * fromTickToNs - cluster_axis[1] * pitch};
+        clusters[icl]->StartWire() * wireSpacing,
+        drift * clusters[icl]->StartTick() * fromTickToNs};
     std::vector<double> cluster_end = {clusters[icl]->EndWire() * wireSpacing,
                                        drift * clusters[icl]->EndTick() *
                                            fromTickToNs};
@@ -335,7 +335,7 @@ void EnergyHelper::dQdx(size_t pfp_id,
 
     std::vector<double> dqdxs;
 
-    bool first = false;
+    bool first = true;
 
     for (auto &hit : hits)
     {
