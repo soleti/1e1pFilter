@@ -1480,7 +1480,7 @@ void lee::PandoraLEEAnalyzer::reconfigure(fhicl::ParameterSet const &pset)
       pset.get<fhicl::ParameterSet>("ElectronSelectionAlg"));
 
   m_hitfinderLabel = pset.get<std::string>("HitFinderLabel", "pandoraCosmicHitRemoval::McRecoStage2");
-  m_pid_producer = pset.get<std::string>("ParticleIDModuleLabel", "pandoraNupid::McRecoStage2");
+  m_pid_producer = pset.get<std::string>("ParticleIDModuleLabel", "pandoraNucalipid::McRecoCali");
 
   m_pfp_producer = pset.get<std::string>("PFParticleLabel", "pandoraNu::McRecoStage2");
   m_spacepointLabel = pset.get<std::string>("SpacePointLabel", "pandoraNu::McRecoStage2");

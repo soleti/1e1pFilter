@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <!DOCTYPE project [
-<!ENTITY name "bnb_nu_cosmic_pandora_electron_filter_ubxsec_0">
+<!ENTITY name "bnb_nu_cosmic_pandora_electron_filter_ubxsec_3">
 <!ENTITY version "v06_26_01_12">
 <!ENTITY larsoft_version "v06_26_01_10">
 <!ENTITY qualifier "e10:prof">
-<!ENTITY dataset "ahack379_mcc7_mcbnbcos_snapshot_14981403_oneFourth_0">
+<!ENTITY dataset "ahack379_mcc7_mcbnbcos_snapshot_14981403_oneFourth_3">
 <!ENTITY user "srsoleti">
 ]>
 
@@ -35,7 +35,7 @@
         <workdir>/pnfs/uboone/resilient/users/&user;/work/lee/&name;</workdir>
         <inputdef>&dataset;</inputdef>
         <numjobs>539</numjobs>
-        <disk>8GB</disk>
+        <disk>2GB</disk>
         <memory>4096</memory>
         <maxfilesperjob>20</maxfilesperjob>
         <datatier>reconstructed</datatier>

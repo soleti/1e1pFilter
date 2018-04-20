@@ -13,7 +13,7 @@ lee_pandora_analyzer:
     HitFinderLabel:             "pandoraCosmicHitRemoval::DataRecoStage2"
     PFParticleLabel:            "pandoraNu::DataRecoStage2"
     SpacePointLabel:            "pandoraNu::DataRecoStage2"
-    ParticleIDModuleLabel: "pandoraNupid::DataRecoStage2"
+    ParticleIDModuleLabel:      "pandoraNucalipid::DataRecoCali" 
 }
 
 lee_pandora_analyzer.ElectronSelectionAlg.startbeamtime: 3.65

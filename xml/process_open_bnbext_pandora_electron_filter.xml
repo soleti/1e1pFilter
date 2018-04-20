@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <!DOCTYPE project [
-<!ENTITY name "bnbext_filter_data_b">
+<!ENTITY name "bnbext_filter_data_a">
 <!ENTITY version "v06_26_01_12">
 <!ENTITY larsoft_version "v06_26_01_10">
 <!ENTITY qualifier "e10:prof">
-<!ENTITY dataset "prod_reco_optfilter_extbnb_v11_mcc8b">
+<!ENTITY dataset "prod_reco_optfilter_extbnb_v11_mcc8a">
 <!ENTITY user "srsoleti">
 ]>
 
@@ -34,9 +34,9 @@
         <logdir>/pnfs/uboone/scratch/users/&user;/&version;/lee/&name;</logdir>
         <workdir>/pnfs/uboone/resilient/users/&user;/work/lee/&name;</workdir>
         <inputdef>&dataset;</inputdef>
-        <numjobs>283</numjobs>
-        <disk>10GB</disk>
-        <memory>4096</memory>
+        <numjobs>172</numjobs>
+        <disk>2GB</disk>
+        <memory>2048</memory>
         <maxfilesperjob>40</maxfilesperjob>
         <datatier>filtered</datatier>
         <datatier>reconstructed</datatier>
