@@ -28,14 +28,14 @@
     <stage name="selection">
         <fcl>run_NueCC_mcnu.fcl</fcl>
         
-        <outdir>/uboone/data/users/&user;/&version;/&name;</outdir>
+        <outdir>/pnfs/uboone/resilient/users/&user;/&version;/&name;</outdir>
         <logdir>/pnfs/uboone/scratch/users/&user;/log/&version;/&name;</logdir>
         <workdir>/pnfs/uboone/resilient/users/&user;/work/&version;/&name;</workdir>
         <bookdir>/uboone/data/users/&user;/book/&version;/&name;</bookdir>>
         <inputdef>&dataset;</inputdef>
         <numjobs>878</numjobs>
         <disk>8GB</disk>
-        <memory>2750</memory>
+        <memory>2999</memory>
         <maxfilesperjob>14</maxfilesperjob>
         <jobsub>--expected-lifetime=7h -Q --append_condor_requirements='(TARGET.HAS_CVMFS_uboone_opensciencegrid_org==true)'</jobsub>
         <jobsub_start>--append_condor_requirements='(TARGET.HAS_CVMFS_uboone_opensciencegrid_org==true)'</jobsub_start> 

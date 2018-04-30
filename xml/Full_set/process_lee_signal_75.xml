@@ -1,14 +1,14 @@
 <?xml version="1.0"?>
 <!DOCTYPE project [
-<!ENTITY name "bnb_nue_cosmic_0s0t_dev_newremoval">
+<!ENTITY name "lee_signal_75k_0s0t">
 <!ENTITY version "v06_26_01_12">
 <!ENTITY qualifier "e10:prof">
-<!ENTITY dataset "prodgenie_bnb_intrinsic_nue_cosmic_uboone_mcc8.7_reco2_dev">
+<!ENTITY dataset "markross_lee_signal_MCC8.8_elike_cosmics_v8.0_75k_180413">
 <!ENTITY user "wvdp">
 ]>
 <project name="&name;">
     <!-- Doesn't matter for non-generating jobs -->
-    <numevents>200000</numevents>
+    <numevents>80000</numevents>
 
     <!--  Operating System  -->
     <os>SL6</os>
@@ -21,7 +21,7 @@
     <larsoft>
         <tag>&version;</tag>
         <qual>&qualifier;</qual>
-        <local>/pnfs/uboone/resilient/users/&user;/submission/MCC87_4_11_0s0t_newremoval.tar</local>
+        <local>/pnfs/uboone/resilient/users/&user;/submission/MCC87_4_13_0s0t.tar</local>
     </larsoft>
 
     <!--  Project stages  -->
@@ -33,11 +33,10 @@
         <workdir>/pnfs/uboone/resilient/users/&user;/work/&version;/&name;</workdir>
         <bookdir>/uboone/data/users/&user;/book/&version;/&name;</bookdir>>
         <inputdef>&dataset;</inputdef>
-        <numjobs>286</numjobs>
+        <numjobs>150</numjobs>
         <disk>8GB</disk>
-        <memory>2500</memory>
-        <maxfilesperjob>14</maxfilesperjob>
-        <jobsub>--expected-lifetime=7h -Q --append_condor_requirements='(TARGET.HAS_CVMFS_uboone_opensciencegrid_org==true)'</jobsub>
+        <memory>3500</memory>
+        <jobsub>--expected-lifetime=5h -Q --append_condor_requirements='(TARGET.HAS_CVMFS_uboone_opensciencegrid_org==true)'</jobsub>
         <jobsub_start>--append_condor_requirements='(TARGET.HAS_CVMFS_uboone_opensciencegrid_org==true)'</jobsub_start> 
       
        <schema>root</schema>

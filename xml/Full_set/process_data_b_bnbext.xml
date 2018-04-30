@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!DOCTYPE project [
-<!ENTITY name "data_bnbext_b_0s0t">
+<!ENTITY name "data_bnbext_b_0s0t_bu">
 <!ENTITY version "v06_26_01_12">
 <!ENTITY qualifier "e10:prof">
 <!ENTITY dataset "wvdp_prod_reco_optfilter_extbnb_v12_mcc8b_ok">
@@ -28,7 +28,7 @@
     <stage name="selection">
         <fcl>run_NueCC_data_bnbext.fcl</fcl>
         
-        <outdir>/uboone/data/users/&user;/&version;/&name;</outdir>
+        <outdir>/pnfs/uboone/resilient/users/&user;/&version;/&name;</outdir>
         <logdir>/pnfs/uboone/scratch/users/&user;/log/&version;/&name;</logdir>
         <workdir>/pnfs/uboone/resilient/users/&user;/work/&version;/&name;</workdir>
         <bookdir>/uboone/data/users/&user;/book/&version;/&name;</bookdir>>

@@ -19,7 +19,6 @@ FeatureHelper::FeatureHelper()
 // Calculate the dot product between two arrays in 3d
 double dot_product(double dir1[], double dir2[])
 {
-  std::cout << "dot product called" << std::endl;
   double nominator = (dir1[0] * dir2[0]) + (dir1[1] * dir2[1]) + (dir1[2] * dir2[2]);
   double denominator = sqrt((dir1[0] * dir1[0]) + (dir1[1] * dir1[1]) + (dir1[2] * dir1[2])) * sqrt((dir2[0] * dir2[0]) + (dir2[1] * dir2[1]) + (dir2[2] * dir2[2]));
   return nominator / denominator;
@@ -542,7 +541,7 @@ void FeatureHelper::reco_spacepoint_ratios(std::vector<size_t> _nu_object_ids, c
           part_2 += sps_dqdx_integral[i];
         }
       }
-      std::cout << "object_dqdx_ratio: part 1 " << part_1 << " part 2 " << part_2 << " ratio " << part_1 / part_2 << std::endl;
+      // std::cout << "object_dqdx_ratio: part 1 " << part_1 << " part 2 " << part_2 << " ratio " << part_1 / part_2 << std::endl;
       object_dqdx_ratio.push_back(part_1 / part_2);
     }
   }
