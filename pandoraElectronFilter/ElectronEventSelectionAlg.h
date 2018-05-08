@@ -208,9 +208,25 @@ public:
     */
   const std::vector<double> &get_flash_time() const { return _flash_time; }
 
-  const double &get_flash_x() const { return _flash_x; }
+  /**
+    * @brief Return the positionaL variables of the brightest in time flash
+    */
+  const double &get_flash_y() const { return _flash_y; }
+  const double &get_flash_z() const { return _flash_z; }
+  const double &get_flash_sigma_y() const { return _flash_sy; }
+  const double &get_flash_sigma_z() const { return _flash_sz; }
 
-  const double &get_TPC_x() const { return _TPC_x; }
+  const std::vector<double> &get_flash_x() const { return _flash_x; }
+  const std::vector<double> &get_TPC_x() const { return _TPC_x; }
+  const std::vector<double> &get_flash_score() const { return _flash_score; }
+
+  /**
+    * @brief Return the  info about the charge distributions of the candidates
+    */
+  const std::vector<double> &get_candidadates_charge_x() const { return _charges_x; }
+  const std::vector<double> &get_candidadates_charge_y() const { return _charges_y; }
+  const std::vector<double> &get_candidadates_charge_z() const { return _charges_z; }
+  const std::vector<double> &get_candidadates_charge_total() const { return _charges_total; }
 
 protected:
   // Variables that are used to determine the selection and might be worth passing
@@ -227,11 +243,22 @@ protected:
   std::map<size_t, int> _n_tracks;
   std::map<size_t, std::vector<size_t>> _pfp_id_tracks_from_primary;
 
-  std::vector<double> _flash_PE;
-  std::vector<double> _flash_time;
+  std::vector<double> _flash_PE;   // PE of all flashes
+  std::vector<double> _flash_time; // time of all flashes
 
-  double _TPC_x;
-  double _flash_x;
+  double _flash_y; // info of the brightest intime flash
+  double _flash_sy;
+  double _flash_z;
+  double _flash_sz;
+
+  std::vector<double> _charges_x;     // closest x spacepoint of the candidates
+  std::vector<double> _charges_y;     // center of charge y
+  std::vector<double> _charges_z;     // center of charge z
+  std::vector<double> _charges_total; // total uncorrected collectionplane charge
+
+  std::vector<double> _TPC_x;       // candidate lowest x for the matched candidates, in order of score
+  std::vector<double> _flash_x;     // flashmatched x for the matched candidates, in order of score
+  std::vector<double> _flash_score; // flashmatch score for the matched candidates, in order of score
 
 protected:
   // Configurable variables from the fcl file:

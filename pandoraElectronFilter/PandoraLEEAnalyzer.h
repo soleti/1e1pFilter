@@ -291,16 +291,27 @@ private:
   std::vector<double> _nu_daughters_endy;
   std::vector<double> _nu_daughters_endz;
 
-  std::vector<double> _flash_PE;
-  std::vector<double> _flash_time;
-
   std::vector<float> _shower_sp_x;
   std::vector<float> _shower_sp_y;
   std::vector<float> _shower_sp_z;
   std::vector<float> _shower_sp_int;
 
-  double _TPC_x;
-  double _flash_x;
+ std::vector<double> _flash_PE;   // PE of all flashes
+  std::vector<double> _flash_time; // time of all flashes
+
+  double _flash_y; // info of the brightest intime flash
+  double _flash_sy;
+  double _flash_z;
+  double _flash_sz;
+
+  std::vector<double> _charges_x;     // closest x spacepoint of the candidates
+  std::vector<double> _charges_y;     // center of charge y
+  std::vector<double> _charges_z;     // center of charge z
+  std::vector<double> _charges_total; // total uncorrected collectionplane charge
+
+  std::vector<double> _TPC_x;       // candidate lowest x for the matched candidates, in order of score
+  std::vector<double> _flash_x;     // flashmatched x for the matched candidates, in order of score
+  std::vector<double> _flash_score; // flashmatch score for the matched candidates, in order of score
 
   std::vector<double> _shower_pca;
   std::vector<double> _track_pca;

@@ -119,9 +119,20 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
 
     myTTree->Branch("flash_time", "std::vector< double >", &_flash_time);
     myTTree->Branch("flash_PE", "std::vector< double >", &_flash_PE);
-    myTTree->Branch("flash_x", &_flash_x, "flash_x/d");
-    myTTree->Branch("TPC_x", &_TPC_x, "TPC_x/d");
+    myTTree->Branch("flash_y", &_flash_y, "flash_z/d");
+    myTTree->Branch("flash_z", &_flash_z, "flash_y/d");
+    myTTree->Branch("flash_sy", &_flash_y, "flash_sz/d");
+    myTTree->Branch("flash_sz", &_flash_z, "flash_sy/d");
 
+    myTTree->Branch("flash_x", "std::vector< double >", &_flash_x);
+    myTTree->Branch("flash_score", "std::vector< double >", &_flash_score);
+    myTTree->Branch("TPC_x", "std::vector< double >", &_TPC_x);
+
+    myTTree->Branch("chargecenter_candidates_x", "std::vector< double >", &_charges_x);
+    myTTree->Branch("chargecenter_candidates_y", "std::vector< double >", &_charges_y);
+    myTTree->Branch("chargecenter_candidates_z", "std::vector< double >", &_charges_z);
+    myTTree->Branch("chargecenter_candidates_total", "std::vector< double >", &_charges_total);
+    
     myTTree->Branch("flash_passed", "std::vector< int >", &_flash_passed);
     myTTree->Branch("track_passed", "std::vector< int >", &_track_passed);
     myTTree->Branch("shower_passed", "std::vector< int >", &_shower_passed);
@@ -265,7 +276,7 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
     myTTree->Branch("shower_spacepoint_dqdx_ratio", "std::vector<float>", &_shower_spacepoint_dqdx_ratio);
     myTTree->Branch("track_spacepoint_dqdx_ratio", "std::vector<float>", &_track_spacepoint_dqdx_ratio);
     myTTree->Branch("track_containment", "std::vector<int>", &_track_containment);
- 
+
     myTTree->Branch("flash_PE_max", &_flash_PE_max, "flash_PE_max/d");
     myTTree->Branch("flash_time_max", &_flash_time_max, "flash_time_max/d");
 
@@ -501,8 +512,18 @@ void lee::PandoraLEEAnalyzer::clear()
     _numu_passed = 0;
     _distance = std::numeric_limits<double>::lowest();
 
-    _flash_x = std::numeric_limits<double>::lowest();
-    _TPC_x = std::numeric_limits<double>::lowest();
+    _flash_x.clear();
+    _flash_score.clear();
+    _TPC_x.clear();
+    _flash_y = std::numeric_limits<double>::lowest();
+    _flash_z = std::numeric_limits<double>::lowest();
+    _flash_sy = std::numeric_limits<double>::lowest();
+    _flash_sz = std::numeric_limits<double>::lowest();
+    
+    _charges_x.clear();
+    _charges_y.clear();
+    _charges_z.clear();
+    _charges_total.clear();
 
     _nu_daughters_E.clear();
     _nu_daughters_pdg.clear();
@@ -698,9 +719,24 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
 
     _flash_PE = fElectronEventSelectionAlg.get_flash_PE();
     _flash_time = fElectronEventSelectionAlg.get_flash_time();
-
-    _flash_x = fElectronEventSelectionAlg.get_flash_x();
+    
     _TPC_x = fElectronEventSelectionAlg.get_TPC_x();
+    _flash_score = fElectronEventSelectionAlg.get_flash_score();
+    _flash_x = fElectronEventSelectionAlg.get_flash_x();
+
+    
+    _flash_y = fElectronEventSelectionAlg.get_flash_y();
+    _flash_z = fElectronEventSelectionAlg.get_flash_z();
+    _flash_sy = fElectronEventSelectionAlg.get_flash_sigma_y();
+    _flash_sz = fElectronEventSelectionAlg.get_flash_sigma_z();
+    _TPC_x = fElectronEventSelectionAlg.get_TPC_x();
+
+    _charges_x = fElectronEventSelectionAlg.get_candidadates_charge_x();
+    _charges_y = fElectronEventSelectionAlg.get_candidadates_charge_y();
+    _charges_z = fElectronEventSelectionAlg.get_candidadates_charge_z();
+    _charges_total = fElectronEventSelectionAlg.get_candidadates_charge_total();
+
+
     _category = 0;
     std::vector<double> true_neutrino_vertex(3);
     std::cout << "[PandoraLEEAnalyzer] Real data " << evt.isRealData() << std::endl;

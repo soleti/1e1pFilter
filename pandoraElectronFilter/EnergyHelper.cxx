@@ -225,6 +225,9 @@ void EnergyHelper::dQdx(size_t pfp_id,
                         std::string _pfp_producer)
 {
 
+  double wireSpacing = 0.3;
+  double tolerance = 0.001;
+
   std::vector<double> _gain;
   if (evt.isRealData())
     _gain = _data_gain;
@@ -328,77 +331,58 @@ void EnergyHelper::dQdx(size_t pfp_id,
 
   std::vector<art::Ptr<recob::Cluster>> clusters = clusters_per_pfpart.at(pfp_id);
 
-  double drift = detprop->DriftVelocity() * 1e-3;
-  //std::cout << "[dQdx] Clusters size " << clusters.size() << std::endl;
-
   for (size_t icl = 0; icl < clusters.size(); icl++)
   {
     std::vector<art::Ptr<recob::Hit>> hits =
         hits_per_clusters.at(clusters[icl].key());
 
-    //std::cout << "[dQdx] "
-    //          << "Cluster " << icl << std::endl;
+    std::vector<double> cluster_axis;
+    std::vector<double> cluster_start;
+    std::vector<double> cluster_end;
+    double start_x = detprop->ConvertTicksToX(clusters[icl]->StartTick(), clusters[icl]->Plane());
+    double end_x = detprop->ConvertTicksToX(clusters[icl]->EndTick(), clusters[icl]->Plane());
+    // std::cout << "start " << start_x << ", end: " << end_x << std::endl;
+    if (pfp_dir.Z() >= 0)
+    {
+      std::reverse(hits.begin(), hits.end());
+      cluster_axis = {cos(clusters[icl]->StartAngle()),
+                      sin(clusters[icl]->StartAngle())};
 
-    //std::cout << "[dQdx] "
-    //          << "Wire coordinate " << clusters[icl]->StartWire() << std::endl;
-    //std::cout << "[dQdx] "
-    //          << "Tick coordinate " << clusters[icl]->StartTick() << std::endl;
-
-    // TODO Use variable from detector properties!
-    // To get the time in ns -> 4.8 ms / 9600 ticks * 1e6 = 500
-    // 0.3 wire spacing
-
-    double fromTickToNs = 4.8 / detprop->ReadOutWindowSize() * 1e6;
-    double wireSpacing = 0.3;
-
-    std::vector<double> cluster_axis = {cos(clusters[icl]->StartAngle()),
-                                        sin(clusters[icl]->StartAngle())};
-
-    double pitch =
-        geoHelper.getPitch(pfp_dir, clusters[icl]->Plane().Plane);
-
-    std::vector<double> cluster_start = {
-        clusters[icl]->StartWire() * wireSpacing - cluster_axis[0] * pitch,
-        drift * clusters[icl]->StartTick() * fromTickToNs - cluster_axis[1] * pitch};
-    std::vector<double> cluster_end = {clusters[icl]->EndWire() * wireSpacing,
-                                       drift * clusters[icl]->EndTick() *
-                                           fromTickToNs};
+      cluster_start = {clusters[icl]->StartWire() * wireSpacing - tolerance * cos(clusters[icl]->StartAngle()),
+                       start_x - tolerance * sin(clusters[icl]->StartAngle())};
+      cluster_end = {clusters[icl]->EndWire() * wireSpacing, end_x};
+    }
+    else
+    {
+      cluster_axis = {-1. * cos(clusters[icl]->StartAngle()),
+                      -1. * sin(clusters[icl]->StartAngle())};
+      cluster_start = {clusters[icl]->EndWire() * wireSpacing + tolerance * cos(clusters[icl]->StartAngle()),
+                       end_x + tolerance * sin(clusters[icl]->StartAngle())};
+      cluster_end = {clusters[icl]->StartWire() * wireSpacing, start_x};
+    }
 
     double cluster_length = sqrt(pow(cluster_end[0] - cluster_start[0], 2) +
                                  pow(cluster_end[1] - cluster_start[1], 2));
     if (cluster_length <= 0)
       continue;
 
+    double pitch = geoHelper.getPitch(pfp_dir, clusters[icl]->Plane().Plane);
+
     // Build rectangle 4 x 1 cm around the cluster axis
     std::vector<std::vector<double>> points;
     geoHelper.buildRectangle(m_dQdxRectangleLength, m_dQdxRectangleWidth,
                              cluster_start, cluster_axis, points);
 
-    //std::cout << "[dQdx] Point 1 " << points[0][0] << " " << points[0][1] << std::endl;
-    //std::cout << "[dQdx] Point 2 " << points[1][0] << " " << points[1][1] << std::endl;
-    //std::cout << "[dQdx] Point 3 " << points[2][0] << " " << points[2][1] << std::endl;
-    //std::cout << "[dQdx] Point 4 " << points[3][0] << " " << points[3][1] << std::endl;
-
     std::vector<double> dqdxs;
-
-    bool first = false;
 
     for (auto &hit : hits)
     {
-
-      // std::cout << "[PandoraLEE] Hit wire ID " << hit->WireID().Wire <<
-      // std::endl;
-      // std::cout << "Hit peak time " << hit->PeakTime() << std::endl;
-
       std::vector<double> hit_pos = {hit->WireID().Wire * wireSpacing,
-                                     fromTickToNs * drift * hit->PeakTime()};
+                                     detprop->ConvertTicksToX(hit->PeakTime(), clusters[icl]->Plane())};
 
       bool is_within = geoHelper.isInside(hit_pos, points);
 
-      // Hit within the rectangle. The function considers points on the border
-      // as outside, so we manually add the first point
-
-      if (is_within || first)
+      if (is_within)
       {
         double q = hit->Integral() * _gain[clusters[icl]->Plane().Plane];
         dqdxs.push_back(q / pitch);
@@ -408,23 +392,13 @@ void EnergyHelper::dQdx(size_t pfp_id,
           dqdx_wires.push_back(hit->WireID().Wire);
         }
       }
-      first = false;
-
-      // std::cout << "[dQdx] Hit pos " << is_within << " " << hit_pos[0] << " " << hit_pos[1] << std::endl;
     }
 
     // Get the median
-    size_t n = dqdxs.size() / 2;
-
-    std::nth_element(dqdxs.begin(), dqdxs.begin() + n, dqdxs.end());
-    if (n > 0)
+    if (dqdxs.size() > 0)
     {
-      //std::cout << "[dQdx] Plane dQdx " << clusters[icl]->Plane().Plane << " "
-      //          << icl << " "
-      //          << dqdxs[n] << " " << dqdxs[n] * (23. / 1e6) / 0.62
-      //          << std::endl;
-
-      dqdx[clusters[icl]->Plane().Plane] = dqdxs[n];
+      std::nth_element(dqdxs.begin(), dqdxs.begin() + dqdxs.size() / 2, dqdxs.end());
+      dqdx[clusters[icl]->Plane().Plane] = dqdxs[dqdxs.size() / 2];
     }
   }
 }

@@ -145,7 +145,7 @@ void PandoraInterfaceHelper::Configure(art::Event const &e,
         {
           const art::Ptr<simb::MCParticle> thisParticle = mcp_v.at(best_match_id);
           const art::Ptr<simb::MCParticle> primaryParticle(lar_pandora::LArPandoraHelper::GetFinalStateMCParticle(particleMap, thisParticle));
-          const art::Ptr<simb::MCParticle> selectedParticle((lar_pandora::LArPandoraHelper::kAddDaughters == daughterMode) ? primaryParticle : thisParticle);       
+          const art::Ptr<simb::MCParticle> selectedParticle((lar_pandora::LArPandoraHelper::kAddDaughters == daughterMode) ? primaryParticle : thisParticle);
           if ((lar_pandora::LArPandoraHelper::kIgnoreDaughters == daughterMode) && (selectedParticle != primaryParticle))
             continue;
 
@@ -358,7 +358,6 @@ std::vector<double> PandoraInterfaceHelper::calculateChargeCenter(
 
   for (auto &_i_pfp : daughters)
   {
-
     // Get the associated spacepoints:
     std::vector<art::Ptr<recob::SpacePoint>> spcpnts =
         spcpnts_per_pfpart.at(_i_pfp);
@@ -367,11 +366,6 @@ std::vector<double> PandoraInterfaceHelper::calculateChargeCenter(
     for (auto &_sps : spcpnts)
     {
       auto xyz = _sps->XYZ();
-
-      if (xyz[0] > 0 && xyz[0] < min_x_sps_temp)
-      {
-        min_x_sps_temp = xyz[0];
-      }
 
       std::vector<art::Ptr<recob::Hit>> hits = hits_per_spcpnts.at(_sps.key());
       // Add the hits to the weighted average, if they are collection hits:
@@ -391,7 +385,13 @@ std::vector<double> PandoraInterfaceHelper::calculateChargeCenter(
           chargecenter[1] += (xyz[1]) * weight;
           chargecenter[2] += (xyz[2]) * weight;
           totalweight += weight;
-          // break; // Exit the loop over hits
+
+          // Save x spacepoint with collectioncharge closest to the anode plane
+          if (xyz[0] > 0 && xyz[0] < min_x_sps_temp)
+          {
+            min_x_sps_temp = xyz[0];
+          }
+
         } // if collection
 
       } // hits

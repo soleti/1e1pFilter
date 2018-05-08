@@ -1,14 +1,14 @@
 <?xml version="1.0"?>
 <!DOCTYPE project [
-<!ENTITY name "data_bnbext_b11_0s0t">
+<!ENTITY name "data_bnb_b11_0s0t">
 <!ENTITY version "v06_26_01_12">
 <!ENTITY qualifier "e10:prof">
-<!ENTITY dataset "wvdp_prod_reco_optfilter_extbnb_v11_mcc8a_ok">
+<!ENTITY dataset "wvdp_prod_reco_optfilter_bnb_v11_unblind_mcc8a_ok">
 <!ENTITY user "wvdp">
 ]>
 <project name="&name;">
     <!-- Doesn't matter for non-generating jobs -->
-    <numevents>521026</numevents>
+    <numevents>912</numevents>
 
     <!--  Operating System  -->
     <os>SL6</os>
@@ -21,19 +21,19 @@
     <larsoft>
         <tag>&version;</tag>
         <qual>&qualifier;</qual>
-        <local>/pnfs/uboone/resilient/users/&user;/submission/MCC87_4_13_0s0t.tar</local>
+        <local>/pnfs/uboone/resilient/users/&user;/submission/MCC87_4_30_0s0t.tar</local>
     </larsoft>
 
     <!--  Project stages  -->
     <stage name="selection">
-        <fcl>run_NueCC_data_bnbext.fcl</fcl>
+        <fcl>run_NueCC_data_bnb.fcl</fcl>
         
         <outdir>/pnfs/uboone/resilient/users/&user;/&version;/&name;</outdir>
         <logdir>/pnfs/uboone/scratch/users/&user;/log/&version;/&name;</logdir>
         <workdir>/pnfs/uboone/resilient/users/&user;/work/&version;/&name;</workdir>
         <bookdir>/uboone/data/users/&user;/book/&version;/&name;</bookdir>>
         <inputdef>&dataset;</inputdef>
-        <numjobs>498</numjobs>
+        <numjobs>19</numjobs>
         <disk>4GB</disk>
         <memory>1500</memory>
         <maxfilesperjob>14</maxfilesperjob>

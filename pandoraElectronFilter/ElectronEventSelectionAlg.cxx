@@ -9,8 +9,20 @@ namespace lee
 void ElectronEventSelectionAlg::clear()
 {
   _n_neutrino_candidates = 0.0;
-  _TPC_x = std::numeric_limits<double>::lowest();
-  _flash_x = std::numeric_limits<double>::lowest();
+
+  _TPC_x.clear();
+  _flash_x.clear();
+  _flash_score.clear();
+
+  _flash_y = std::numeric_limits<double>::lowest();
+  _flash_z = std::numeric_limits<double>::lowest();
+  _flash_sy = std::numeric_limits<double>::lowest();
+  _flash_sz = std::numeric_limits<double>::lowest();
+
+  _charges_x.clear();
+  _charges_y.clear();
+  _charges_z.clear();
+  _charges_total.clear();
 
   _primary_indexes.clear();
   _neutrino_candidate_passed.clear();
@@ -132,7 +144,6 @@ const std::map<size_t, int> ElectronEventSelectionAlg::flashBasedSelection(const
   std::vector<unsigned int> PFPIDvector; //links the pfp indices to the qvec indices.
   std::vector<double> chargexvector;
   std::vector<flashana::FlashMatch_t> matchvec;
-  std::vector<double> scorevector;
   std::vector<double> TPC_x_vector;
   std::vector<unsigned int> TPCIDvector; //links the qvec indices to the matched ones, matched ones are score ordered already
 
@@ -162,14 +173,29 @@ const std::map<size_t, int> ElectronEventSelectionAlg::flashBasedSelection(const
       }
     }
   }
-  if (maxIndex == -1 || maxPE < m_PE_threshold)
+
+  // Fill the result array with flash failure codes
+  int temp_flash_index;
+  if (maxIndex == -1)
   {
-    std::cout << "[ElectronEventSelectionAlg] "
-              << "No flash in event within window and over " << m_PE_threshold << "PE!" << std::endl;
+    temp_flash_index = -4; // No flash in time
+  }
+  else if (maxPE < m_PE_threshold)
+  {
+    temp_flash_index = -3; // Not enough PE
+  }
+  else // Good flash
+  {
+    temp_flash_index = -1; // Placeholder, means not highest score
+  }
+
+  for (size_t pfpindex : pfplist)
+  {
+    result[pfpindex] = temp_flash_index;
   }
 
   // Else means we have a good flash
-  else
+  if(temp_flash_index ==-1)
   {
     // Store what I want to know about the flash
     recob::OpFlash const &flash = optical_handle->at(maxIndex);
@@ -194,12 +220,23 @@ const std::map<size_t, int> ElectronEventSelectionAlg::flashBasedSelection(const
       f.pe_err_v[opdet] = sqrt(flash.PE(i));
     }
 
+    // Pass information about the brightest intime flash to the analyzer:
+    _flash_y = f.y;
+    _flash_sy = f.y_err;
+    _flash_y = f.z;
+    _flash_sy = f.z_err;
+
     // Loop over the neutrino candidates to do prematching cuts
     art::FindOneP<recob::Vertex> vertex_per_pfpart(pfparticle_handle, evt, m_pfp_producer);
 
     for (size_t pfpindex : pfplist)
     {
       ChargeCenter = pandoraHelper.calculateChargeCenter(pfpindex, pfparticle_handle, evt, m_pfp_producer);
+
+      _charges_x.push_back(ChargeCenter[0]);
+      _charges_y.push_back(ChargeCenter[1]);
+      _charges_z.push_back(ChargeCenter[2]);
+      _charges_total.push_back(ChargeCenter[3]);
 
       // candidates that fail the prematching cuts do not need to be passed to the manager
       bool prematching_cuts;
@@ -222,6 +259,7 @@ const std::map<size_t, int> ElectronEventSelectionAlg::flashBasedSelection(const
       }
       else
       {
+        result[pfpindex] = -2; // Did fail prematching cuts
         std::cout << "[ElectronEventSelectionAlg] "
                   << "Neutrino candidate " << pfpindex << " rejected (prematching cuts)." << std::endl;
       }
@@ -272,38 +310,23 @@ const std::map<size_t, int> ElectronEventSelectionAlg::flashBasedSelection(const
           }
           else
           {
-            scorevector.emplace_back(match.score);
-            TPC_x_vector.emplace_back(match.tpc_point.x);
+            _flash_score.emplace_back(match.score);
+            _flash_x.emplace_back(match.tpc_point.x);
             TPCIDvector.emplace_back(match.tpc_id);
+            _TPC_x.emplace_back(chargexvector[match.tpc_id]);
             //std::cout << "Score: " << match.score << " TPC_x: " << match.tpc_point.x << " TPC_id: " <<  match.tpc_id << std::endl;
           }
         }
-
         chosen_index = PFPIDvector[TPCIDvector[0]];
-
-        _TPC_x = chargexvector[TPCIDvector[0]];
-        _flash_x = TPC_x_vector[0];
-        std::cout << "[ElectronEventSelectionAlg] "
-                  << "Candidate " << PFPIDvector[TPCIDvector[0]]
-                  << "passed optical selection! TPC_X: " << _TPC_x << " flash_x: " << _flash_x << std::endl;
       } // Else means we have a match
 
     } // Else run flashmatching in the remaining cases
 
+  result[chosen_index] = maxIndex;
   } // Else means we have a good flash
-
-  for (unsigned int i = 0; i < pfplist.size(); i++)
-  {
-    if (pfplist[i] == chosen_index)
-    {
-      result[pfplist[i]] = maxIndex; //MaxIndex is the index corresponding to the flash
-    }
-    else
-    {
-      result[pfplist[i]] = -1;
-    }
-  }
+  
   return result;
+
 } // End of flashbased selection function
 
 const flashana::QCluster_t ElectronEventSelectionAlg::collect3DHits(
@@ -445,7 +468,6 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt)
   for (auto &_i_primary : _primary_indexes)
   {
 
-
     _neutrino_candidate_passed[_i_primary] = true;
     _neutrino_vertex[_i_primary] = TVector3(0, 0, 0);
     _n_showers[_i_primary] = 0;
@@ -522,8 +544,10 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt)
     }
     _n_tracks[_i_primary] = tracks;
     _n_showers[_i_primary] = showers;
-    std::cout << "[ElectronEventSelectionAlg] " << "Showers tracks " << showers << " " << tracks << std::endl;
-    std::cout << "[ElectronEventSelectionAlg] " << "shower_daughters tracks_daughters " << shower_daughters << " " << track_daughters << std::endl;
+    std::cout << "[ElectronEventSelectionAlg] "
+              << "Showers tracks " << showers << " " << tracks << std::endl;
+    std::cout << "[ElectronEventSelectionAlg] "
+              << "shower_daughters tracks_daughters " << shower_daughters << " " << track_daughters << std::endl;
 
     // Cut on the topology to select 1e Np like signal
     if (m_topological)
@@ -606,7 +630,7 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt)
     {
       // here we also need to do the fiducial cut on that candidate:
       _neutrino_candidate_fiducial = geoHelper.isFiducial(_neutrino_vertex[val.first]);
-      std::cout<< "The selected neutrino candidate was fiducial? " << _neutrino_candidate_fiducial << std::endl;
+      std::cout << "The selected neutrino candidate was fiducial? " << _neutrino_candidate_fiducial << std::endl;
       return true;
     }
   }
