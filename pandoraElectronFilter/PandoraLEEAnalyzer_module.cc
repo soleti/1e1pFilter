@@ -119,10 +119,10 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
 
     myTTree->Branch("flash_time", "std::vector< double >", &_flash_time);
     myTTree->Branch("flash_PE", "std::vector< double >", &_flash_PE);
-    myTTree->Branch("flash_y", &_flash_y, "flash_z/d");
-    myTTree->Branch("flash_z", &_flash_z, "flash_y/d");
-    myTTree->Branch("flash_sy", &_flash_y, "flash_sz/d");
-    myTTree->Branch("flash_sz", &_flash_z, "flash_sy/d");
+    myTTree->Branch("flash_y", &_flash_y, "flash_y/d");
+    myTTree->Branch("flash_z", &_flash_z, "flash_z/d");
+    myTTree->Branch("flash_sy", &_flash_sy, "flash_sy/d");
+    myTTree->Branch("flash_sz", &_flash_sz, "flash_sz/d");
 
     myTTree->Branch("flash_x", "std::vector< double >", &_flash_x);
     myTTree->Branch("flash_score", "std::vector< double >", &_flash_score);
@@ -132,7 +132,7 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
     myTTree->Branch("chargecenter_candidates_y", "std::vector< double >", &_charges_y);
     myTTree->Branch("chargecenter_candidates_z", "std::vector< double >", &_charges_z);
     myTTree->Branch("chargecenter_candidates_total", "std::vector< double >", &_charges_total);
-    
+
     myTTree->Branch("flash_passed", "std::vector< int >", &_flash_passed);
     myTTree->Branch("track_passed", "std::vector< int >", &_track_passed);
     myTTree->Branch("shower_passed", "std::vector< int >", &_shower_passed);
@@ -519,7 +519,7 @@ void lee::PandoraLEEAnalyzer::clear()
     _flash_z = std::numeric_limits<double>::lowest();
     _flash_sy = std::numeric_limits<double>::lowest();
     _flash_sz = std::numeric_limits<double>::lowest();
-    
+
     _charges_x.clear();
     _charges_y.clear();
     _charges_z.clear();
@@ -719,12 +719,11 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
 
     _flash_PE = fElectronEventSelectionAlg.get_flash_PE();
     _flash_time = fElectronEventSelectionAlg.get_flash_time();
-    
+
     _TPC_x = fElectronEventSelectionAlg.get_TPC_x();
     _flash_score = fElectronEventSelectionAlg.get_flash_score();
     _flash_x = fElectronEventSelectionAlg.get_flash_x();
 
-    
     _flash_y = fElectronEventSelectionAlg.get_flash_y();
     _flash_z = fElectronEventSelectionAlg.get_flash_z();
     _flash_sy = fElectronEventSelectionAlg.get_flash_sigma_y();
@@ -735,7 +734,6 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
     _charges_y = fElectronEventSelectionAlg.get_candidadates_charge_y();
     _charges_z = fElectronEventSelectionAlg.get_candidadates_charge_z();
     _charges_total = fElectronEventSelectionAlg.get_candidadates_charge_total();
-
 
     _category = 0;
     std::vector<double> true_neutrino_vertex(3);
@@ -991,6 +989,9 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
 
         _n_matched = neutrino_pf.size();
     }
+
+    // Fill fields that do not depend on passed or not passed.
+    _n_primaries = _primary_indexes.size();
 
     size_t ipf_candidate = std::numeric_limits<size_t>::lowest();
     if (_event_passed)
@@ -1646,29 +1647,23 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
 
             _shower_passed.push_back(pass_shower);
 
-            if (_number_tracks.back() > 0)
+            std::vector<size_t> pfp_tracks_id = fElectronEventSelectionAlg.get_pfp_id_tracks_from_primary().at(inu);
+            int pass_track = 0;
+
+            for (size_t itr = 0; itr < pfp_tracks_id.size(); itr++)
             {
-                std::vector<size_t> pfp_tracks_id = fElectronEventSelectionAlg.get_pfp_id_tracks_from_primary().at(inu);
-                int pass_track = 0;
 
-                for (size_t itr = 0; itr < pfp_tracks_id.size(); itr++)
+                for (size_t ipf = 0; ipf < neutrino_pf.size(); ipf++)
                 {
-
-                    for (size_t ipf = 0; ipf < neutrino_pf.size(); ipf++)
+                    if (pfp_tracks_id[itr] == neutrino_pf[ipf].key())
                     {
-                        if (pfp_tracks_id[itr] == neutrino_pf[ipf].key())
-                        {
-                            pass_track += 1;
-                        }
+                        pass_track += 1;
                     }
                 }
-
-                _track_passed.push_back(pass_track);
             }
-        }
 
-        // Fill fields that do not depend on passed or not passed.
-        _n_primaries = _primary_indexes.size();
+            _track_passed.push_back(pass_track);
+        }
     }
 
     myTTree->Fill();
