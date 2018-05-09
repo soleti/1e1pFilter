@@ -10,6 +10,66 @@ EnergyHelper::EnergyHelper() {
   detprop = lar::providerFrom<detinfo::DetectorPropertiesService>();
 }
 
+void EnergyHelper::showerResiduals(const art::Event &evt,
+                                   std::string _pfp_producer,
+                                   size_t pfp_id,
+                                   double &mean_v,
+                                   double &std_v)
+{
+  auto const &pfparticle_handle =
+      evt.getValidHandle<std::vector<recob::PFParticle>>(_pfp_producer);
+  auto const &cluster_handle =
+      evt.getValidHandle<std::vector<recob::Cluster>>(_pfp_producer);
+
+  art::FindManyP<recob::Cluster> clusters_per_pfpart(pfparticle_handle, evt, _pfp_producer);
+
+  std::vector<art::Ptr<recob::Cluster>> clusters = clusters_per_pfpart.at(pfp_id);
+
+  art::FindManyP<recob::Hit> hits_per_clusters(cluster_handle, evt, _pfp_producer);
+
+  double drift = detprop->DriftVelocity() * 1e-3;
+  double fromTickToNs = 4.8 / detprop->ReadOutWindowSize() * 1e6;
+  double wireSpacing = 0.3;
+  std::vector<double> distances;
+
+  for (size_t icl = 0; icl < clusters.size(); icl++)
+  {
+    if (clusters[icl]->Plane().Plane != 2) continue;
+
+    TVector3 start_cluster(clusters[icl]->StartWire() * wireSpacing, fromTickToNs * drift * clusters[icl]->StartTick(), 0);
+    TVector3 end_cluster(clusters[icl]->EndWire() * wireSpacing, fromTickToNs * drift * clusters[icl]->EndTick(), 0);
+    TVector3 line(start_cluster-end_cluster);
+    
+    std::vector< art::Ptr<recob::Hit> > hits = hits_per_clusters.at(clusters[icl].key());
+
+
+    for (auto &hit : hits)
+    {
+      double w = hit->WireID().Wire * wireSpacing;
+      double t = fromTickToNs * drift * hit->PeakTime();
+      TVector3 hit_v(w, t, 0);
+      TVector3 num(line.Cross(start_cluster - hit_v));
+      distances.push_back(num.Mag()/line.Mag());
+      std::cout << "distance " << num.Mag() / line.Mag() << std::endl;
+    }
+
+  }
+
+  double sum = std::accumulate(distances.begin(), distances.end(), 0.0);
+  double mean = sum / distances.size();
+
+  std::vector<double> diff(distances.size());
+  std::transform(distances.begin(), distances.end(), diff.begin(), [mean](double x) { return x - mean; });
+
+  double sq_sum = std::inner_product(diff.begin(), diff.end(), diff.begin(), 0.0);
+  double stdv = std::sqrt(sq_sum / distances.size());
+
+  if (!isnan(mean) && !isnan(stdv)) {
+    mean_v = mean;
+    std_v = stdv;
+  }
+
+}
 
 void EnergyHelper::trackResiduals(const art::Event &e,
                                   std::string _pfp_producer,
@@ -20,7 +80,7 @@ void EnergyHelper::trackResiduals(const art::Event &e,
   lar_pandora::TrackVector allPfParticleTracks;
   lar_pandora::TracksToHits trackToHitsMap;
   lar_pandora::LArPandoraHelper::CollectTracks(e, _pfp_producer, allPfParticleTracks, trackToHitsMap);
-  
+
   std::vector<TVector3> hit_v;   // a vec of hits from coll plane
   std::vector<TVector3> track_v; // a vec of hits from coll plane
 
@@ -65,7 +125,7 @@ void EnergyHelper::trackResiduals(const art::Event &e,
   _track_quality.SetTrackPoints(track_v);
   _track_quality.SetHitCollection(hit_v);
   std::pair<double, double> residual_mean_std = _track_quality.GetResiduals();
-  
+
   if (!isnan(residual_mean_std.first) && !isnan(residual_mean_std.second)) {
     mean = residual_mean_std.first;
     std = residual_mean_std.second;
@@ -92,7 +152,7 @@ void EnergyHelper::energyFromHits(recob::PFParticle const &pfparticle,
       std::vector<double> _gain;
       if (evt.isRealData()){
         _gain = _data_gain;
-      }  
+      }
       else{
         _gain = _mc_gain;
       }
@@ -228,7 +288,8 @@ void EnergyHelper::dQdx(size_t pfp_id,
                         double m_dQdxRectangleWidth,
                         std::string _pfp_producer)
 {
-
+  double wireSpacing = 0.3;
+  double tolerance = 0.001;
   std::vector<double> _gain;
   if (evt.isRealData())
     _gain = _data_gain;
@@ -249,135 +310,113 @@ void EnergyHelper::dQdx(size_t pfp_id,
   //For a shower
   if (pfparticle_handle->at(pfp_id).PdgCode() == 11)
   {
-
-    art::FindOneP<recob::Shower> shower_per_pfpart(pfparticle_handle, evt, _pfp_producer);
-    auto const &shower_obj = shower_per_pfpart.at(pfp_id);
-
-    try {
+    try
+    {
+      art::FindOneP<recob::Shower> shower_per_pfpart(pfparticle_handle, evt, _pfp_producer);
+      auto const &shower_obj = shower_per_pfpart.at(pfp_id);
       pfp_dir.SetX(shower_obj->Direction().X());
       pfp_dir.SetY(shower_obj->Direction().Y());
       pfp_dir.SetZ(shower_obj->Direction().Z());
-    } catch (...) {
+    }
+    catch (...)
+    {
       return;
     }
   }
   // For a track
   else
   {
-
+    try
+    {
     art::FindOneP<recob::Track> track_per_pfpart(pfparticle_handle, evt, _pfp_producer);
     auto const &track_obj = track_per_pfpart.at(pfp_id);
 
     pfp_dir.SetX(track_obj->StartDirection().X());
     pfp_dir.SetY(track_obj->StartDirection().Y());
     pfp_dir.SetZ(track_obj->StartDirection().Z());
+    }
+    catch (...)
+    {
+      return;
+    }
   }
-
 
   art::FindManyP<recob::Cluster> clusters_per_pfpart(pfparticle_handle, evt,
                                                      _pfp_producer);
   art::FindManyP<recob::Hit> hits_per_clusters(cluster_handle, evt,
                                                _pfp_producer);
-
   std::vector<art::Ptr<recob::Cluster>> clusters =
       clusters_per_pfpart.at(pfp_id);
-
-  double drift = detprop->DriftVelocity() * 1e-3;
-  std::cout << "[dQdx] Clusters size " << clusters.size() << std::endl;
-
   for (size_t icl = 0; icl < clusters.size(); icl++)
   {
     std::vector<art::Ptr<recob::Hit>> hits =
         hits_per_clusters.at(clusters[icl].key());
 
-    //std::cout << "[dQdx] "
-    //          << "Cluster " << icl << std::endl;
+    std::vector<double> cluster_axis;
+    std::vector<double> cluster_start;
+    std::vector<double> cluster_end;
 
-    //std::cout << "[dQdx] "
-    //          << "Wire coordinate " << clusters[icl]->StartWire() << std::endl;
-    //std::cout << "[dQdx] "
-    //          << "Tick coordinate " << clusters[icl]->StartTick() << std::endl;
+    double start_x = detprop->ConvertTicksToX(clusters[icl]->StartTick(), clusters[icl]->Plane());
+    double end_x = detprop->ConvertTicksToX(clusters[icl]->EndTick(), clusters[icl]->Plane());
+    // std::cout << "start " << start_x << ", end: " << end_x << std::endl;
+    if (pfp_dir.Z() >= 0)
+    {
+      std::reverse(hits.begin(), hits.end());
+      cluster_axis = {cos(clusters[icl]->StartAngle()),
+                      sin(clusters[icl]->StartAngle())};
 
-    // TODO Use variable from detector properties!
-    // To get the time in ns -> 4.8 ms / 9600 ticks * 1e6 = 500
-    // 0.3 wire spacing
-
-    double fromTickToNs = 4.8 / detprop->ReadOutWindowSize() * 1e6;
-    double wireSpacing = 0.3;
-
-    std::vector<double> cluster_axis = {cos(clusters[icl]->StartAngle()),
-                                        sin(clusters[icl]->StartAngle())};
-
-    double pitch =
-        geoHelper.getPitch(pfp_dir, clusters[icl]->Plane().Plane);
-
-    std::vector<double> cluster_start = {
-        clusters[icl]->StartWire() * wireSpacing,
-        drift * clusters[icl]->StartTick() * fromTickToNs};
-    std::vector<double> cluster_end = {clusters[icl]->EndWire() * wireSpacing,
-                                       drift * clusters[icl]->EndTick() *
-                                           fromTickToNs};
+      cluster_start = {clusters[icl]->StartWire() * wireSpacing - tolerance*cos(clusters[icl]->StartAngle()),
+                       start_x - tolerance*sin(clusters[icl]->StartAngle())};
+      cluster_end = {clusters[icl]->EndWire() * wireSpacing, end_x};
+    }
+    else
+    {
+      cluster_axis = {-1.*cos(clusters[icl]->StartAngle()),
+                      -1.*sin(clusters[icl]->StartAngle())};
+      cluster_start = {clusters[icl]->EndWire() * wireSpacing + tolerance*cos(clusters[icl]->StartAngle()),
+                       end_x + tolerance*sin(clusters[icl]->StartAngle())};
+      cluster_end = {clusters[icl]->StartWire() * wireSpacing, start_x};
+    }
 
     double cluster_length = sqrt(pow(cluster_end[0] - cluster_start[0], 2) +
                                  pow(cluster_end[1] - cluster_start[1], 2));
     if (cluster_length <= 0)
       continue;
 
+    double pitch =
+        geoHelper.getPitch(pfp_dir, clusters[icl]->Plane().Plane);
+
     // Build rectangle 4 x 1 cm around the cluster axis
     std::vector<std::vector<double>> points;
     geoHelper.buildRectangle(m_dQdxRectangleLength, m_dQdxRectangleWidth,
                              cluster_start, cluster_axis, points);
 
-    //std::cout << "[dQdx] Point 1 " << points[0][0] << " " << points[0][1] << std::endl;
-    //std::cout << "[dQdx] Point 2 " << points[1][0] << " " << points[1][1] << std::endl;
-    //std::cout << "[dQdx] Point 3 " << points[2][0] << " " << points[2][1] << std::endl;
-    //std::cout << "[dQdx] Point 4 " << points[3][0] << " " << points[3][1] << std::endl;
-
     std::vector<double> dqdxs;
-
-    bool first = true;
 
     for (auto &hit : hits)
     {
-
-      // std::cout << "[PandoraLEE] Hit wire ID " << hit->WireID().Wire <<
-      // std::endl;
-      // std::cout << "Hit peak time " << hit->PeakTime() << std::endl;
-
       std::vector<double> hit_pos = {hit->WireID().Wire * wireSpacing,
-                                     fromTickToNs * drift * hit->PeakTime()};
+                                     detprop->ConvertTicksToX(hit->PeakTime(), clusters[icl]->Plane())};
 
       bool is_within = geoHelper.isInside(hit_pos, points);
 
-      // Hit within the rectangle. The function considers points on the border
-      // as outside, so we manually add the first point
-
-      if (is_within || first)
+      if (is_within)
       {
         double q = hit->Integral() * _gain[clusters[icl]->Plane().Plane];
         dqdxs.push_back(q / pitch);
         if (clusters[icl]->Plane().Plane == 2)
         {
           dqdx_hits.push_back(q / pitch);
+          // dqdx_wires.push_back(hit->WireID().Wire);
         }
       }
-      first = false;
-
-      // std::cout << "[dQdx] Hit pos " << is_within << " " << hit_pos[0] << " " << hit_pos[1] << std::endl;
     }
 
     // Get the median
-    size_t n = dqdxs.size() / 2;
-
-    std::nth_element(dqdxs.begin(), dqdxs.begin() + n, dqdxs.end());
-    if (n > 0)
+    if (dqdxs.size() > 0)
     {
-      std::cout << "[dQdx] Plane dQdx " << clusters[icl]->Plane().Plane << " "
-                << icl << " "
-                << dqdxs[n] << " " << dqdxs[n] * (23. / 1e6) / 0.62
-                << std::endl;
-
-      dqdx[clusters[icl]->Plane().Plane] = dqdxs[n];
+      std::nth_element(dqdxs.begin(), dqdxs.begin() + dqdxs.size()/2, dqdxs.end());
+      dqdx[clusters[icl]->Plane().Plane] = dqdxs[dqdxs.size()/2];
     }
   }
 }

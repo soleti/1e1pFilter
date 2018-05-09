@@ -90,7 +90,9 @@ private:
   std::string _geantModuleLabel = "largeant";
   std::string m_pfp_producer;
   std::string m_pid_producer;
-  std::string m_spacepointLabel; 
+  std::string m_calorimetry_producer;
+
+  std::string m_spacepointLabel;
   std::string _mctruthLabel = "generator";
   std::string _mcpHitAssLabel = "crHitRemovalTruthMatch";
 
@@ -245,6 +247,9 @@ private:
 
   std::vector<double> _track_res_mean;
   std::vector<double> _track_res_std;
+
+  std::vector<double> _shower_res_mean;
+  std::vector<double> _shower_res_std;
 
   std::vector<double> _track_start_x;
   std::vector<double> _track_start_y;

@@ -27,7 +27,7 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
   myTTree->Branch("n_tracks", &_n_tracks, "n_tracks/i");
   myTTree->Branch("n_showers", &_n_showers, "n_showers/i");
   myTTree->Branch("ccnc", &_ccnc, "ccnc/i");
-  
+
   myTTree->Branch("qsqr", &_qsqr, "qsqr/d");
   myTTree->Branch("theta", &_theta, "theta/d");
   myTTree->Branch("lepton_E", &_lepton_E, "lepton_E/d");
@@ -171,7 +171,8 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
   myTTree->Branch("track_pida", "std::vector< double >", &_track_pida);
   myTTree->Branch("track_res_mean", "std::vector< double >", &_track_res_mean);
   myTTree->Branch("track_res_std", "std::vector< double >", &_track_res_std);
-
+  myTTree->Branch("shower_res_mean", "std::vector< double >", &_shower_res_mean);
+  myTTree->Branch("shower_res_std", "std::vector< double >", &_shower_res_std);
   myTTree->Branch("nu_pdg", &_nu_pdg, "nu_pdg/i");
 
   myPOTTTree->Branch("run", &_run_sr, "run/i");
@@ -352,6 +353,8 @@ void lee::PandoraLEEAnalyzer::clear()
 {
   _track_res_mean.clear();
   _track_res_std.clear();
+  _shower_res_mean.clear();
+  _shower_res_std.clear();
   _qsqr = std::numeric_limits<double>::lowest();
   _theta = std::numeric_limits<double>::lowest();
   _nu_p = TLorentzVector();
@@ -614,6 +617,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
   _event_passed = int(fElectronEventSelectionAlg.eventSelected(evt));
 
   if (_event_passed && !evt.isRealData() && m_save_flux_info) {
+    std::cout<< "Saving Flux info..." << std::endl;
     art::Handle<std::vector<simb::GTruth>> gTruthHandle;
     evt.getByLabel("generator", gTruthHandle);
     if (!gTruthHandle.isValid())
@@ -780,7 +784,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
           _true_vy = true_neutrino_vertex[1];
           _true_vz = true_neutrino_vertex[2];
           _true_nu_is_fiducial = int(geoHelper.isFiducial(true_neutrino_vertex));
-          _interaction_type = gen.GetNeutrino().InteractionType();
+          _interaction_type = gen.GetNeutrino().Mode();
 
           auto const *SCE = lar::providerFrom<spacecharge::SpaceChargeService>();
           if (SCE->GetPosOffsets(_true_vx, _true_vy, _true_vz).size() == 3)
@@ -936,7 +940,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
   size_t ipf_candidate = std::numeric_limits<size_t>::lowest();
   if (_event_passed)
   {
-  
+
     for (auto &inu : fElectronEventSelectionAlg.get_primary_indexes())
     {
       if (fElectronEventSelectionAlg.get_neutrino_candidate_passed().at(inu))
@@ -982,46 +986,74 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
     if (_n_tracks > 0)
     {
       _nu_track_ids = fElectronEventSelectionAlg.get_pfp_id_tracks_from_primary().at(ipf_candidate);
+      art::Handle<std::vector<recob::Track>> trackHandle;
+      evt.getByLabel(m_pfp_producer, trackHandle);
+      std::vector<art::Ptr<recob::Track>> trackCollection;
+      art::fill_ptr_vector(trackCollection, trackHandle);
 
+      // calorimetry object...
+      art::FindManyP<anab::Calorimetry> caloFromTracks(trackHandle, evt, m_calorimetry_producer);
 
       for (auto &pf_id : _nu_track_ids)
       {
 
         recob::PFParticle const &pfparticle = pfparticle_handle->at(pf_id);
         _nu_track_daughters.push_back(pfparticle.Daughters());
+        art::FindOneP<recob::Track> track_per_pfpart(pfparticle_handle, evt,
+                                                     m_pfp_producer);
+        auto const &track_obj = track_per_pfpart.at(pf_id);
 
         std::vector<double> dqdx(3, std::numeric_limits<double>::lowest());
         std::vector<double> dedx(3, std::numeric_limits<double>::lowest());
         std::vector<double> dqdx_hits_track;
 
-        energyHelper.dQdx(pf_id, evt, dqdx, dqdx_hits_track, m_dQdxRectangleLength, m_dQdxRectangleWidth, m_pfp_producer);
-        _track_dQdx_hits.push_back(dqdx_hits_track);
-        std::vector<double> dedx_hits_track(dqdx_hits_track.size(), std::numeric_limits<double>::lowest());
+        if (caloFromTracks.isValid())
+        {
+          std::vector<art::Ptr<anab::Calorimetry>> caloFromTrack = caloFromTracks.at(track_obj->ID());
 
-        energyHelper.dEdxFromdQdx(dedx, dqdx);
+          // Get the dQdx from the Calorimetry module
+          art::Ptr<anab::Calorimetry> calo;
+          int planenum = -1;
+          for (auto c : caloFromTrack)
+          {
+            if (!c)
+              continue; // Only use calorimetry from collection plane
 
+            planenum = c->PlaneID().Plane;
+            std::vector<double> dqdxs = c->dQdx();
+            std::vector<double> dedxs = c->dEdx();
 
-            energyHelper.dEdxFromdQdx(dedx_hits_track, dqdx_hits_track);
-        _track_dEdx_hits.push_back(dedx_hits_track);
-
+            if (dqdxs.size() > 0)
+            {
+              size_t n = dqdxs.size() / 2;
+              std::nth_element(dqdxs.begin(), dqdxs.begin() + n, dqdxs.end());
+              if (n > 0)
+              {
+                dqdx[planenum] = dqdxs[n];
+                if (dedxs.size() == dqdxs.size()) {
+                  dedx[planenum] = dedxs[n];
+                }
+              }
+            }
+          }
+        } else {
+          std::cout << "[PandoraLEEAnalyzer] caloFromTracks not valid" << std::endl;
+        }
+        
         _track_dQdx.push_back(dqdx);
         _track_dEdx.push_back(dedx);
 
-        art::FindOneP<recob::Track> track_per_pfpart(pfparticle_handle, evt,
-                                                     m_pfp_producer);
-        auto const &track_obj = track_per_pfpart.at(pf_id);
-
         double mean = std::numeric_limits<double>::lowest();
         double stdev = std::numeric_limits<double>::lowest();
-        
+
         energyHelper.trackResiduals(evt, m_pfp_producer, track_obj, mean, stdev);
-        
+
         _track_res_mean.push_back(mean);
         _track_res_std.push_back(stdev);
 
         auto const &trackVecHandle =
             evt.getValidHandle<std::vector<recob::Track>>(m_pfp_producer);
-            
+
         art::FindMany<anab::ParticleID> fmpid(trackVecHandle, evt, m_pid_producer);
         std::vector<const anab::ParticleID *> pids = fmpid.at(track_obj.key());
 
@@ -1168,8 +1200,13 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
 
       recob::PFParticle const &pfparticle = pfparticle_handle->at(pf_id);
       _nu_shower_daughters.push_back(pfparticle.Daughters());
-
-      std::vector<double> dqdx(3, std::numeric_limits<double>::lowest());
+      double mean = std::numeric_limits<double>::lowest();
+      double stdev = std::numeric_limits<double>::lowest();
+      energyHelper.showerResiduals(evt, m_pfp_producer, pf_id, mean, stdev);
+      _shower_res_mean.push_back(mean);
+      _shower_res_std.push_back(stdev);
+      std::vector<double>
+          dqdx(3, std::numeric_limits<double>::lowest());
       std::vector<double> dedx(3, std::numeric_limits<double>::lowest());
       std::vector<double> dqdx_hits_shower;
       _matched_showers.push_back(std::numeric_limits<int>::lowest());
@@ -1481,6 +1518,7 @@ void lee::PandoraLEEAnalyzer::reconfigure(fhicl::ParameterSet const &pset)
 
   m_hitfinderLabel = pset.get<std::string>("HitFinderLabel", "pandoraCosmicHitRemoval::McRecoStage2");
   m_pid_producer = pset.get<std::string>("ParticleIDModuleLabel", "pandoraNucalipid::McRecoCali");
+  m_calorimetry_producer = pset.get<std::string>("CalorimetryLabel", "pandoraNucali::McRecoCali");
 
   m_pfp_producer = pset.get<std::string>("PFParticleLabel", "pandoraNu::McRecoStage2");
   m_spacepointLabel = pset.get<std::string>("SpacePointLabel", "pandoraNu::McRecoStage2");

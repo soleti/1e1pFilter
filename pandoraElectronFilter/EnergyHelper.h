@@ -83,19 +83,25 @@ public:
                       double &mean,
                       double &std);
 
-  private:
-    std::vector<double> _data_gain = {239.5, 239.5, 239.5}; // Only measured of collection plane, David Caratelli
-    std::vector<double> _mc_gain = {193.0, 197.0, 197.0};   // Plane 0, plane 1, plane 2
+  void showerResiduals(const art::Event &e,
+                       std::string _pfp_producer,
+                       size_t pfp_id,
+                       double &mean,
+                       double &std);
 
-    art::ServiceHandle<geo::Geometry> geo;
-    detinfo::DetectorProperties const *detprop;
+private:
+  std::vector<double> _data_gain = {239.5, 239.5, 239.5};               // Only measured of collection plane, David Caratelli
+  std::vector<double> _mc_gain = {193.0, 197.0, 197.0};                 // Plane 0, plane 1, plane 2
 
-    // 23 work function (23 eV/e- in the argon)
-    // 0.62 recombination factor
-    double work_function = 23 / 1e6;
-    double recombination_factor = 0.62;
+  art::ServiceHandle<geo::Geometry> geo;
+  detinfo::DetectorProperties const *detprop;
 
-    GeometryHelper geoHelper;
+  // 23 work function (23 eV/e- in the argon)
+  // 0.62 recombination factor
+  double work_function = 23 / 1e6;
+  double recombination_factor = 0.62;
+
+  GeometryHelper geoHelper;
 };
 } // namespace lee
 
