@@ -170,6 +170,7 @@ public:
     * @return [description]
     */
   const std::map<size_t, int> &get_n_showers() const { return _n_showers; }
+  const std::map<size_t, int> &get_n_primary_showers() const { return _n_primary_showers; }
 
   /**
     * @brief Return number of tracks for pfparticle index
@@ -177,6 +178,7 @@ public:
     * @return [description]
     */
   const std::map<size_t, int> &get_n_tracks() const { return _n_tracks; }
+  const std::map<size_t, int> &get_n_primary_tracks() const { return _n_primary_tracks; }
 
   /**
     * @brief Return the list of pfparticle indexes that are showers that are associated with primary pfparticle indexes
@@ -238,9 +240,12 @@ protected:
   bool _neutrino_candidate_fiducial;
   std::map<size_t, int> _op_flash_indexes;
   std::map<size_t, TVector3> _neutrino_vertex;
+
   std::map<size_t, int> _n_showers;
+  std::map<size_t, int> _n_primary_showers;
   std::map<size_t, std::vector<size_t>> _pfp_id_showers_from_primary;
   std::map<size_t, int> _n_tracks;
+  std::map<size_t, int> _n_primary_tracks;
   std::map<size_t, std::vector<size_t>> _pfp_id_tracks_from_primary;
 
   std::vector<double> _flash_PE;   // PE of all flashes

@@ -192,7 +192,8 @@ private:
   std::vector<int> _primary_indexes;
   std::vector<int> _number_tracks;
   std::vector<int> _number_showers;
-
+  std::vector<int> _number_primary_tracks;
+  std::vector<int> _number_primary_showers;
   std::vector<int> _matched_showers;
   std::vector<int> _matched_tracks;
 

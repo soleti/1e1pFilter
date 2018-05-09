@@ -30,7 +30,9 @@ void ElectronEventSelectionAlg::clear()
   _op_flash_indexes.clear();
   _neutrino_vertex.clear();
   _n_showers.clear();
+  _n_primary_showers.clear();
   _n_tracks.clear();
+  _n_primary_tracks.clear();
   _pfp_id_showers_from_primary.clear();
   _pfp_id_tracks_from_primary.clear();
   _flash_PE.clear();
@@ -324,7 +326,7 @@ const std::map<size_t, int> ElectronEventSelectionAlg::flashBasedSelection(const
 
   result[chosen_index] = maxIndex;
   } // Else means we have a good flash
-  
+
   return result;
 
 } // End of flashbased selection function
@@ -470,9 +472,13 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt)
 
     _neutrino_candidate_passed[_i_primary] = true;
     _neutrino_vertex[_i_primary] = TVector3(0, 0, 0);
+
     _n_showers[_i_primary] = 0;
+    _n_primary_showers[_i_primary] = 0;
     _pfp_id_showers_from_primary[_i_primary] = std::vector<size_t>();
+
     _n_tracks[_i_primary] = 0;
+    _n_primary_tracks[_i_primary] = 0;
     _pfp_id_tracks_from_primary[_i_primary] = std::vector<size_t>();
 
     // Get the neutrino vertex and check if it's fiducial:
@@ -543,7 +549,10 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt)
       }
     }
     _n_tracks[_i_primary] = tracks;
+    _n_primary_tracks[_i_primary] = track_daughters;
     _n_showers[_i_primary] = showers;
+    _n_primary_showers[_i_primary] = shower_daughters;
+
     std::cout << "[ElectronEventSelectionAlg] "
               << "Showers tracks " << showers << " " << tracks << std::endl;
     std::cout << "[ElectronEventSelectionAlg] "

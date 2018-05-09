@@ -114,8 +114,11 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
     myTTree->Branch("n_primaries", &_n_primaries, "n_primaries/i");
 
     myTTree->Branch("primary_indexes", "std::vector< int >", &_primary_indexes);
+    
     myTTree->Branch("number_tracks", "std::vector< int >", &_number_tracks);
     myTTree->Branch("number_showers", "std::vector< int >", &_number_showers);
+    myTTree->Branch("number_primary_tracks", "std::vector< int >", &_number_primary_tracks);
+    myTTree->Branch("number_primary_showers", "std::vector< int >", &_number_primary_showers);
 
     myTTree->Branch("flash_time", "std::vector< double >", &_flash_time);
     myTTree->Branch("flash_PE", "std::vector< double >", &_flash_PE);
@@ -466,6 +469,9 @@ void lee::PandoraLEEAnalyzer::clear()
     _primary_indexes.clear();
     _number_tracks.clear();
     _number_showers.clear();
+
+    _number_primary_tracks.clear();
+    _number_primary_showers.clear();
 
     _flash_PE.clear();
     _flash_time.clear();
@@ -1425,6 +1431,8 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
             _flash_passed.push_back(fElectronEventSelectionAlg.get_op_flash_indexes().at(inu));
             _number_tracks.push_back(fElectronEventSelectionAlg.get_n_tracks().at(inu));
             _number_showers.push_back(fElectronEventSelectionAlg.get_n_showers().at(inu));
+            _number_primary_tracks.push_back(fElectronEventSelectionAlg.get_n_primary_tracks().at(inu));
+            _number_primary_showers.push_back(fElectronEventSelectionAlg.get_n_primary_showers().at(inu));
 
             std::vector<size_t> pfp_showers_id = fElectronEventSelectionAlg.get_pfp_id_showers_from_primary().at(inu);
 
