@@ -310,9 +310,11 @@ private:
   std::vector<double> _charges_z;     // center of charge z
   std::vector<double> _charges_total; // total uncorrected collectionplane charge
 
-  std::vector<double> _TPC_x;       // candidate lowest x for the matched candidates, in order of score
-  std::vector<double> _flash_x;     // flashmatched x for the matched candidates, in order of score
-  std::vector<double> _flash_score; // flashmatch score for the matched candidates, in order of score
+  std::vector<int> _flash_matchid;    // The corresponding pfp ID of the matched candidate.
+  std::vector<double> _TPC_x;         // candidate lowest x for the matched candidates, in order of score
+  std::vector<double> _flash_x;       // flashmatched x for the matched candidates, in order of score
+  std::vector<double> _flash_score;   // flashmatch score for the matched candidates, in order of score
+  std::vector<double> _flash_hypo_PE; // the total PE of the flash hypothesis
 
   std::vector<double> _shower_pca;
   std::vector<double> _track_pca;

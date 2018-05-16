@@ -41,6 +41,9 @@
 #include "GeometryHelper.h"
 #include "PandoraInterfaceHelper.h"
 
+#include <numeric>
+
+
 namespace lee
 {
 
@@ -197,18 +200,13 @@ public:
   get_pfp_id_tracks_from_primary() const { return _pfp_id_tracks_from_primary; }
 
   /**
-    * @brief Return the list of total PE of the flashes
+    * @brief Return the list of total PE,time of the flashes and the brightest inbeam flash
     * @details [long description]
     * @return [description]
     */
   const std::vector<double> &get_flash_PE() const { return _flash_PE; }
-
-  /**
-    * @brief Return the list of times of the flashes
-    * @details [long description]
-    * @return [description]
-    */
   const std::vector<double> &get_flash_time() const { return _flash_time; }
+  const double &get_flash_PE_max() const { return _flash_PE_max; }
 
   /**
     * @brief Return the positionaL variables of the brightest in time flash
@@ -218,17 +216,19 @@ public:
   const double &get_flash_sigma_y() const { return _flash_sy; }
   const double &get_flash_sigma_z() const { return _flash_sz; }
 
+  const std::vector<int> &get_flash_matchid() const { return _flash_matchid; }
   const std::vector<double> &get_flash_x() const { return _flash_x; }
   const std::vector<double> &get_TPC_x() const { return _TPC_x; }
   const std::vector<double> &get_flash_score() const { return _flash_score; }
+  const std::vector<double> &get_flash_hypo_PE() const { return _flash_hypo_PE; }
 
   /**
     * @brief Return the  info about the charge distributions of the candidates
     */
-  const std::vector<double> &get_candidadates_charge_x() const { return _charges_x; }
-  const std::vector<double> &get_candidadates_charge_y() const { return _charges_y; }
-  const std::vector<double> &get_candidadates_charge_z() const { return _charges_z; }
-  const std::vector<double> &get_candidadates_charge_total() const { return _charges_total; }
+  const std::map<size_t, double> &get_candidadates_charge_x() const { return _charges_x; }
+  const std::map<size_t, double> &get_candidadates_charge_y() const { return _charges_y; }
+  const std::map<size_t, double> &get_candidadates_charge_z() const { return _charges_z; }
+  const std::map<size_t, double> &get_candidadates_charge_total() const { return _charges_total; }
 
 protected:
   // Variables that are used to determine the selection and might be worth passing
@@ -250,21 +250,23 @@ protected:
 
   std::vector<double> _flash_PE;   // PE of all flashes
   std::vector<double> _flash_time; // time of all flashes
+  double _flash_PE_max; // I there was a flash in beamtime, return the one with the highest PE. 
 
   double _flash_y; // info of the brightest intime flash
   double _flash_sy;
   double _flash_z;
   double _flash_sz;
 
-  std::vector<double> _charges_x;     // closest x spacepoint of the candidates
-  std::vector<double> _charges_y;     // center of charge y
-  std::vector<double> _charges_z;     // center of charge z
-  std::vector<double> _charges_total; // total uncorrected collectionplane charge
+  std::map<size_t, double> _charges_x;     // closest x spacepoint of the candidates
+  std::map<size_t, double> _charges_y;     // center of charge y
+  std::map<size_t, double> _charges_z;     // center of charge z
+  std::map<size_t, double> _charges_total; // total uncorrected collectionplane charge
 
+  std::vector<int> _flash_matchid;  // The corresponding pfp ID of the matched candidate.
   std::vector<double> _TPC_x;       // candidate lowest x for the matched candidates, in order of score
   std::vector<double> _flash_x;     // flashmatched x for the matched candidates, in order of score
   std::vector<double> _flash_score; // flashmatch score for the matched candidates, in order of score
-
+  std::vector<double> _flash_hypo_PE; // the total PE of the flash hypothesis
 protected:
   // Configurable variables from the fcl file:
   int m_nTracks;
@@ -289,7 +291,8 @@ protected:
   double m_cut_sigzwidth;
   double m_cut_ywidth;
   double m_cut_sigywidth;
-  double m_charge_light_ratio;
+  double m_charge_light_ratio_lower;
+  double m_charge_light_ratio_upper;
 
   // Fixing the PMT wrong ids
   bool _do_opdet_swap;              ///< If true swaps reconstructed OpDets according to _opdet_swap_map

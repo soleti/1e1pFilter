@@ -10,9 +10,11 @@ void ElectronEventSelectionAlg::clear()
 {
   _n_neutrino_candidates = 0.0;
 
+  _flash_matchid.clear();
   _TPC_x.clear();
   _flash_x.clear();
   _flash_score.clear();
+  _flash_hypo_PE.clear();
 
   _flash_y = std::numeric_limits<double>::lowest();
   _flash_z = std::numeric_limits<double>::lowest();
@@ -37,6 +39,7 @@ void ElectronEventSelectionAlg::clear()
   _pfp_id_tracks_from_primary.clear();
   _flash_PE.clear();
   _flash_time.clear();
+  _flash_PE_max = 0;
 }
 
 TVector3 ElectronEventSelectionAlg::spaceChargeTrueToReco(const TVector3 &xyz)
@@ -99,7 +102,8 @@ void ElectronEventSelectionAlg::reconfigure(fhicl::ParameterSet const &p)
   m_cut_sigzwidth = p.get<double>("cut_sigzwidth", 1.0);
   m_cut_ywidth = p.get<double>("cut_ywidth", 95.);
   m_cut_sigywidth = p.get<double>("cut_sigywidth", 2.2);
-  m_charge_light_ratio = p.get<double>("charge_light_ratio", 3.0);
+  m_charge_light_ratio_lower = p.get<double>("charge_light_ratio", 2.0);
+  m_charge_light_ratio_upper = p.get<double>("charge_light_ratio", 200.0);
 
   m_flashmatching = p.get<bool>("Flashmatching", true);
   m_FM_all = p.get<bool>("Flashmatching_first", true);
@@ -131,7 +135,8 @@ void ElectronEventSelectionAlg::reconfigure(fhicl::ParameterSet const &p)
   std::cout << "cut_sigzwidth\t" << m_cut_sigzwidth << std::endl;
   std::cout << "cut_ywidth\t" << m_cut_ywidth << std::endl;
   std::cout << "cut_sigywidth\t" << m_cut_sigywidth << std::endl;
-  std::cout << "charge_light_ratio\t" << m_charge_light_ratio << std::endl;
+  std::cout << "charge_light_ratio_lower\t" << m_charge_light_ratio_lower << std::endl;
+  std::cout << "charge_light_ratio_upper\t" << m_charge_light_ratio_upper << std::endl;
   std::cout << "Flashmatching\t" << m_flashmatching << std::endl;
   std::cout << "Flashmatching_first\t" << m_FM_all << std::endl;
 }
@@ -147,7 +152,6 @@ const std::map<size_t, int> ElectronEventSelectionAlg::flashBasedSelection(const
   std::vector<double> chargexvector;
   std::vector<flashana::FlashMatch_t> matchvec;
   std::vector<double> TPC_x_vector;
-  std::vector<unsigned int> TPCIDvector; //links the qvec indices to the matched ones, matched ones are score ordered already
 
   size_t chosen_index = -1;
   std::map<size_t, int> result;
@@ -158,7 +162,6 @@ const std::map<size_t, int> ElectronEventSelectionAlg::flashBasedSelection(const
   auto const &optical_handle = evt.getValidHandle<std::vector<recob::OpFlash>>(optical_tag);
 
   int maxIndex = -1;
-  double maxPE = 0;
   for (unsigned int ifl = 0; ifl < optical_handle->size(); ++ifl)
   {
     recob::OpFlash const &flash = optical_handle->at(ifl);
@@ -168,9 +171,9 @@ const std::map<size_t, int> ElectronEventSelectionAlg::flashBasedSelection(const
     if ((flash.Time() < m_endbeamtime && flash.Time() > m_startbeamtime))
     {
       double thisPE = flash.TotalPE();
-      if (thisPE > maxPE)
+      if (thisPE > _flash_PE_max)
       {
-        maxPE = thisPE;
+        _flash_PE_max = thisPE;
         maxIndex = ifl;
       }
     }
@@ -182,7 +185,7 @@ const std::map<size_t, int> ElectronEventSelectionAlg::flashBasedSelection(const
   {
     temp_flash_index = -4; // No flash in time
   }
-  else if (maxPE < m_PE_threshold)
+  else if (_flash_PE_max < m_PE_threshold)
   {
     temp_flash_index = -3; // Not enough PE
   }
@@ -196,8 +199,8 @@ const std::map<size_t, int> ElectronEventSelectionAlg::flashBasedSelection(const
     result[pfpindex] = temp_flash_index;
   }
 
-  // Else means we have a good flash
-  if(temp_flash_index ==-1)
+  // Means we have a good flash
+  if (temp_flash_index == -1)
   {
     // Store what I want to know about the flash
     recob::OpFlash const &flash = optical_handle->at(maxIndex);
@@ -225,8 +228,8 @@ const std::map<size_t, int> ElectronEventSelectionAlg::flashBasedSelection(const
     // Pass information about the brightest intime flash to the analyzer:
     _flash_y = f.y;
     _flash_sy = f.y_err;
-    _flash_y = f.z;
-    _flash_sy = f.z_err;
+    _flash_z = f.z;
+    _flash_sz = f.z_err;
 
     // Loop over the neutrino candidates to do prematching cuts
     art::FindOneP<recob::Vertex> vertex_per_pfpart(pfparticle_handle, evt, m_pfp_producer);
@@ -235,10 +238,10 @@ const std::map<size_t, int> ElectronEventSelectionAlg::flashBasedSelection(const
     {
       ChargeCenter = pandoraHelper.calculateChargeCenter(pfpindex, pfparticle_handle, evt, m_pfp_producer);
 
-      _charges_x.push_back(ChargeCenter[0]);
-      _charges_y.push_back(ChargeCenter[1]);
-      _charges_z.push_back(ChargeCenter[2]);
-      _charges_total.push_back(ChargeCenter[3]);
+      _charges_x[pfpindex] = ChargeCenter[0];
+      _charges_y[pfpindex] = ChargeCenter[1];
+      _charges_z[pfpindex] = ChargeCenter[2];
+      _charges_total[pfpindex] = ChargeCenter[3];
 
       // candidates that fail the prematching cuts do not need to be passed to the manager
       bool prematching_cuts;
@@ -247,7 +250,8 @@ const std::map<size_t, int> ElectronEventSelectionAlg::flashBasedSelection(const
                          (m_cut_sigzwidth > std::abs(ChargeCenter[2] - f.z) / f.z_err) &&
                          (m_cut_ywidth > std::abs(ChargeCenter[1] - f.y)) && // Cut in Y direction
                          (m_cut_sigywidth > std::abs(ChargeCenter[1] - f.y) / f.y_err) &&
-                         (m_charge_light_ratio < std::abs(ChargeCenter[3] / maxPE));
+                         (m_charge_light_ratio_lower < std::abs(ChargeCenter[3] / _flash_PE_max)) && 
+                         (m_charge_light_ratio_upper > std::abs(ChargeCenter[3] / _flash_PE_max));
 
       if (prematching_cuts)
       {
@@ -276,12 +280,13 @@ const std::map<size_t, int> ElectronEventSelectionAlg::flashBasedSelection(const
 
     //  Commented out for now to force flashmatching to make sure x-values are calculated.
 
-    else if (qcvec.size() == 1)
-    {
-      std::cout << "[ElectronEventSelectionAlg] "
-                << "Candidate " << PFPIDvector[0] << " passed optical selection!" << std::endl;
-      chosen_index = PFPIDvector[0];
-    }
+    //else if (qcvec.size() == 1)
+    //{
+    // std::cout << "[ElectronEventSelectionAlg] "
+    //            << "Candidate " << PFPIDvector[0] << " passed optical selection!" << std::endl;
+    // chosen_index = PFPIDvector[0];
+    //}
+
     else
     { // Else run flashmatching in the remaining cases
       ::flashana::Flash_t flashRecoCopy = f;
@@ -298,10 +303,15 @@ const std::map<size_t, int> ElectronEventSelectionAlg::flashBasedSelection(const
       if (matchvec.size() == 0)
       {
         std::cout << "[ElectronEventSelectionAlg] "
-                  << "Flashmatchmanager unable to match!" << std::endl;
+                  << "Flashmatchmanager unable to match all qvec objects!" << std::endl;
       }
       else
       { // Else means we have a match
+        if (matchvec.size() != qcvec.size())
+        {
+          std::cout << "[ElectronEventSelectionAlg] "
+                    << "There is a match, but not objects got matched!" << std::endl;
+        }
         for (auto match : matchvec)
         {
           //Postmatching cuts.
@@ -314,17 +324,18 @@ const std::map<size_t, int> ElectronEventSelectionAlg::flashBasedSelection(const
           {
             _flash_score.emplace_back(match.score);
             _flash_x.emplace_back(match.tpc_point.x);
-            TPCIDvector.emplace_back(match.tpc_id);
+            _flash_matchid.emplace_back(PFPIDvector[match.tpc_id]);
             _TPC_x.emplace_back(chargexvector[match.tpc_id]);
+            _flash_hypo_PE.emplace_back(std::accumulate(match.hypothesis.begin(), match.hypothesis.end(), 0));
             //std::cout << "Score: " << match.score << " TPC_x: " << match.tpc_point.x << " TPC_id: " <<  match.tpc_id << std::endl;
           }
         }
-        chosen_index = PFPIDvector[TPCIDvector[0]];
+        chosen_index = _flash_matchid[0];
       } // Else means we have a match
 
     } // Else run flashmatching in the remaining cases
 
-  result[chosen_index] = maxIndex;
+    result[chosen_index] = maxIndex;
   } // Else means we have a good flash
 
   return result;
@@ -647,6 +658,6 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt)
   return false;
 }
 
-} // lee
+} // namespace lee
 
 #endif // ELECTRON_EVENT_SELECTION_ALG_CXX

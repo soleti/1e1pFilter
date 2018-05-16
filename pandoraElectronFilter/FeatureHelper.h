@@ -120,13 +120,6 @@ public:
                               std::vector<float> &object_containment, std::vector<float> &object_dqdx_ratio);
 
   /**
-   * @brief      Returns the PE and time of the flash used for matching. 
-   * @return     double,double
-   */
-  void reco_flash_info(std::vector<int> &_flash_passed, std::vector<double> &_flash_PE, std::vector<double> &_flash_time,
-                       double &_flash_PE_max, double &_flash_time_max);
-
-  /**
    * @brief      Returns an array with 0 for notcontained tracks. 
    * @return     int array of length tracks
    */
@@ -156,12 +149,12 @@ public:
    * @return     void
    */
   void reco_energy(std::vector<std::vector<double>> &_object_energy_hits,
-                 std::vector<std::vector<float>> &_object_energy_cali,
-                 std::vector<std::vector<int>> &_object_nhits_cluster,
-                 std::vector<std::vector<int>> &_object_nhits_spacepoint,
-                 std::vector<float> &_object_energy_w,
-                 std::vector<float> &_object_hitsratio_w,
-                 std::vector<int> &_object_hits_w);
+                   std::vector<std::vector<float>> &_object_energy_cali,
+                   std::vector<std::vector<int>> &_object_nhits_cluster,
+                   std::vector<std::vector<int>> &_object_nhits_spacepoint,
+                   std::vector<float> &_object_energy_w,
+                   std::vector<float> &_object_hitsratio_w,
+                   std::vector<int> &_object_hits_w);
 
 private:
   double mass_e = 0.00511;                // electron mass in GeV

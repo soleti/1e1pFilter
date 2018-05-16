@@ -127,9 +127,11 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
     myTTree->Branch("flash_sy", &_flash_sy, "flash_sy/d");
     myTTree->Branch("flash_sz", &_flash_sz, "flash_sz/d");
 
+    myTTree->Branch("flash_matchid", "std::vector< int >", &_flash_matchid);
     myTTree->Branch("flash_x", "std::vector< double >", &_flash_x);
     myTTree->Branch("flash_score", "std::vector< double >", &_flash_score);
     myTTree->Branch("TPC_x", "std::vector< double >", &_TPC_x);
+    myTTree->Branch("flash_hypo_PE", "std::vector< double >", &_flash_hypo_PE);
 
     myTTree->Branch("chargecenter_candidates_x", "std::vector< double >", &_charges_x);
     myTTree->Branch("chargecenter_candidates_y", "std::vector< double >", &_charges_y);
@@ -281,7 +283,6 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
     myTTree->Branch("track_containment", "std::vector<int>", &_track_containment);
 
     myTTree->Branch("flash_PE_max", &_flash_PE_max, "flash_PE_max/d");
-    myTTree->Branch("flash_time_max", &_flash_time_max, "flash_time_max/d");
 
     myTTree->Branch("chargecenter_x", &_chargecenter_x, "chargecenter_x/F");
     myTTree->Branch("chargecenter_y", &_chargecenter_y, "chargecenter_y/F");
@@ -518,9 +519,12 @@ void lee::PandoraLEEAnalyzer::clear()
     _numu_passed = 0;
     _distance = std::numeric_limits<double>::lowest();
 
+    _flash_matchid.clear();
     _flash_x.clear();
     _flash_score.clear();
     _TPC_x.clear();
+    _flash_hypo_PE.clear();
+
     _flash_y = std::numeric_limits<double>::lowest();
     _flash_z = std::numeric_limits<double>::lowest();
     _flash_sy = std::numeric_limits<double>::lowest();
@@ -725,21 +729,18 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
 
     _flash_PE = fElectronEventSelectionAlg.get_flash_PE();
     _flash_time = fElectronEventSelectionAlg.get_flash_time();
+    _flash_PE_max = fElectronEventSelectionAlg.get_flash_PE_max();
 
+    _flash_matchid = fElectronEventSelectionAlg.get_flash_matchid();
     _TPC_x = fElectronEventSelectionAlg.get_TPC_x();
     _flash_score = fElectronEventSelectionAlg.get_flash_score();
     _flash_x = fElectronEventSelectionAlg.get_flash_x();
+    _flash_hypo_PE =  fElectronEventSelectionAlg.get_flash_hypo_PE();
 
     _flash_y = fElectronEventSelectionAlg.get_flash_y();
     _flash_z = fElectronEventSelectionAlg.get_flash_z();
     _flash_sy = fElectronEventSelectionAlg.get_flash_sigma_y();
     _flash_sz = fElectronEventSelectionAlg.get_flash_sigma_z();
-    _TPC_x = fElectronEventSelectionAlg.get_TPC_x();
-
-    _charges_x = fElectronEventSelectionAlg.get_candidadates_charge_x();
-    _charges_y = fElectronEventSelectionAlg.get_candidadates_charge_y();
-    _charges_z = fElectronEventSelectionAlg.get_candidadates_charge_z();
-    _charges_total = fElectronEventSelectionAlg.get_candidadates_charge_total();
 
     _category = 0;
     std::vector<double> true_neutrino_vertex(3);
@@ -997,7 +998,8 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
     }
 
     // Fill fields that do not depend on passed or not passed.
-    _n_primaries = _primary_indexes.size();
+    _n_primaries = fElectronEventSelectionAlg.get_primary_indexes().size();
+    std::cerr<< "_n_primaries" << _n_primaries << std::endl;
 
     size_t ipf_candidate = std::numeric_limits<size_t>::lowest();
     if (_event_passed)
@@ -1434,6 +1436,21 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
             _number_primary_tracks.push_back(fElectronEventSelectionAlg.get_n_primary_tracks().at(inu));
             _number_primary_showers.push_back(fElectronEventSelectionAlg.get_n_primary_showers().at(inu));
 
+            if (fElectronEventSelectionAlg.get_candidadates_charge_x().count(inu) > 0)
+            {
+                _charges_x.push_back(fElectronEventSelectionAlg.get_candidadates_charge_x().at(inu));
+                _charges_y.push_back(fElectronEventSelectionAlg.get_candidadates_charge_y().at(inu));
+                _charges_z.push_back(fElectronEventSelectionAlg.get_candidadates_charge_z().at(inu));
+                _charges_total.push_back(fElectronEventSelectionAlg.get_candidadates_charge_total().at(inu));
+            }
+            else  // Happens if there was not a properly reconstructed flash.
+            {
+                _charges_x.push_back(0);
+                _charges_y.push_back(0);
+                _charges_z.push_back(0);
+                _charges_total.push_back(0);
+            }
+
             std::vector<size_t> pfp_showers_id = fElectronEventSelectionAlg.get_pfp_id_showers_from_primary().at(inu);
 
             int pass_shower = 0;
@@ -1477,47 +1494,44 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
 
             _shower_passed.push_back(pass_shower);
 
-            if (_number_tracks.back() > 0)
+            std::vector<size_t> pfp_tracks_id = fElectronEventSelectionAlg.get_pfp_id_tracks_from_primary().at(inu);
+
+            int pass_track = 0;
+
+            for (size_t itr = 0; itr < pfp_tracks_id.size(); itr++)
             {
-                std::vector<size_t> pfp_tracks_id = fElectronEventSelectionAlg.get_pfp_id_tracks_from_primary().at(inu);
 
-                int pass_track = 0;
-
-                for (size_t itr = 0; itr < pfp_tracks_id.size(); itr++)
+                for (size_t ipf = 0; ipf < neutrino_pf.size(); ipf++)
                 {
-
-                    for (size_t ipf = 0; ipf < neutrino_pf.size(); ipf++)
+                    if (pfp_tracks_id[itr] == neutrino_pf[ipf].key())
                     {
-                        if (pfp_tracks_id[itr] == neutrino_pf[ipf].key())
+                        pass_track += 1;
+                        if (inu == ipf_candidate)
                         {
-                            pass_track += 1;
-                            if (inu == ipf_candidate)
-                            {
-                                _nu_matched_tracks++;
-                                _matched_tracks[itr] = neutrino_pdg[ipf];
-                                _matched_tracks_process[itr] = neutrino_process[ipf];
-                                _matched_tracks_energy[itr] = neutrino_energy[ipf];
-                            }
-                        }
-                    }
-
-                    if (inu == ipf_candidate)
-                    {
-                        for (size_t ipf = 0; ipf < cosmic_pf.size(); ipf++)
-                        {
-                            if (pfp_tracks_id[itr] == cosmic_pf[ipf].key())
-                            {
-                                track_cr_found = true;
-                                _matched_tracks[itr] = cosmic_pdg[ipf];
-                                _matched_tracks_process[itr] = cosmic_process[ipf];
-                                _matched_tracks_energy[itr] = cosmic_energy[ipf];
-                            }
+                            _nu_matched_tracks++;
+                            _matched_tracks[itr] = neutrino_pdg[ipf];
+                            _matched_tracks_process[itr] = neutrino_process[ipf];
+                            _matched_tracks_energy[itr] = neutrino_energy[ipf];
                         }
                     }
                 }
 
-                _track_passed.push_back(pass_track);
+                if (inu == ipf_candidate)
+                {
+                    for (size_t ipf = 0; ipf < cosmic_pf.size(); ipf++)
+                    {
+                        if (pfp_tracks_id[itr] == cosmic_pf[ipf].key())
+                        {
+                            track_cr_found = true;
+                            _matched_tracks[itr] = cosmic_pdg[ipf];
+                            _matched_tracks_process[itr] = cosmic_process[ipf];
+                            _matched_tracks_energy[itr] = cosmic_energy[ipf];
+                        }
+                    }
+                }
             }
+
+            _track_passed.push_back(pass_track);
         }
 
         if (!track_cr_found && _nu_matched_tracks == 0 && !shower_cr_found && _nu_matched_showers == 0 && _category != k_dirt && _category != k_data)
@@ -1568,9 +1582,6 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
         std::vector<float> _track_fidvol_ratio; // Dummy variable, not saving this field.
         featureHelper.reco_spacepoint_ratios(_nu_track_ids, evt, m_pfp_producer,
                                              _track_fidvol_ratio, _track_spacepoint_dqdx_ratio);
-
-        featureHelper.reco_flash_info(_flash_passed, _flash_PE, _flash_time,
-                                      _flash_PE_max, _flash_time_max);
 
         _track_bdt_precut = featureHelper.reco_bdt_track_precut(_predict_mu, _predict_cos, _n_tracks);
 
@@ -1637,6 +1648,23 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
             _flash_passed.push_back(fElectronEventSelectionAlg.get_op_flash_indexes().at(inu));
             _number_tracks.push_back(fElectronEventSelectionAlg.get_n_tracks().at(inu));
             _number_showers.push_back(fElectronEventSelectionAlg.get_n_showers().at(inu));
+            _number_primary_tracks.push_back(fElectronEventSelectionAlg.get_n_primary_tracks().at(inu));
+            _number_primary_showers.push_back(fElectronEventSelectionAlg.get_n_primary_showers().at(inu));
+
+            if (fElectronEventSelectionAlg.get_candidadates_charge_x().count(inu) > 0)
+            {
+                _charges_x.push_back(fElectronEventSelectionAlg.get_candidadates_charge_x().at(inu));
+                _charges_y.push_back(fElectronEventSelectionAlg.get_candidadates_charge_y().at(inu));
+                _charges_z.push_back(fElectronEventSelectionAlg.get_candidadates_charge_z().at(inu));
+                _charges_total.push_back(fElectronEventSelectionAlg.get_candidadates_charge_total().at(inu));
+            }
+            else  // Happens if there was not a properly reconstructed flash.
+            {
+                _charges_x.push_back(0);
+                _charges_y.push_back(0);
+                _charges_z.push_back(0);
+                _charges_total.push_back(0);
+            }
 
             std::vector<size_t> pfp_showers_id = fElectronEventSelectionAlg.get_pfp_id_showers_from_primary().at(inu);
 

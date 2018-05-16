@@ -547,19 +547,6 @@ void FeatureHelper::reco_spacepoint_ratios(std::vector<size_t> _nu_object_ids, c
   }
 }
 
-void FeatureHelper::reco_flash_info(std::vector<int> &_flash_passed, std::vector<double> &_flash_PE, std::vector<double> &_flash_time,
-                                    double &_flash_PE_max, double &_flash_time_max)
-{
-  for (const int fl : _flash_passed)
-  {
-    if (fl != -1)
-    {
-      _flash_PE_max = _flash_PE[fl];
-      _flash_time_max = _flash_time[fl];
-    }
-  }
-}
-
 void FeatureHelper::true_match_daughters(const art::Event &evt, std::string _pfp_producer,
                                          std::vector<size_t> &_nu_shower_ids, std::vector<size_t> &_nu_track_ids,
                                          std::vector<int> &_matched_showers, std::vector<int> &_matched_tracks)

@@ -25,7 +25,8 @@ lee_electron_alg: {
     cut_sigzwidth:               1.0 
     cut_ywidth:                  95
     cut_sigywidth:               2.1
-    charge_light_ratio:          3.0
+    charge_light_ratio_lower:    2.0
+    charge_light_ratio_upper:    200.0
 
     # Configuration of the flashmatchmanager
     FlashMatchConfig: @local::flashmatch_config
