@@ -177,9 +177,9 @@ const std::map<size_t, int> ElectronEventSelectionAlg::flashBasedSelection(const
     f.pe_v.resize(m_geo->NOpDets());
     f.pe_err_v.resize(m_geo->NOpDets());
     f.time = flash.Time();
-    for (unsigned int ipmt = 0; ipmt < m_geo->NOpDets(); ++ipmt)
+    for (unsigned int i = 0; i < f.pe_v.size(); i++)
     {
-      unsigned int opdet = m_geo->OpDetFromOpChannel(ipmt);
+      unsigned int opdet = m_geo->OpDetFromOpChannel(i);
       if (_do_opdet_swap && evt.isRealData())
       {
         std::cout << "[ElectronEventSelectionAlg] Switching the PMT mapping before flashmatching!" << std::endl;
