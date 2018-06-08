@@ -83,7 +83,8 @@ void ElectronEventSelectionAlg::reconfigure(fhicl::ParameterSet const &p)
 
   m_flashmatching = p.get<bool>("Flashmatching", true);
   m_FM_all = p.get<bool>("Flashmatching_first", true);
-
+  _do_opdet_swap = p.get<bool>("DoOpDetSwap", false);
+  _opdet_swap_map = p.get<std::vector<int>>("OpDetSwapMap");
   m_isCosmicInTime = p.get<bool>("isCosmicInTime", false);
   m_mgr.Configure(p.get<flashana::Config_t>("FlashMatchConfig"));
   std::cout << "[ElectronEventSelectionAlg] config " << std::endl;
@@ -144,6 +145,7 @@ const std::map<size_t, int> ElectronEventSelectionAlg::flashBasedSelection(const
     _flash_PE.push_back(flash.TotalPE());
     _flash_time.push_back(flash.Time());
 
+    
     if ((flash.Time() < m_endbeamtime && flash.Time() > m_startbeamtime))
     {
       double thisPE = flash.TotalPE();
@@ -178,8 +180,13 @@ const std::map<size_t, int> ElectronEventSelectionAlg::flashBasedSelection(const
     for (unsigned int ipmt = 0; ipmt < m_geo->NOpDets(); ++ipmt)
     {
       unsigned int opdet = m_geo->OpDetFromOpChannel(ipmt);
-      f.pe_v[opdet] = flash.PE(ipmt);
-      f.pe_err_v[opdet] = sqrt(flash.PE(ipmt));
+      if (_do_opdet_swap && evt.isRealData())
+      {
+        std::cout << "[ElectronEventSelectionAlg] Switching the PMT mapping before flashmatching!" << std::endl;
+        opdet = _opdet_swap_map.at(opdet);
+      }
+      f.pe_v[opdet] = flash.PE(i);
+      f.pe_err_v[opdet] = sqrt(flash.PE(i));
     }
 
     // Loop over the neutrino candidates to do prematching cuts
