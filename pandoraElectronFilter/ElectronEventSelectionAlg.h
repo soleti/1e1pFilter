@@ -271,6 +271,9 @@ namespace lee {
     bool m_flashmatching;
     bool m_FM_all;
     double m_isCosmicInTime;
+	  
+    bool _do_opdet_swap;              ///< If true swaps reconstructed OpDets according to _opdet_swap_map
+    std::vector<int> _opdet_swap_map; ///< The OpDet swap map for reco flashes
 
     // std::map<unsigned short, double> m_ly_map;
 
