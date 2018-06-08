@@ -49,8 +49,9 @@ void EnergyHelper::showerResiduals(const art::Event &evt,
       double t = fromTickToNs * drift * hit->PeakTime();
       TVector3 hit_v(w, t, 0);
       TVector3 num(line.Cross(start_cluster - hit_v));
-      distances.push_back(num.Mag()/line.Mag());
-      std::cout << "distance " << num.Mag() / line.Mag() << std::endl;
+      double side = (hit_v[0] - start_cluster[0])*(end_cluster[1] - start_cluster[1]) - (hit_v[1] - start_cluster[1])*(end_cluster[0] - start_cluster[0]);
+      int sign_side = (side > 0) - (side < 0);
+      distances.push_back(sign_side * num.Mag()/line.Mag());
     }
 
   }

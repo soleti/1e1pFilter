@@ -538,6 +538,12 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt)
     // Cut on the topology to select 1e Np like signal
     // Np: at least N direct track daughters
     // 1e: at least one direct shower or 1 direct track daughter with a shower connected to it
+
+    if ((track_daughters + tracks + showers + shower_daughters) < 1) {
+      _neutrino_candidate_passed[_i_primary] = false;
+    }
+
+
     if (track_daughters < m_nTracks){  
       // There are less direct daughter tracks than we want protons, FAIL   
       std::cout << "There are less direct daughter tracks than we want protons, FAIL" << std::endl;             

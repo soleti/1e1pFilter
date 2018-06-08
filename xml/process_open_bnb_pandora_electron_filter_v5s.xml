@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <!DOCTYPE project [
-<!ENTITY name "bnb_nu_cosmic_pandora_electron_filter_ubxsec_1">
+<!ENTITY name "bnb_filter_data_ubxsec_v5s">
 <!ENTITY version "v06_26_01_12">
 <!ENTITY larsoft_version "v06_26_01_10">
 <!ENTITY qualifier "e10:prof">
-<!ENTITY dataset "ahack379_mcc7_mcbnbcos_snapshot_14981403_oneFourth_1">
+<!ENTITY dataset "prod_reco_optfilter_bnb_v12_unblind_mcc8_gooodruns_v5s">
 <!ENTITY user "srsoleti">
 ]>
 
@@ -26,19 +26,19 @@
         <fcldir>/uboone/app/users/&user;/v06_26_01_11/srcs/1e1pFilter/pandoraElectronFilter/job</fcldir>
         <local>/pnfs/uboone/resilient/users/&user;/&version;.tar</local> 
     </larsoft>
-
+    
     <!--  Project stages  -->
     <stage name="selection">
-        <fcl>run_PandoraOnly.fcl</fcl>
+        <fcl>run_PandoraOnly_data_bnb.fcl</fcl>
         <outdir>/pnfs/uboone/scratch/users/&user;/&version;/lee/&name;</outdir>
         <logdir>/pnfs/uboone/scratch/users/&user;/&version;/lee/&name;</logdir>
         <workdir>/pnfs/uboone/resilient/users/&user;/work/lee/&name;</workdir>
         <inputdef>&dataset;</inputdef>
-        <numjobs>539</numjobs>
+        <numjobs>11</numjobs>
         <disk>2GB</disk>
-        <memory>4096</memory>
+        <memory>3048</memory>
         <maxfilesperjob>20</maxfilesperjob>
-        <datatier>reconstructed</datatier>
+        <datatier>filtered</datatier>
         <jobsub>--expected-lifetime=24h -Q --append_condor_requirements='(TARGET.HAS_CVMFS_uboone_opensciencegrid_org==true)'</jobsub>
         <jobsub_start>--append_condor_requirements='(TARGET.HAS_CVMFS_uboone_opensciencegrid_org==true)'</jobsub_start>        
         <schema>root</schema>
