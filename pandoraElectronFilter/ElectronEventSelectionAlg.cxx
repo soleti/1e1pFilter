@@ -182,7 +182,7 @@ const std::map<size_t, int> ElectronEventSelectionAlg::flashBasedSelection(const
       unsigned int opdet = m_geo->OpDetFromOpChannel(i);
       if (_do_opdet_swap && evt.isRealData())
       {
-        std::cout << "[ElectronEventSelectionAlg] Switching the PMT mapping before flashmatching!" << std::endl;
+//         std::cout << "[ElectronEventSelectionAlg] Switching the PMT mapping before flashmatching!" << std::endl;
         opdet = _opdet_swap_map.at(opdet);
       }
       f.pe_v[opdet] = flash.PE(i);
