@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <!DOCTYPE project [
 <!ENTITY name "bnb_filter_data_ubxsec_v5s">
-<!ENTITY version "v06_26_01_12">
-<!ENTITY larsoft_version "v06_26_01_10">
+<!ENTITY version "v06_26_01_17">
+<!ENTITY larsoft_version "v06_26_01_13">
 <!ENTITY qualifier "e10:prof">
 <!ENTITY dataset "prod_reco_optfilter_bnb_v12_unblind_mcc8_gooodruns_v5s">
 <!ENTITY user "srsoleti">
@@ -23,7 +23,7 @@
     <larsoft>
         <tag>&larsoft_version;</tag>
         <qual>&qualifier;</qual>
-        <fcldir>/uboone/app/users/&user;/v06_26_01_11/srcs/1e1pFilter/pandoraElectronFilter/job</fcldir>
+        <fcldir>/uboone/app/users/&user;/&version;/srcs/1e1pFilter/pandoraElectronFilter/job</fcldir>
         <local>/pnfs/uboone/resilient/users/&user;/&version;.tar</local> 
     </larsoft>
     

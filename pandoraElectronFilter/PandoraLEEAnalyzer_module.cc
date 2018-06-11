@@ -1130,7 +1130,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
 
         _track_energy_hits.push_back(this_energy);
         // Alternative way to calculate the energy using dedx.
-        _track_energy_dedx.push_back(energyHelper.trackEnergy_dedx(track_obj, evt, m_pfp_producer));
+        _track_energy_dedx.push_back(energyHelper.trackEnergy_dedx(track_obj, evt, m_pfp_producer, m_calorimetry_producer));
 
         _track_length.push_back(track_obj->Length());
         _track_id.push_back(track_obj->ID());

@@ -42,7 +42,8 @@ public:
    */
   double trackEnergy_dedx(const art::Ptr<recob::Track> &track,
                           const art::Event &evt,
-                          std::string _pfp_producer);
+                          std::string _pfp_producer,
+                          std::string _calo_producer);
 
   /**
    * @brief      Measure the energy of a pfp_particle

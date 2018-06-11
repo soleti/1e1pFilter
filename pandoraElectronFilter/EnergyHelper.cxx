@@ -180,13 +180,13 @@ void EnergyHelper::energyFromHits(recob::PFParticle const &pfparticle,
   }
 }
 
-
 double EnergyHelper::trackEnergy_dedx(const art::Ptr<recob::Track> &track,
                                       const art::Event &evt,
-                                      std::string _pfp_producer)
+                                      std::string _pfp_producer,
+                                      std::string _calo_producer)
 {
   auto const &track_handle = evt.getValidHandle<std::vector<recob::Track>>(_pfp_producer);
-  art::FindManyP<anab::Calorimetry> calo_track_ass(track_handle, evt,"pandoraNucalo");
+  art::FindManyP<anab::Calorimetry> calo_track_ass(track_handle, evt, _calo_producer);
 
   const std::vector<art::Ptr<anab::Calorimetry>> calos = calo_track_ass.at(track->ID());
 
