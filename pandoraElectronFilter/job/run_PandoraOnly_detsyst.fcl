@@ -11,7 +11,7 @@ lee_pandora_analyzer:
     HitFinderLabel:             "pandoraCosmicHitRemoval::McRecoStage2CV"
     PFParticleLabel:            "pandoraNu::McRecoStage2CV"
     SpacePointLabel:            "pandoraNu::McRecoStage2CV"
-    ParticleIDModuleLabel:      "pandoraNucalipid::McRecoStage2CV"
+    ParticleIDModuleLabel:      "pandoraNupid::McRecoStage2CV"
     CalorimetryLabel:           "pandoraNucali::McRecoStage2CV"
 }
 
@@ -36,7 +36,7 @@ physics: {
      # ParameterSets for zero or more filter modules
   }
 
-  reco: [ decisiontreeid, @sequence::ubxsec_mc_producers ]
+  reco: [ @sequence::ubxsec_mc_producers ]
 
   path0 : [ robertoana ]
 
@@ -50,6 +50,8 @@ physics.analyzers.robertoana.isData: false
 physics.analyzers.robertoana.saveFluxInfo: true
 source.inputCommands:        [ "keep *_*_*_*", "drop *_opfiltercommon__McRecoStage1" ]
 services.SpaceCharge.EnableSimSpatialSCE: true
+
+
 
 physics.producers.pandoraCosmicTrackPFPart.FlashTimeVetoStart: 3.20
 physics.producers.pandoraCosmicTrackPFPart.FlashTimeVetoEnd:   4.80
