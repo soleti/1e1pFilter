@@ -27,6 +27,7 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
   myTTree->Branch("n_tracks", &_n_tracks, "n_tracks/i");
   myTTree->Branch("n_showers", &_n_showers, "n_showers/i");
   myTTree->Branch("ccnc", &_ccnc, "ccnc/i");
+  myTTree->Branch("cosmic_fraction", &_cosmic_fraction, "cosmic_fraction/d");
 
   myTTree->Branch("qsqr", &_qsqr, "qsqr/d");
   myTTree->Branch("theta", &_theta, "theta/d");
@@ -503,6 +504,7 @@ void lee::PandoraLEEAnalyzer::clear()
   _event_passed = 0;
   _numu_passed = 0;
   _numu_cuts = 0;
+  _cosmic_fraction = std::numeric_limits<double>::lowest();
   _distance = std::numeric_limits<double>::lowest();
 
   _flash_x = std::numeric_limits<double>::lowest();
@@ -1085,25 +1087,25 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
         _matched_tracks_process.push_back("");
         _matched_tracks_energy.push_back(std::numeric_limits<double>::lowest());
 
-        art::FindManyP<anab::CosmicTag> dtAssns(trackVecHandle, evt,
-                                                "decisiontreeid");
+        // art::FindManyP<anab::CosmicTag> dtAssns(trackVecHandle, evt,
+        //                                         "decisiontreeid");
 
-        std::vector<art::Ptr<anab::CosmicTag>> dtVec =
-            dtAssns.at(track_obj.key());
+        // std::vector<art::Ptr<anab::CosmicTag>> dtVec =
+        //     dtAssns.at(track_obj.key());
 
-        for (auto const &dttag : dtVec)
-        {
-          if (dttag->CosmicType() == TAGID_P)
-            _predict_p.push_back(dttag->CosmicScore());
-          else if (dttag->CosmicType() == TAGID_MU)
-            _predict_mu.push_back(dttag->CosmicScore());
-          else if (dttag->CosmicType() == TAGID_PI)
-            _predict_pi.push_back(dttag->CosmicScore());
-          else if (dttag->CosmicType() == TAGID_EM)
-            _predict_em.push_back(dttag->CosmicScore());
-          else if (dttag->CosmicType() == TAGID_CS)
-            _predict_cos.push_back(dttag->CosmicScore());
-        }
+        // for (auto const &dttag : dtVec)
+        // {
+        //   if (dttag->CosmicType() == TAGID_P)
+        //     _predict_p.push_back(dttag->CosmicScore());
+        //   else if (dttag->CosmicType() == TAGID_MU)
+        //     _predict_mu.push_back(dttag->CosmicScore());
+        //   else if (dttag->CosmicType() == TAGID_PI)
+        //     _predict_pi.push_back(dttag->CosmicScore());
+        //   else if (dttag->CosmicType() == TAGID_EM)
+        //     _predict_em.push_back(dttag->CosmicScore());
+        //   else if (dttag->CosmicType() == TAGID_CS)
+        //     _predict_cos.push_back(dttag->CosmicScore());
+        // }
 
         std::vector<double> start_point;
         std::vector<double> end_point;
@@ -1321,6 +1323,8 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
 
     _nu_matched_tracks = 0;
     bool track_cr_found = false;
+    double cr_hits = 0;
+    double nu_hits = 0;
 
     for (auto &inu : fElectronEventSelectionAlg.get_primary_indexes())
     {
@@ -1346,6 +1350,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
             if (inu == ipf_candidate)
             {
               _nu_matched_showers++;
+              nu_hits += _shower_nhits[ish][2] + _shower_nhits[ish][1] + _shower_nhits[ish][0];
               _matched_showers[ish] = neutrino_pdg[ipf];
               _matched_showers_process[ish] = neutrino_process[ipf];
               _matched_showers_energy[ish] = neutrino_energy[ipf];
@@ -1360,6 +1365,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
             if (pfp_showers_id[ish] == cosmic_pf[ipf].key())
             {
               shower_cr_found = true;
+              cr_hits += _shower_nhits[ish][2] + _shower_nhits[ish][1] + _shower_nhits[ish][0];
               _matched_showers[ish] = cosmic_pdg[ipf];
               _matched_showers_process[ish] = cosmic_process[ipf];
               _matched_showers_energy[ish] = cosmic_energy[ipf];
@@ -1387,6 +1393,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
               if (inu == ipf_candidate)
               {
                 _nu_matched_tracks++;
+                nu_hits += _track_nhits[itr][2] + _track_nhits[itr][1] + _track_nhits[itr][0];
                 _matched_tracks[itr] = neutrino_pdg[ipf];
                 _matched_tracks_process[itr] = neutrino_process[ipf];
                 _matched_tracks_energy[itr] = neutrino_energy[ipf];
@@ -1401,6 +1408,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
               if (pfp_tracks_id[itr] == cosmic_pf[ipf].key())
               {
                 track_cr_found = true;
+                cr_hits += _track_nhits[itr][2] + _track_nhits[itr][1] + _track_nhits[itr][0];
                 _matched_tracks[itr] = cosmic_pdg[ipf];
                 _matched_tracks_process[itr] = cosmic_process[ipf];
                 _matched_tracks_energy[itr] = cosmic_energy[ipf];
@@ -1414,7 +1422,8 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
     }
 
     _n_primaries = _primary_indexes.size();
-
+    _cosmic_fraction = cr_hits / (cr_hits + nu_hits);
+    std::cout << "[PandoraLEE] Cosmic fraction " << _cosmic_fraction << std::endl;
     if (
         !track_cr_found && _nu_matched_tracks == 0 && !shower_cr_found && _nu_matched_showers == 0 && _category != k_dirt && _category != k_data)
     {

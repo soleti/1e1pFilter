@@ -178,7 +178,7 @@ private:
   int _numu_passed;
   int _numu_cuts;
   double _distance;
-
+  double _cosmic_fraction;
   double _qsqr;
   double _theta;
   TLorentzVector _nu_p;
