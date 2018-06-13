@@ -16,7 +16,7 @@ services :
   @table::microboone_services_reco
   @table::microboone_simulation_services
   #BackTracker:             @local::microboone_backtracker
-
+  TPCEnergyCalibService:         @local::microboone_tpcenergycalib_service
 }
 
 outputs: {

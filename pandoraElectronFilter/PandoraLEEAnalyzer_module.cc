@@ -193,6 +193,11 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
   myTTree->Branch("shower_dEdx", "std::vector< std::vector< double > >",
                   &_shower_dEdx);
 
+  myTTree->Branch("shower_dQdx_cali", "std::vector< std::vector< double > >",
+                  &_shower_dQdx_cali);
+  myTTree->Branch("shower_dEdx_cali", "std::vector< std::vector< double > >",
+                  &_shower_dEdx_cali);
+
   myTTree->Branch("track_dQdx", "std::vector< std::vector< double > >",
                   &_track_dQdx);
   myTTree->Branch("track_dEdx", "std::vector< std::vector< double > >",
@@ -206,6 +211,10 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
 
   myTTree->Branch("shower_dQdx_hits", "std::vector< std::vector< double > >",
                   &_shower_dQdx_hits);
+
+  myTTree->Branch("shower_pitches", "std::vector< std::vector< double > >",
+                  &_shower_pitches);
+
   myTTree->Branch("shower_dEdx_hits", "std::vector< std::vector< double > >",
                   &_shower_dEdx_hits);
 
@@ -244,6 +253,7 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
   myTTree->Branch("shower_sp_y", "std::vector< float >", &_shower_sp_y);
   myTTree->Branch("shower_sp_z", "std::vector< float >", &_shower_sp_z);
   myTTree->Branch("shower_sp_int", "std::vector< float >", &_shower_sp_int);
+  myTTree->Branch("shower_energy_cali", "std::vector< std::vector< double > >", &_shower_energy_cali);
 
   this->reconfigure(pset);
 }
@@ -361,6 +371,7 @@ void lee::PandoraLEEAnalyzer::clear()
   _nu_p = TLorentzVector();
   _lepton_E = std::numeric_limits<double>::lowest();
   _lepton_p = TLorentzVector();
+  _shower_pitches.clear();
   _ccnc = std::numeric_limits<int>::lowest();
   _interaction_type = std::numeric_limits<int>::lowest();
   _track_pida.clear();
@@ -386,6 +397,9 @@ void lee::PandoraLEEAnalyzer::clear()
   _shower_dQdx.clear();
   _shower_dEdx.clear();
 
+  _shower_dQdx_cali.clear();
+  _shower_dEdx_cali.clear();
+
   _track_dQdx_hits.clear();
   _track_dEdx_hits.clear();
   _track_dQdx.clear();
@@ -401,8 +415,7 @@ void lee::PandoraLEEAnalyzer::clear()
   _shower_dir_x.clear();
   _shower_dir_y.clear();
   _shower_dir_z.clear();
-  _shower_dQdx.clear();
-  _shower_dEdx.clear();
+
 
   _nu_track_ids.clear();
   _nu_shower_ids.clear();
@@ -469,6 +482,7 @@ void lee::PandoraLEEAnalyzer::clear()
   _n_primaries = 0;
 
   _energy.clear();
+  _shower_energy_cali.clear();
 
   _true_nu_is_fiducial = std::numeric_limits<int>::lowest();
   _nu_energy = std::numeric_limits<double>::lowest();
@@ -1048,7 +1062,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
         double mean = std::numeric_limits<double>::lowest();
         double stdev = std::numeric_limits<double>::lowest();
 
-        energyHelper.trackResiduals(evt, m_pfp_producer, track_obj, mean, stdev);
+        energyHelper.cluster_residuals(evt, m_pfp_producer, pf_id, mean, stdev);
 
         _track_res_mean.push_back(mean);
         _track_res_std.push_back(stdev);
@@ -1167,8 +1181,6 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
         weighted_pca /= total_hits;
         _track_pca.push_back(weighted_pca);
         _track_nhits.push_back(this_nhits);
-
-        std::cout << "[PCA] Track " << pca[2][0] << " " << pca[2][1] << std::endl;
       }
     }
 
@@ -1204,33 +1216,54 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
       _nu_shower_daughters.push_back(pfparticle.Daughters());
       double mean = std::numeric_limits<double>::lowest();
       double stdev = std::numeric_limits<double>::lowest();
-      energyHelper.showerResiduals(evt, m_pfp_producer, pf_id, mean, stdev);
+      energyHelper.cluster_residuals(evt, m_pfp_producer, pf_id, mean, stdev);
       _shower_res_mean.push_back(mean);
       _shower_res_std.push_back(stdev);
-      std::vector<double>
-          dqdx(3, std::numeric_limits<double>::lowest());
+
+      std::vector<double> pitches(3, std::numeric_limits<double>::lowest());
+      std::vector<double> pitches_cali(3, std::numeric_limits<double>::lowest());
+
+      std::vector<double> dqdx(3, std::numeric_limits<double>::lowest());
       std::vector<double> dedx(3, std::numeric_limits<double>::lowest());
       std::vector<double> dqdx_hits_shower;
+
+      std::vector<double> dqdx_cali(3, std::numeric_limits<double>::lowest());
+      std::vector<double> dedx_cali(3, std::numeric_limits<double>::lowest());
+      std::vector<double> dqdx_hits_shower_cali;
+
       _matched_showers.push_back(std::numeric_limits<int>::lowest());
       _matched_showers_process.push_back("");
 
       _matched_showers_energy.push_back(std::numeric_limits<double>::lowest());
 
-      energyHelper.dQdx(pf_id, evt, dqdx, dqdx_hits_shower, m_dQdxRectangleLength,
+      energyHelper.dQdx(pf_id, evt, dqdx, dqdx_hits_shower, pitches, m_dQdxRectangleLength,
                         m_dQdxRectangleWidth, m_pfp_producer);
 
+      energyHelper.dQdx_cali(pf_id, evt, dqdx_cali, dqdx_hits_shower_cali, pitches_cali, m_dQdxRectangleLength,
+                        m_dQdxRectangleWidth, m_pfp_producer);
 
       _shower_dQdx_hits.push_back(dqdx_hits_shower);
-      std::cout << "[dQdx] nohits " << dqdx_hits_shower.size() << " " << dqdx[0] << " " << dqdx[1] << " " << dqdx[2] << std::endl;
+      _shower_pitches.push_back(pitches);
 
       std::vector<double> dedx_hits_shower(dqdx_hits_shower.size(), std::numeric_limits<double>::lowest());
 
+      for (size_t i_dqdx = 0; i_dqdx < dqdx_cali.size(); i_dqdx++) {
+        if (dqdx_cali[i_dqdx] <= 0) {
+            dqdx_cali[i_dqdx] = dqdx[i_dqdx];
+        }
+      }
+
       energyHelper.dEdxFromdQdx(dedx, dqdx);
+      energyHelper.dEdxFromdQdx(dedx_cali, dqdx_cali);
+
       energyHelper.dEdxFromdQdx(dedx_hits_shower, dqdx_hits_shower);
       _shower_dEdx_hits.push_back(dedx_hits_shower);
 
       _shower_dQdx.push_back(dqdx);
       _shower_dEdx.push_back(dedx);
+
+      _shower_dQdx_cali.push_back(dqdx_cali);
+      _shower_dEdx_cali.push_back(dedx_cali);
 
       _shower_dir_x.push_back(shower_obj->Direction().X());
       _shower_dir_y.push_back(shower_obj->Direction().Y());
@@ -1262,14 +1295,19 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
       _shower_theta.push_back(shower_obj->Direction().Theta());
 
       std::vector<double> this_energy;
+      std::vector<double> this_cali_energy;
+
       std::vector<int> this_nhits;
 
       energyHelper.energyFromHits(pfparticle, this_nhits, this_energy, evt, m_pfp_producer);
+      energyHelper.energy_cali(pfparticle, this_cali_energy, evt, m_pfp_producer);
 
       for (int i = 0; i < 3; ++i)
       {
         _energy[i] += this_energy[i];
       }
+
+      _shower_energy_cali.push_back(this_cali_energy);
       _shower_energy.push_back(this_energy);
 
       std::vector<std::vector<double>> pca;
@@ -1289,31 +1327,6 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
       _shower_pca.push_back(weighted_pca);
       _shower_nhits.push_back(this_nhits);
 
-      std::cout << "[PCA] Shower " << pca[2][0] << " " << pca[2][1] << std::endl;
-
-      std::vector<art::Ptr<recob::SpacePoint>> spcpnts = spcpnts_per_pfpart.at(pf_id);
-      for (auto &_sps : spcpnts)
-      {
-        std::vector<art::Ptr<recob::Hit>> hits = hits_per_spcpnts.at(_sps.key());
-        auto xyz = _sps->XYZ();
-        float integral = 0;
-
-        for (auto &hit : hits)
-        {
-          if (hit->View() == geo::kZ)
-          {
-            integral += hit->Integral();
-          }
-        }
-        // Only save points with nonzero collection charge
-        if (integral > 0)
-        {
-          _shower_sp_int.push_back(integral);
-          _shower_sp_x.push_back(xyz[0]);
-          _shower_sp_y.push_back(xyz[1]);
-          _shower_sp_z.push_back(xyz[2]);
-        }
-      }
     }
 
     /* For each neutrino PFParticle checks how many daughter tracks and showers
@@ -1423,7 +1436,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
 
     _n_primaries = _primary_indexes.size();
     _cosmic_fraction = cr_hits / (cr_hits + nu_hits);
-    std::cout << "[PandoraLEE] Cosmic fraction " << _cosmic_fraction << std::endl;
+
     if (
         !track_cr_found && _nu_matched_tracks == 0 && !shower_cr_found && _nu_matched_showers == 0 && _category != k_dirt && _category != k_data)
     {

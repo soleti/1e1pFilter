@@ -65,7 +65,7 @@
 
 #include "uboone/EventWeight/EventWeightTreeUtility.h"
 
-namespace lee {
+    namespace lee {
 
 class PandoraLEEAnalyzer : public art::EDAnalyzer {
 public:
@@ -107,6 +107,7 @@ private:
   const anab::CosmicTagID_t TAGID_PI = anab::CosmicTagID_t::kGeometry_ZZ;
   const anab::CosmicTagID_t TAGID_EM = anab::CosmicTagID_t::kGeometry_XX;
   const anab::CosmicTagID_t TAGID_CS = anab::CosmicTagID_t::kGeometry_XY;
+
 
   lee::ElectronEventSelectionAlg fElectronEventSelectionAlg;
 
@@ -158,7 +159,7 @@ private:
   std::vector<double> _true_shower_z_sce;
   std::vector<int> _true_shower_pdg;
   std::vector<double> _true_shower_depE;
-
+  
   int _nu_matched_tracks;
   int _nu_matched_showers;
 
@@ -211,6 +212,9 @@ private:
 
   std::vector<std::vector<double>> _shower_dQdx;
   std::vector<std::vector<double>> _shower_dEdx;
+  std::vector<std::vector<double>> _shower_dQdx_cali;
+  std::vector<std::vector<double>> _shower_dEdx_cali;
+  std::vector<std::vector<double>> _shower_pitches;
 
   std::vector<std::vector<double>> _track_dQdx_hits;
   std::vector<std::vector<double>> _track_dEdx_hits;
@@ -238,6 +242,7 @@ private:
   std::vector<double> _shower_phi;
 
   std::vector<std::vector<double>> _shower_energy;
+  std::vector<std::vector<double>> _shower_energy_cali;
 
   std::vector<double> _track_dir_x;
   std::vector<double> _track_dir_y;

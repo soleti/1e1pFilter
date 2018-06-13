@@ -24,6 +24,8 @@
 #include "lardata/DetectorInfoServices/DetectorPropertiesService.h"
 #include "TPrincipal.h"
 #include "uboone/UBXSec/Algorithms/TrackQuality.h"
+#include "uboone/Database/TPCEnergyCalib/TPCEnergyCalibProvider.h"
+#include "uboone/Database/TPCEnergyCalib/TPCEnergyCalibService.h"
 
 namespace lee {
 
@@ -59,14 +61,30 @@ public:
                       const art::Event &evt,
                       std::string _pfp_producer);
 
+  void energy_cali(recob::PFParticle const &pfparticle,
+                  std::vector<double> &pfenergy,
+                  const art::Event &evt,
+                  std::string _pfp_producer);
+
   void dQdx(size_t pfp_id,
             const art::Event &evt,
             std::vector<double> &dqdx,
             std::vector<double> &dqdx_hits,
+            std::vector<double> &pitches,
             double m_dQdxRectangleLength, double m_dQdxRectangleWidth,
             std::string _pfp_producer);
 
-  void dEdxFromdQdx(std::vector<double> &dedx, std::vector<double> &dqdx);
+  void dQdx_cali(size_t pfp_id,
+                 const art::Event &evt,
+                 std::vector<double> &dqdx,
+                 std::vector<double> &dqdx_hits,
+                 std::vector<double> &pitches,
+                 double m_dQdxRectangleLength,
+                 double m_dQdxRectangleWidth,
+                 std::string _pfp_producer);
+                        
+  void dEdxFromdQdx(std::vector<double> &dedx,
+                    std::vector<double> &dqdx);
 
   void PCA(size_t pfp_id,
            const art::Event &evt,
@@ -84,16 +102,17 @@ public:
                       double &mean,
                       double &std);
 
-  void showerResiduals(const art::Event &e,
-                       std::string _pfp_producer,
-                       size_t pfp_id,
-                       double &mean,
-                       double &std);
+  void cluster_residuals(const art::Event &e,
+                         std::string _pfp_producer,
+                         size_t pfp_id,
+                         double &mean,
+                         double &std);
 
 private:
   std::vector<double> _data_gain = {239.5, 239.5, 239.5};               // Only measured of collection plane, David Caratelli
   std::vector<double> _mc_gain = {193.0, 197.0, 197.0};                 // Plane 0, plane 1, plane 2
 
+  const lariov::TPCEnergyCalibProvider &energyCalibProvider = art::ServiceHandle<lariov::TPCEnergyCalibService>()->GetProvider();
   art::ServiceHandle<geo::Geometry> geo;
   detinfo::DetectorProperties const *detprop;
 
