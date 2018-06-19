@@ -69,20 +69,13 @@ public:
   void dQdx(size_t pfp_id,
             const art::Event &evt,
             std::vector<double> &dqdx,
+            std::vector<double> &dqdx_cali,
             std::vector<double> &dqdx_hits,
             std::vector<double> &pitches,
-            double m_dQdxRectangleLength, double m_dQdxRectangleWidth,
+            double m_dQdxRectangleLength,
+            double m_dQdxRectangleWidth,
             std::string _pfp_producer);
 
-  void dQdx_cali(size_t pfp_id,
-                 const art::Event &evt,
-                 std::vector<double> &dqdx,
-                 std::vector<double> &dqdx_hits,
-                 std::vector<double> &pitches,
-                 double m_dQdxRectangleLength,
-                 double m_dQdxRectangleWidth,
-                 std::string _pfp_producer);
-                        
   void dEdxFromdQdx(std::vector<double> &dedx,
                     std::vector<double> &dqdx);
 
@@ -95,6 +88,12 @@ public:
              const art::Event &evt,
              std::vector< int > &nHits,
              std::string _pfp_producer);
+
+  void get_cali(
+      const art::Event &evt,
+      std::vector<double> &cali_corr,
+      size_t pf_id,
+      std::string _pfp_producer);
 
   void trackResiduals(const art::Event &e,
                       std::string _pfp_producer,

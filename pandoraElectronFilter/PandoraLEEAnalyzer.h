@@ -220,6 +220,8 @@ private:
   std::vector<std::vector<double>> _track_dEdx_hits;
 
   std::vector<std::vector<double>> _track_dQdx;
+  std::vector<std::vector<double>> _track_dQdx_cali;
+
   std::vector<std::vector<double>> _track_dEdx;
 
   std::vector<size_t> _nu_track_ids;
@@ -243,6 +245,7 @@ private:
 
   std::vector<std::vector<double>> _shower_energy;
   std::vector<std::vector<double>> _shower_energy_cali;
+  std::vector<std::vector<double>> _track_energy_cali;
 
   std::vector<double> _track_dir_x;
   std::vector<double> _track_dir_y;

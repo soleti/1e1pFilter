@@ -193,13 +193,12 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
   myTTree->Branch("shower_dEdx", "std::vector< std::vector< double > >",
                   &_shower_dEdx);
 
-  myTTree->Branch("shower_dQdx_cali", "std::vector< std::vector< double > >",
-                  &_shower_dQdx_cali);
-  myTTree->Branch("shower_dEdx_cali", "std::vector< std::vector< double > >",
-                  &_shower_dEdx_cali);
+  myTTree->Branch("shower_dQdx_cali", "std::vector< std::vector< double > >", &_shower_dQdx_cali);
 
   myTTree->Branch("track_dQdx", "std::vector< std::vector< double > >",
                   &_track_dQdx);
+
+
   myTTree->Branch("track_dEdx", "std::vector< std::vector< double > >",
                   &_track_dEdx);
 
@@ -254,6 +253,7 @@ lee::PandoraLEEAnalyzer::PandoraLEEAnalyzer(fhicl::ParameterSet const &pset)
   myTTree->Branch("shower_sp_z", "std::vector< float >", &_shower_sp_z);
   myTTree->Branch("shower_sp_int", "std::vector< float >", &_shower_sp_int);
   myTTree->Branch("shower_energy_cali", "std::vector< std::vector< double > >", &_shower_energy_cali);
+  myTTree->Branch("track_energy_cali", "std::vector< std::vector< double > >", &_track_energy_cali);
 
   this->reconfigure(pset);
 }
@@ -403,6 +403,7 @@ void lee::PandoraLEEAnalyzer::clear()
   _track_dQdx_hits.clear();
   _track_dEdx_hits.clear();
   _track_dQdx.clear();
+
   _track_dEdx.clear();
 
   _shower_sp_x.clear();
@@ -481,8 +482,8 @@ void lee::PandoraLEEAnalyzer::clear()
   _chosen_candidate = std::numeric_limits<int>::lowest();
   _n_primaries = 0;
 
-  _energy.clear();
   _shower_energy_cali.clear();
+  _track_energy_cali.clear();
 
   _true_nu_is_fiducial = std::numeric_limits<int>::lowest();
   _nu_energy = std::numeric_limits<double>::lowest();
@@ -1057,6 +1058,11 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
         }
         
         _track_dQdx.push_back(dqdx);
+
+        std::vector<double> track_cali;
+        energyHelper.get_cali(evt, track_cali, pf_id, m_pfp_producer);
+        
+        _track_energy_cali.push_back(track_cali);
         _track_dEdx.push_back(dedx);
 
         double mean = std::numeric_limits<double>::lowest();
@@ -1221,49 +1227,35 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
       _shower_res_std.push_back(stdev);
 
       std::vector<double> pitches(3, std::numeric_limits<double>::lowest());
-      std::vector<double> pitches_cali(3, std::numeric_limits<double>::lowest());
 
       std::vector<double> dqdx(3, std::numeric_limits<double>::lowest());
       std::vector<double> dedx(3, std::numeric_limits<double>::lowest());
       std::vector<double> dqdx_hits_shower;
 
       std::vector<double> dqdx_cali(3, std::numeric_limits<double>::lowest());
-      std::vector<double> dedx_cali(3, std::numeric_limits<double>::lowest());
-      std::vector<double> dqdx_hits_shower_cali;
 
       _matched_showers.push_back(std::numeric_limits<int>::lowest());
       _matched_showers_process.push_back("");
 
       _matched_showers_energy.push_back(std::numeric_limits<double>::lowest());
 
-      energyHelper.dQdx(pf_id, evt, dqdx, dqdx_hits_shower, pitches, m_dQdxRectangleLength,
-                        m_dQdxRectangleWidth, m_pfp_producer);
-
-      energyHelper.dQdx_cali(pf_id, evt, dqdx_cali, dqdx_hits_shower_cali, pitches_cali, m_dQdxRectangleLength,
-                        m_dQdxRectangleWidth, m_pfp_producer);
+      energyHelper.dQdx(pf_id, evt, dqdx, dqdx_cali, dqdx_hits_shower, pitches, 
+                        m_dQdxRectangleLength, m_dQdxRectangleWidth, m_pfp_producer);
 
       _shower_dQdx_hits.push_back(dqdx_hits_shower);
       _shower_pitches.push_back(pitches);
 
       std::vector<double> dedx_hits_shower(dqdx_hits_shower.size(), std::numeric_limits<double>::lowest());
 
-      for (size_t i_dqdx = 0; i_dqdx < dqdx_cali.size(); i_dqdx++) {
-        if (dqdx_cali[i_dqdx] <= 0) {
-            dqdx_cali[i_dqdx] = dqdx[i_dqdx];
-        }
-      }
-
       energyHelper.dEdxFromdQdx(dedx, dqdx);
-      energyHelper.dEdxFromdQdx(dedx_cali, dqdx_cali);
-
       energyHelper.dEdxFromdQdx(dedx_hits_shower, dqdx_hits_shower);
+
       _shower_dEdx_hits.push_back(dedx_hits_shower);
 
       _shower_dQdx.push_back(dqdx);
       _shower_dEdx.push_back(dedx);
 
       _shower_dQdx_cali.push_back(dqdx_cali);
-      _shower_dEdx_cali.push_back(dedx_cali);
 
       _shower_dir_x.push_back(shower_obj->Direction().X());
       _shower_dir_y.push_back(shower_obj->Direction().Y());
@@ -1295,19 +1287,14 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
       _shower_theta.push_back(shower_obj->Direction().Theta());
 
       std::vector<double> this_energy;
-      std::vector<double> this_cali_energy;
+      std::vector<double> shower_cali;
 
       std::vector<int> this_nhits;
 
       energyHelper.energyFromHits(pfparticle, this_nhits, this_energy, evt, m_pfp_producer);
-      energyHelper.energy_cali(pfparticle, this_cali_energy, evt, m_pfp_producer);
+      energyHelper.get_cali(evt, shower_cali, pf_id, m_pfp_producer);
 
-      for (int i = 0; i < 3; ++i)
-      {
-        _energy[i] += this_energy[i];
-      }
-
-      _shower_energy_cali.push_back(this_cali_energy);
+      _shower_energy_cali.push_back(shower_cali);
       _shower_energy.push_back(this_energy);
 
       std::vector<std::vector<double>> pca;
