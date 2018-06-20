@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <!DOCTYPE project [
-<!ENTITY name "bnb_nu_cosmic_pandora_electron_filter_detsyst_sce">
+<!ENTITY name "bnb_nu_cosmic_pandora_electron_filter_detsyst_dic">
 <!ENTITY version "v06_26_01_17">
 <!ENTITY larsoft_version "v06_26_01_13">
 <!ENTITY qualifier "e10:prof">
-<!ENTITY dataset "prodgenie_bnb_nu_cosmic_uboone_detsyst_dataSCE_mcc8.11_reco">
+<!ENTITY dataset "prodgenie_bnb_nu_cosmic_uboone_detsyst_withDIC_mcc8.11_reco">
 <!ENTITY user "srsoleti">
 ]>
 

@@ -47,12 +47,18 @@ void PandoraInterfaceHelper::Configure(art::Event const & e,
   lar_pandora::HitVector hitVector;
   //lar_pandora::LArPandoraHelper::CollectHits(e, _hitfinder_producer, hitVector);
   art::Handle<std::vector<recob::Hit>> hit_h;
+  std::cout << "[McPfpMatch] getbylabel " << std::endl;
+
   e.getByLabel(_hitfinder_producer, hit_h);
   if (!hit_h.isValid()) {
     std::cout << "[McPfpMatch] Hit Handle is not valid." << std::endl;
     throw std::exception();
   }
+  std::cout << "[McPfpMatch] Before hitvector " << std::endl;
+
   art::fill_ptr_vector(hitVector, hit_h);
+  std::cout << "[McPfpMatch] Before Backtracker " << std::endl;
+
   art::FindManyP<simb::MCParticle,anab::BackTrackerHitMatchingData> mcps_from_hit(hit_h, e, _hit_mcp_producer);
 
   // Collect PFParticles and match Reco Particles to Hits
@@ -60,22 +66,25 @@ void PandoraInterfaceHelper::Configure(art::Event const & e,
   lar_pandora::PFParticleVector  recoNeutrinoVector;
   lar_pandora::PFParticlesToHits pfp_to_hits_map;
   lar_pandora::HitsToPFParticles recoHitsToParticles;
+  std::cout << "[McPfpMatch] Before Collect " << std::endl;
 
   lar_pandora::LArPandoraHelper::CollectPFParticles(e, _pfp_producer, recoParticleVector);
+  std::cout << "[McPfpMatch] Before Select " << std::endl;
+
   lar_pandora::LArPandoraHelper::SelectNeutrinoPFParticles(recoParticleVector, recoNeutrinoVector);
   std::cout << "[McPfpMatch] Before Build " << std::endl;
-try {
-  lar_pandora::LArPandoraHelper::BuildPFParticleHitMaps(e,
-                                                        _pfp_producer,
-                                                      _spacepoint_producer,
-                                                        pfp_to_hits_map,
-                                                        recoHitsToParticles,
-                                                        daughterMode,
-                                                        true); // Use clusters to go from pfp to hits
-} catch (...) {
-  std::cout <<"Build error" << std::endl;
-}
-_verbose = true;
+  try {
+    lar_pandora::LArPandoraHelper::BuildPFParticleHitMaps(e,
+                                                          _pfp_producer,
+                                                        _spacepoint_producer,
+                                                          pfp_to_hits_map,
+                                                          recoHitsToParticles,
+                                                          daughterMode,
+                                                          true); // Use clusters to go from pfp to hits
+  } catch (...) {
+    std::cout <<"Build error" << std::endl;
+  }
+  _verbose = true;
   if (_verbose) {
     std::cout << "[McPfpMatch] RecoNeutrinos: " << recoNeutrinoVector.size() << std::endl;
     std::cout << "[McPfpMatch] RecoParticles: " << recoParticleVector.size() << std::endl;

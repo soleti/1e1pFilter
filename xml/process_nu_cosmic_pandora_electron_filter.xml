@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <!DOCTYPE project [
-<!ENTITY name "bnb_nu_cosmic_pandora_electron_filter_ubxsec_0">
+<!ENTITY name "bnb_nu_cosmic_pandora_electron_filter_ubxsec_1">
 <!ENTITY version "v06_26_01_17">
 <!ENTITY larsoft_version "v06_26_01_13">
 <!ENTITY qualifier "e10:prof">
-<!ENTITY dataset "ahack379_mcc7_mcbnbcos_snapshot_14981403_oneFourth_0">
+<!ENTITY dataset "ahack379_mcc7_mcbnbcos_snapshot_14981403_oneFourth_1">
 <!ENTITY user "srsoleti">
 ]>
 
@@ -16,7 +16,7 @@
     <os>SL6</os>
 
     <!--  Batch resources  -->
-    <resource>DEDICATED,OPPORTUNISTIC,OFFSITE</resource>
+    <resource>DEDICATED,OPPORTUNISTIC</resource>
 
 
     <!--  Larsoft information  -->
