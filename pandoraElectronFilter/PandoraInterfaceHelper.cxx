@@ -58,6 +58,7 @@ void PandoraInterfaceHelper::Configure(art::Event const & e,
 
   art::fill_ptr_vector(hitVector, hit_h);
   std::cout << "[McPfpMatch] Before Backtracker " << std::endl;
+  std::cout << "hitVectore size " << hitVector.size() << std::endl;
 
   art::FindManyP<simb::MCParticle,anab::BackTrackerHitMatchingData> mcps_from_hit(hit_h, e, _hit_mcp_producer);
 

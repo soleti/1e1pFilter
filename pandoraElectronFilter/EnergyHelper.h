@@ -108,8 +108,8 @@ public:
                          double &std);
 
 private:
-  std::vector<double> _data_gain = {239.5, 239.5, 239.5};               // Only measured of collection plane, David Caratelli
-  std::vector<double> _mc_gain = {193.0, 197.0, 197.0};                 // Plane 0, plane 1, plane 2
+  std::vector<double> _data_gain = {236.41, 228.83, 242.72};              // DocDB 14754
+  std::vector<double> _mc_gain = {193.05, 196.85, 196.85};                // Plane 0, plane 1, plane 2
 
   const lariov::TPCEnergyCalibProvider &energyCalibProvider = art::ServiceHandle<lariov::TPCEnergyCalibService>()->GetProvider();
   art::ServiceHandle<geo::Geometry> geo;
