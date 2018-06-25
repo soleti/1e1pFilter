@@ -1,26 +1,27 @@
 #include "decisiontreeid.fcl"
 #include "lee_selection_alg.fcl"
-#include "ubxsec_data_common.fcl"
+#include "ubxsec_mc_common.fcl"
 #include "pandora_lee_ana_common.fcl"
 
 
 
-pandora_label: "pandoraNu::DataRecoStage2"
+pandora_label: "pandoraNu::McRecoStage2CV"
 
-start_window:  3.58
-end_window:    5.26
+start_window:  3.16
+end_window:    4.84
 
 lee_pandora_analyzer:
 {
     module_type:                "PandoraLEEAnalyzer"
     ElectronSelectionAlg:       @local::lee_electron_alg
-    isData:                     true
     PrintDebug:                 false
-    HitFinderLabel:             "pandoraCosmicHitRemoval::DataRecoStage2"
+    isData:                     true
+    HitFinderLabel:             "pandoraCosmicHitRemoval::McRecoStage2CV"
     PFParticleLabel:            @local::pandora_label
     SpacePointLabel:            @local::pandora_label
-    ParticleIDModuleLabel:      "pandoraNupid::DataRecoStage2" 
+    ParticleIDModuleLabel:      "pandoraNupid::McRecoStage2CV" 
 }
+
 
 # The optical selection module settings:
 lee_pandora_analyzer.ElectronSelectionAlg.startbeamtime:    @local::start_window
@@ -32,18 +33,21 @@ physics: {
   producers : {
      # ParameterSets for zero or more producer modules
      decisiontreeid: @local::DecisionTreeID
-     @table::ubxsec_data_reco
-     @table::ubxsec_data_flashmatch
-     }
+     @table::ubxsec_mc_reco
+     @table::ubxsec_mc_flashmatch
+  }
+
   analyzers: {
      # ParameterSets for zero or more analyzer modules
      wouterNueCC:  @local::lee_pandora_analyzer
-     @table::ubxsec_data_ana
+     # @table::ubxsec_mc_ana
   }
+  
   filters : {
      # ParameterSets for zero or more filter modules
   }
-  reco: [decisiontreeid ,@sequence::ubxsec_data_producers]
+
+  reco: [decisiontreeid, @sequence::ubxsec_mc_producers]
 
   path0 : [ wouterNueCC ]
   path1 : []
@@ -55,7 +59,7 @@ physics: {
 }
 
 services.SpaceCharge.EnableSimSpatialSCE: true
-physics.producers.UBXSec.UseGENIEInfo:                   false
+
 
 physics.producers.decisiontreeid.BeamWindowStartT:                @local::start_window  
 physics.producers.decisiontreeid.BeamWindowEndT:                  @local::end_window 

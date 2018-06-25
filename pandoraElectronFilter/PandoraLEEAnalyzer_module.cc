@@ -1718,16 +1718,14 @@ void lee::PandoraLEEAnalyzer::reconfigure(fhicl::ParameterSet const &pset)
     // add what you want to read, and default values of your labels etc. example:
     fElectronEventSelectionAlg.reconfigure(pset.get<fhicl::ParameterSet>("ElectronSelectionAlg"));
 
-    m_hitfinderLabel = pset.get<std::string>("HitFinderLabel", "pandoraCosmicHitRemoval::McRecoStage2");
-    m_pid_producer = pset.get<std::string>("ParticleIDModuleLabel", "pandoraNupid::McRecoStage2");
-    m_pfp_producer = pset.get<std::string>("PFParticleLabel", "pandoraNu::McRecoStage2");
-    m_spacepointLabel = pset.get<std::string>("SpacePointLabel", "pandoraNu::McRecoStage2");
-    //m_spacepointLabel = pset.get<std::string>("SpacePointLabel", "pandoraNu::PandoraLEEAnalyzer");
+    m_hitfinderLabel = pset.get<std::string>("HitFinderLabel", "pandoraCosmicHitRemoval");
+    m_pid_producer = pset.get<std::string>("ParticleIDModuleLabel", "pandoraNupid");
+    m_pfp_producer = pset.get<std::string>("PFParticleLabel", "pandoraNu");
+    m_spacepointLabel = pset.get<std::string>("SpacePointLabel", "pandoraNu");
 
     m_printDebug = pset.get<bool>("PrintDebug", false);
 
     m_isData = pset.get<bool>("isData", false);
-    m_isCosmicInTime = pset.get<bool>("isCosmicInTime", false);
     m_isOverlaidSample = pset.get<bool>("isOverlaidSample", false);
 
     m_dQdxRectangleWidth = pset.get<double>("dQdxRectangleWidth", 1);
