@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!DOCTYPE project [
 <!ENTITY name "lee_signal_0s0t">
-<!ENTITY version "v06_26_01_12">
+<!ENTITY version "v06_26_01_13">
 <!ENTITY qualifier "e10:prof">
 <!ENTITY dataset "markross_lee_signal_MCC8.8_elike_cosmics_v7.0_180314">
 <!ENTITY user "wvdp">
@@ -21,7 +21,7 @@
     <larsoft>
         <tag>&version;</tag>
         <qual>&qualifier;</qual>
-        <local>/pnfs/uboone/resilient/users/&user;/submission/MCC87_5_8_0s0t.tar</local>
+        <local>/pnfs/uboone/resilient/users/&user;/submission/MCC87_6_25_0s0t.tar</local>
     </larsoft>
 
     <!--  Project stages  -->

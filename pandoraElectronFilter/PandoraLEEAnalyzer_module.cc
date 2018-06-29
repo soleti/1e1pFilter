@@ -901,6 +901,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
                   mcparticle.StatusCode() == 1))
                 continue;
 
+            
             const auto mc_truth = pandoraHelper.TrackIDToMCTruth(evt, "largeant", mcparticle.TrackId());
             if (mc_truth->Origin() == simb::kBeamNeutrino)
             {
@@ -919,6 +920,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
                 _nu_daughters_endy.push_back(mcparticle.EndY());
                 _nu_daughters_endz.push_back(mcparticle.EndZ());
             }
+            
         }
 
         //Insert block to save the start point of the MCshower object for all showers that have a neutrino as mother and a kbeamneutrino as origin
@@ -987,7 +989,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
     std::vector<std::string> cosmic_process;
     std::vector<double> cosmic_energy;
 
-    if ((!evt.isRealData() || m_isOverlaidSample))
+    if ((!evt.isRealData())) // || m_isOverlaidSample))
     {
 
         categorizePFParticles(evt,
@@ -999,7 +1001,6 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
 
     // Fill fields that do not depend on passed or not passed.
     _n_primaries = fElectronEventSelectionAlg.get_primary_indexes().size();
-    std::cerr<< "_n_primaries" << _n_primaries << std::endl;
 
     size_t ipf_candidate = std::numeric_limits<size_t>::lowest();
     if (_event_passed)
@@ -1623,7 +1624,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
                                   _track_hits_w);
 
         // Should work on overlaidsample
-        if (!evt.isRealData())
+        if (!evt.isRealData()) // || m_isOverlaidSample)
         {
             featureHelper.true_closest_electron_matched(_matched_showers, _matched_tracks,
                                                         _true_vx_sce, _true_vy_sce, _true_vz_sce,

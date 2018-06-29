@@ -38,7 +38,7 @@ physics: {
   analyzers: {
      # ParameterSets for zero or more analyzer modules
      wouterNueCC:  @local::lee_pandora_analyzer
-     @table::ubxsec_data_ana
+     # @table::ubxsec_data_ana
   }
   filters : {
      # ParameterSets for zero or more filter modules

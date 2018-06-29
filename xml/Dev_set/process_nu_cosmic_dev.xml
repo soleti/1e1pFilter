@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!DOCTYPE project [
 <!ENTITY name "bnb_nu_cosmic_0s0t_dev">
-<!ENTITY version "v06_26_01_12">
+<!ENTITY version "v06_26_01_13">
 <!ENTITY qualifier "e10:prof">
 <!ENTITY dataset "prodgenie_bnb_nu_cosmic_uboone_mcc8.7_reco2_dev">
 <!ENTITY user "wvdp">
@@ -14,14 +14,14 @@
     <os>SL6</os>
 
     <!--  Batch resources  -->
-    <resource>DEDICATED,OPPORTUNISTIC,OFFSITE</resource>
+    <resource>DEDICATED,OPPORTUNISTIC</resource>
 
 
     <!--  Larsoft information  -->
     <larsoft>
         <tag>&version;</tag>
         <qual>&qualifier;</qual>
-        <local>/pnfs/uboone/resilient/users/&user;/submission/MCC87_5_8_0s0t.tar</local>
+        <local>/pnfs/uboone/resilient/users/&user;/submission/MCC87_6_25_0s0t.tar</local>
     </larsoft>
 
     <!--  Project stages  -->
