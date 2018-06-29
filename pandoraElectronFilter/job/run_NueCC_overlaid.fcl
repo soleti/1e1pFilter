@@ -8,8 +8,8 @@
 
 pandora_label: "pandoraNu::DataRecoStage2"
 
-start_window:  3.58
-end_window:    5.26
+start_window:  3.57
+end_window:    5.25
 
 lee_pandora_analyzer:
 {

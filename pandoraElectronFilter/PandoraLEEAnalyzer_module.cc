@@ -1000,7 +1000,7 @@ void lee::PandoraLEEAnalyzer::analyze(art::Event const &evt)
     }
 
     // Fill fields that do not depend on passed or not passed.
-    _n_primaries = fElectronEventSelectionAlg.get_primary_indexes().size();
+    _n_primaries = fElectronEventSelectionAlg.get_n_neutrino_candidates();
 
     size_t ipf_candidate = std::numeric_limits<size_t>::lowest();
     if (_event_passed)

@@ -141,27 +141,14 @@ void ElectronEventSelectionAlg::reconfigure(fhicl::ParameterSet const &p)
   std::cout << "Flashmatching_first\t" << m_FM_all << std::endl;
 }
 
-const std::map<size_t, int> ElectronEventSelectionAlg::flashBasedSelection(const art::Event &evt,
-                                                                           const std::vector<size_t> &pfplist,
-                                                                           const art::ValidHandle<std::vector<recob::PFParticle>> pfparticle_handle)
+void ElectronEventSelectionAlg::flashFinder(const art::Event &evt)
 {
-  // All initializations
-  std::vector<double> ChargeCenter;
-  std::vector<flashana::QCluster_t> qcvec;
-  std::vector<unsigned int> PFPIDvector; //links the pfp indices to the qvec indices.
-  std::vector<double> chargexvector;
-  std::vector<flashana::FlashMatch_t> matchvec;
-  std::vector<double> TPC_x_vector;
-
-  size_t chosen_index = -1;
-  std::map<size_t, int> result;
-
   //Select the flash with the biggest PE inside the window
-
   art::InputTag optical_tag{fOpticalFlashFinderLabel};
   auto const &optical_handle = evt.getValidHandle<std::vector<recob::OpFlash>>(optical_tag);
 
   int maxIndex = -1;
+
   for (unsigned int ifl = 0; ifl < optical_handle->size(); ++ifl)
   {
     recob::OpFlash const &flash = optical_handle->at(ifl);
@@ -178,10 +165,27 @@ const std::map<size_t, int> ElectronEventSelectionAlg::flashBasedSelection(const
       }
     }
   }
+  m_flash_index = maxIndex;
+}
+
+const std::map<size_t, int> ElectronEventSelectionAlg::flashBasedSelection(const art::Event &evt,
+                                                                           const std::vector<size_t> &pfplist,
+                                                                           const art::ValidHandle<std::vector<recob::PFParticle>> pfparticle_handle)
+{
+  // All initializations
+  std::vector<double> ChargeCenter;
+  std::vector<flashana::QCluster_t> qcvec;
+  std::vector<unsigned int> PFPIDvector; //links the pfp indices to the qvec indices.
+  std::vector<double> chargexvector;
+  std::vector<flashana::FlashMatch_t> matchvec;
+  std::vector<double> TPC_x_vector;
+
+  size_t chosen_index = -1;
+  std::map<size_t, int> result;
 
   // Fill the result array with flash failure codes
   int temp_flash_index;
-  if (maxIndex == -1)
+  if (m_flash_index == -1)
   {
     temp_flash_index = -4; // No flash in time
   }
@@ -202,8 +206,11 @@ const std::map<size_t, int> ElectronEventSelectionAlg::flashBasedSelection(const
   // Means we have a good flash
   if (temp_flash_index == -1)
   {
+    art::InputTag optical_tag{fOpticalFlashFinderLabel};
+    auto const &optical_handle = evt.getValidHandle<std::vector<recob::OpFlash>>(optical_tag);
+
     // Store what I want to know about the flash
-    recob::OpFlash const &flash = optical_handle->at(maxIndex);
+    recob::OpFlash const &flash = optical_handle->at(m_flash_index);
     ::flashana::Flash_t f;
     f.x = f.x_err = 0;
     f.y = flash.YCenter();
@@ -250,7 +257,7 @@ const std::map<size_t, int> ElectronEventSelectionAlg::flashBasedSelection(const
                          (m_cut_sigzwidth > std::abs(ChargeCenter[2] - f.z) / f.z_err) &&
                          (m_cut_ywidth > std::abs(ChargeCenter[1] - f.y)) && // Cut in Y direction
                          (m_cut_sigywidth > std::abs(ChargeCenter[1] - f.y) / f.y_err) &&
-                         (m_charge_light_ratio_lower < std::abs(ChargeCenter[3] / _flash_PE_max)) && 
+                         (m_charge_light_ratio_lower < std::abs(ChargeCenter[3] / _flash_PE_max)) &&
                          (m_charge_light_ratio_upper > std::abs(ChargeCenter[3] / _flash_PE_max));
 
       if (prematching_cuts)
@@ -335,7 +342,7 @@ const std::map<size_t, int> ElectronEventSelectionAlg::flashBasedSelection(const
 
     } // Else run flashmatching in the remaining cases
 
-    result[chosen_index] = maxIndex;
+    result[chosen_index] = m_flash_index;
   } // Else means we have a good flash
 
   return result;
@@ -447,6 +454,9 @@ bool ElectronEventSelectionAlg::eventSelected(const art::Event &evt)
   auto const &pfparticle_handle =
       evt.getValidHandle<std::vector<recob::PFParticle>>(m_pfp_producer);
 
+  // Fill the flash fields
+  flashFinder(evt);
+  
   // Are there any pfparticles?
   if (pfparticle_handle->size() == 0)
   {

@@ -87,16 +87,21 @@ public:
                                             const art::ValidHandle<std::vector<recob::PFParticle>> pfparticle_handle);
 
   /**
-    * @brief Checks if there is a flash within the flash_window_start - flash_window_end window with enough PE.
-    * and compatible with the center of charge, the best one is selected using flashmatching
+    * @brief Checks if candidates are compatible with the center of charge, the best one is selected using flashmatching
     *
     * @param std::vector<size_t> pfplist : list of primary neutrino candidates that need to be tested
     * @param evt art Event
-    * @return -1 if not passed, otherwise index of the flash is returned
+    * @return negative code if not passed, otherwise index of the flash is returned
     */
   const std::map<size_t, int> flashBasedSelection(const art::Event &evt,
                                                   const std::vector<size_t> &pfplist,
                                                   const art::ValidHandle<std::vector<recob::PFParticle>> pfparticle_handle);
+
+  
+  /**
+    * @brief Checks if there is a flash within the flash_window_start - flash_window_end window with enough PE, returns the index of -1.
+    */
+  void flashFinder(const art::Event &evt);
 
   /**
 	* @brief Creates a photon cluster for a neutrino pfp hierarchy
@@ -139,7 +144,7 @@ public:
   /**
     * @brief Return the number of neutrino candidates
     */
-  const size_t &get_n_neutrino_candidates() const { return _n_neutrino_candidates; }
+  const int &get_n_neutrino_candidates() const { return _n_neutrino_candidates; }
 
   /**
     * @brief Informs whether a particular candidate passed or failed the algorithm
@@ -154,7 +159,7 @@ public:
   bool get_neutrino_candidate_fiducial() const { return _neutrino_candidate_fiducial; }
 
   /**
-    * @brief Return the index of the flash matched with the pfparticle, -1 if it is not the selected candidate.
+    * @brief Return the index of the flash matched with the pfparticle or failure code, -4 (no intime flash), -3 (PE cut), -2 (precuts), -1 (matching).
     * @details [long description]
     * @return [description]
     */
@@ -234,7 +239,7 @@ protected:
   // Variables that are used to determine the selection and might be worth passing
   // to an analyzer module:
 
-  size_t _n_neutrino_candidates;
+  int _n_neutrino_candidates;
   std::vector<size_t> _primary_indexes;
   std::map<size_t, bool> _neutrino_candidate_passed;
   bool _neutrino_candidate_fiducial;
@@ -297,6 +302,8 @@ protected:
   // Fixing the PMT wrong ids
   bool _do_opdet_swap;              ///< If true swaps reconstructed OpDets according to _opdet_swap_map
   std::vector<int> _opdet_swap_map; ///< The OpDet swap map for reco flashes
+
+  int m_flash_index;
 
   bool m_flashmatching; ///< Use flashmatching or the old set of cuts
   bool m_FM_all;        ///< Use flashmatching for all candidates or only the ones passing the topological cut
