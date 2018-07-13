@@ -1,6 +1,9 @@
+#include "config_particle_identification.fcl"
+#include "particleid_microboone.fcl"
 #include "decisiontreeid.fcl"
 #include "lee_selection_alg.fcl"
 #include "ubxsec_mc_common.fcl"
+
 #include "pandora_lee_ana_common.fcl"
 
 lee_pandora_analyzer:
@@ -17,6 +20,7 @@ physics: {
      decisiontreeid: @local::DecisionTreeID
      @table::ubxsec_mc_reco
      @table::ubxsec_mc_flashmatch
+     pid: @local::particleidconfig
   }
 
   analyzers: {
@@ -67,6 +71,10 @@ physics.producers.pandoraNucalo.TrackModuleLabel:                   "pandoraNu::
 physics.producers.pandoraNucalo.SpacePointModuleLabel:              "pandoraNu::PandoraLEEAnalyzer"
 physics.producers.pandoraNupid.CalorimetryModuleLabel:              "pandoraNucalo::PandoraLEEAnalyzer"
 physics.producers.pandoraNupid.TrackModuleLabel:                    "pandoraNu::PandoraLEEAnalyzer"
+physics.producers.pandoraNucali.TrackModuleLabel:                   "pandoraNu::PandoraLEEAnalyzer"
+physics.producers.pandoraNucali.CalorimetryModuleLabel:             "pandoraNucalo::PandoraLEEAnalyzer"
+physics.producers.pandoraNucalipid.TrackModuleLabel:                "pandoraNu::PandoraLEEAnalyzer"
+physics.producers.pandoraNucalipid.CalorimetryModuleLabel:          "pandoraNucali::PandoraLEEAnalyzer"
 
 physics.producers.pandoraNuMCSMu.inputs.inputLabel:                 "pandoraNu::PandoraLEEAnalyzer"
 

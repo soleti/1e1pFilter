@@ -94,7 +94,7 @@ private:
 
   std::string m_spacepointLabel;
   std::string _mctruthLabel = "generator";
-  std::string _mcpHitAssLabel = "crHitRemovalTruthMatch";
+  std::string m_hitmatching_producer;
 
   std::vector<double> _predict_p;
   std::vector<double> _predict_mu;
@@ -111,7 +111,6 @@ private:
 
   lee::ElectronEventSelectionAlg fElectronEventSelectionAlg;
 
-  EnergyHelper energyHelper;
   GeometryHelper geoHelper;
   PandoraInterfaceHelper pandoraHelper;
   uboone::EWTreeUtil ewutil;
@@ -141,7 +140,6 @@ private:
 
   int _n_tracks;
   int _n_showers;
-  double _gain;
   double _vx;
   double _vy;
   double _vz;
@@ -309,8 +307,8 @@ private:
   double _TPC_x;
   double _flash_x;
 
-  std::vector<double> _shower_pca;
-  std::vector<double> _track_pca;
+  std::vector<std::vector<double>> _shower_pca;
+  std::vector<std::vector<double>> _track_pca;
 
   std::vector<std::vector<int>> _shower_nhits;
   std::vector<std::vector<int>> _track_nhits;

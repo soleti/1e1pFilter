@@ -245,6 +245,7 @@ namespace lee {
 
     // Configurable variables from the fcl file:
     int m_nTracks;
+    bool m_printDebug;
     double m_fidvolXstart;
     double m_fidvolXend;
 
