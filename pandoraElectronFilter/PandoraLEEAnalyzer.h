@@ -108,9 +108,8 @@ private:
   const anab::CosmicTagID_t TAGID_EM = anab::CosmicTagID_t::kGeometry_XX;
   const anab::CosmicTagID_t TAGID_CS = anab::CosmicTagID_t::kGeometry_XY;
 
-
   lee::ElectronEventSelectionAlg fElectronEventSelectionAlg;
-
+  EnergyHelper energyHelper;
   GeometryHelper geoHelper;
   PandoraInterfaceHelper pandoraHelper;
   uboone::EWTreeUtil ewutil;
@@ -270,6 +269,10 @@ private:
 
   std::vector<double> _track_length;
   std::vector<double> _track_id;
+
+  std::vector< double > _track_bragg_p;
+  std::vector< double > _track_bragg_mu;
+  std::vector< double > _track_bragg_mip;
 
   std::vector< double > _track_pidchi;
   std::vector< double > _track_pidchipr;

@@ -6,8 +6,16 @@
 namespace lee
 {
 
-EnergyHelper::EnergyHelper(bool is_data=false) {
-    _is_data = is_data;
+EnergyHelper::EnergyHelper() {
+
+}
+
+void EnergyHelper::reconfigure(fhicl::ParameterSet const &pset) {
+  _readout_window = pset.get<double>("ReadoutWindow", 4.8);
+  _recombination_factor = pset.get<double>("RecombinationFactor", 0.62);
+  _dQdx_rectangle_length = pset.get<double>("dQdxRectangleLength", 4);
+  _dQdx_rectangle_width = pset.get<double>("dQdxRectangleWidth", 1);
+  _gain =  pset.get<std::vector<double>>("Gains", _mc_gain);
 }
 
 
@@ -92,14 +100,6 @@ void EnergyHelper::energy_from_hits(std::vector<art::Ptr<recob::Cluster>> *clust
                                     std::vector<double> &pfenergy)
 {
 
-  std::vector<double> gain;
-
-  if (_is_data) {
-      gain = _data_gain;
-  } else {
-      gain = _mc_gain;
-  }
-
   nHits.resize(3);
   pfenergy.resize(3);
 
@@ -112,7 +112,7 @@ void EnergyHelper::energy_from_hits(std::vector<art::Ptr<recob::Cluster>> *clust
       if (plane_nr > 2 || plane_nr < 0)
         continue;
 
-      pfenergy[plane_nr] += hit->Integral() * gain[plane_nr] * _work_function / _recombination_factor / 1000; // convert MeV to GeV
+      pfenergy[plane_nr] += hit->Integral() * _gain[plane_nr] * _work_function / _recombination_factor / 1000; // convert MeV to GeV
       nHits[plane_nr]++;
     }
   }
@@ -189,17 +189,17 @@ void EnergyHelper::get_cali(
 }
 
 
-double EnergyHelper::PID(const std::vector<anab::ParticleID> *pids,
+double EnergyHelper::PID(const std::vector<art::Ptr<anab::ParticleID>> *pids,
                          int trackID,
                          std::string AlgName,
                          anab::kVariableType VariableType,
                          int pdgCode)
 {
-    anab::ParticleID selected_pid;
+    art::Ptr<anab::ParticleID> selected_pid;
     bool there_is_pid = false;
 
     for (auto& pid: *pids) {
-      if ((int)pid.PlaneID().Plane == trackID) {
+      if ((int)pid->PlaneID().Plane == trackID) {
           selected_pid = pid;
           there_is_pid = true;
           break;
@@ -209,8 +209,7 @@ double EnergyHelper::PID(const std::vector<anab::ParticleID> *pids,
     if (!there_is_pid) {
         return std::numeric_limits<double>::lowest();
     }
-    std::vector<anab::sParticleIDAlgScores> AlgScoresVec = selected_pid.ParticleIDAlgScores();
-
+    std::vector<anab::sParticleIDAlgScores> AlgScoresVec = selected_pid->ParticleIDAlgScores();
     for (size_t i_algscore = 0; i_algscore < AlgScoresVec.size(); i_algscore++)
     {
       anab::sParticleIDAlgScores AlgScore = AlgScoresVec.at(i_algscore);
@@ -236,33 +235,9 @@ double EnergyHelper::PID(const std::vector<anab::ParticleID> *pids,
     return std::numeric_limits<double>::lowest();
 }
 
-void EnergyHelper::dQdx(size_t pfp_id,
-                        const art::Event &evt,
-                        std::vector<double> &dqdx,
-                        std::vector<double> &dqdx_cali,
-                        std::vector<double> &dqdx_hits,
-                        std::vector<double> &pitches,
-                        double m_dQdxRectangleLength,
-                        double m_dQdxRectangleWidth,
-                        std::string _pfp_producer)
+void EnergyHelper::dQdx_cali(const recob::Shower *shower_obj,
+                             std::vector<double> &dqdx_cali) 
 {
-
-  double tolerance = 0.001;
-
-  std::vector<double> _gain;
-  if (evt.isRealData())
-    _gain = _data_gain;
-  else
-    _gain = _mc_gain;
-
-
-  // art::ServiceHandle<geo::Geometry> geom;
-
-  auto const &pfparticle_handle =
-      evt.getValidHandle<std::vector<recob::PFParticle>>(_pfp_producer);
-  auto const &cluster_handle =
-      evt.getValidHandle<std::vector<recob::Cluster>>(_pfp_producer);
-
   TVector3 pfp_dir;
 
   // Field needed for calibration factor
@@ -271,44 +246,15 @@ void EnergyHelper::dQdx(size_t pfp_id,
   double x_end, y_end, z_end;
   float start_corr, middle_corr, end_corr;
 
-  //For a shower
-  if (pfparticle_handle->at(pfp_id).PdgCode() == 11)
-  {
+  pfp_dir.SetX(shower_obj->Direction().X());
+  pfp_dir.SetY(shower_obj->Direction().Y());
+  pfp_dir.SetZ(shower_obj->Direction().Z());
+  
+  x_start = shower_obj->ShowerStart().X();
+  y_start = shower_obj->ShowerStart().Y();
+  z_start = shower_obj->ShowerStart().Z();
 
-    art::FindOneP<recob::Shower> shower_per_pfpart(pfparticle_handle, evt, _pfp_producer);
-    auto const &shower_obj = shower_per_pfpart.at(pfp_id);
-
-    try
-    {
-      pfp_dir.SetX(shower_obj->Direction().X());
-      pfp_dir.SetY(shower_obj->Direction().Y());
-      pfp_dir.SetZ(shower_obj->Direction().Z());
-
-      x_start = shower_obj->ShowerStart().X();
-      y_start = shower_obj->ShowerStart().Y();
-      z_start = shower_obj->ShowerStart().Z();
-    }
-    catch (...)
-    {
-      return;
-    }
-  }
-  // For a track
-  else
-  {
-
-    art::FindOneP<recob::Track> track_per_pfpart(pfparticle_handle, evt, _pfp_producer);
-    auto const &track_obj = track_per_pfpart.at(pfp_id);
-
-    pfp_dir.SetX(track_obj->StartDirection().X());
-    pfp_dir.SetY(track_obj->StartDirection().Y());
-    pfp_dir.SetZ(track_obj->StartDirection().Z());
-
-    x_start = track_obj->Start().X();
-    y_start = track_obj->Start().Y();
-    z_start = track_obj->Start().Z();
-  }
-  pfp_dir.SetMag(2.); //Go 2cm along the direction of the object.
+  pfp_dir.SetMag(_dQdx_rectangle_length / 2.); //Go 2cm along the direction of the object.
   x_middle = x_start + pfp_dir.X();
   y_middle = y_start + pfp_dir.Y();
   z_middle = z_start + pfp_dir.Z();
@@ -345,40 +291,53 @@ void EnergyHelper::dQdx(size_t pfp_id,
     //std::cout << "[EnergyHelper] dqdx_cali " << start_corr << middle_corr << end_corr << std::endl;
     dqdx_cali[plane_nr] = (start_corr + middle_corr + end_corr) / 3;
   }
+}
 
-  art::FindManyP<recob::Cluster> clusters_per_pfpart(pfparticle_handle, evt, _pfp_producer);
-  art::FindManyP<recob::Hit> hits_per_cluster(cluster_handle, evt, _pfp_producer);
+void EnergyHelper::dQdx(const recob::Shower *shower_obj,
+                        std::vector<art::Ptr<recob::Cluster>> *clusters,
+                        art::FindManyP<recob::Hit> *hits_per_cluster,
+                        std::vector<double> &dqdx,
+                        std::vector<double> &dqdx_hits,
+                        std::vector<double> &pitches)
+{
 
-  std::vector<art::Ptr<recob::Cluster>> clusters = clusters_per_pfpart.at(pfp_id);
+  double tolerance = 0.001;
 
-  for (size_t icl = 0; icl < clusters.size(); icl++)
+  TVector3 pfp_dir;
+
+  pfp_dir.SetX(shower_obj->Direction().X());
+  pfp_dir.SetY(shower_obj->Direction().Y());
+  pfp_dir.SetZ(shower_obj->Direction().Z());
+
+  for (auto _cl: *clusters)
   {
-    std::vector<art::Ptr<recob::Hit>> hits =
-        hits_per_cluster.at(clusters[icl].key());
+    std::vector<art::Ptr<recob::Hit>> hits = hits_per_cluster->at(_cl.key());
 
     std::vector<double> cluster_axis;
     std::vector<double> cluster_start;
     std::vector<double> cluster_end;
-    double start_x = _detprop->ConvertTicksToX(clusters[icl]->StartTick(), clusters[icl]->Plane());
-    double end_x = _detprop->ConvertTicksToX(clusters[icl]->EndTick(), clusters[icl]->Plane());
+    double start_x = _detprop->ConvertTicksToX(_cl->StartTick(), _cl->Plane());
+    double end_x = _detprop->ConvertTicksToX(_cl->EndTick(), _cl->Plane());
     // std::cout << "start " << start_x << ", end: " << end_x << std::endl;
-    if (pfp_dir.Z() >= 0)
+    double pitch = geo_helper.getPitch(pfp_dir, _cl->Plane().Plane);
+
+    if (pitch >= 0)
     {
       std::reverse(hits.begin(), hits.end());
-      cluster_axis = {cos(clusters[icl]->StartAngle()),
-                      sin(clusters[icl]->StartAngle())};
+      cluster_axis = {cos(_cl->StartAngle()),
+                      sin(_cl->StartAngle())};
 
-      cluster_start = {clusters[icl]->StartWire() * _wire_spacing - tolerance * cos(clusters[icl]->StartAngle()),
-                       start_x - tolerance * sin(clusters[icl]->StartAngle())};
-      cluster_end = {clusters[icl]->EndWire() * _wire_spacing, end_x};
+      cluster_start = {_cl->StartWire() * _wire_spacing - tolerance * cos(_cl->StartAngle()),
+                       start_x - tolerance * sin(_cl->StartAngle())};
+      cluster_end = {_cl->EndWire() * _wire_spacing, end_x};
     }
     else
     {
-      cluster_axis = {-1. * cos(clusters[icl]->StartAngle()),
-                      -1. * sin(clusters[icl]->StartAngle())};
-      cluster_start = {clusters[icl]->EndWire() * _wire_spacing + tolerance * cos(clusters[icl]->StartAngle()),
-                       end_x + tolerance * sin(clusters[icl]->StartAngle())};
-      cluster_end = {clusters[icl]->StartWire() * _wire_spacing, start_x};
+      cluster_axis = {-1. * cos(_cl->StartAngle()),
+                      -1. * sin(_cl->StartAngle())};
+      cluster_start = {_cl->EndWire() * _wire_spacing + tolerance * cos(_cl->StartAngle()),
+                       end_x + tolerance * sin(_cl->StartAngle())};
+      cluster_end = {_cl->StartWire() * _wire_spacing, start_x};
     }
 
     double cluster_length = sqrt(pow(cluster_end[0] - cluster_start[0], 2) +
@@ -386,11 +345,10 @@ void EnergyHelper::dQdx(size_t pfp_id,
     if (cluster_length <= 0)
       continue;
 
-    double pitch = geo_helper.getPitch(pfp_dir, clusters[icl]->Plane().Plane);
 
     // Build rectangle 4 x 1 cm around the cluster axis
     std::vector<std::vector<double>> points;
-    geo_helper.buildRectangle(m_dQdxRectangleLength, m_dQdxRectangleWidth,
+    geo_helper.buildRectangle(_dQdx_rectangle_length, _dQdx_rectangle_width,
                              cluster_start, cluster_axis, points);
 
     std::vector<double> dqdxs;
@@ -398,15 +356,16 @@ void EnergyHelper::dQdx(size_t pfp_id,
     for (auto &hit : hits)
     {
       std::vector<double> hit_pos = {hit->WireID().Wire * _wire_spacing,
-                                     _detprop->ConvertTicksToX(hit->PeakTime(), clusters[icl]->Plane())};
+                                     _detprop->ConvertTicksToX(hit->PeakTime(), 
+                                     _cl->Plane())};
 
       bool is_within = geo_helper.isInside(hit_pos, points);
 
       if (is_within)
       {
-        double q = hit->Integral() * _gain[clusters[icl]->Plane().Plane];
-        dqdxs.push_back(q / pitch);
-        dqdx_hits.push_back(q / pitch);
+        double q = hit->Integral() * _gain[_cl->Plane().Plane];
+        dqdxs.push_back(q / fabs(pitch));
+        dqdx_hits.push_back(q / fabs(pitch));
         pitches.push_back(pitch);
       }
     }
@@ -415,13 +374,13 @@ void EnergyHelper::dQdx(size_t pfp_id,
     if (dqdxs.size() > 0)
     {
       std::nth_element(dqdxs.begin(), dqdxs.begin() + dqdxs.size() / 2, dqdxs.end());
-      dqdx[clusters[icl]->Plane().Plane] = dqdxs[dqdxs.size() / 2];
+      dqdx[_cl->Plane().Plane] = dqdxs[dqdxs.size() / 2];
     }
   }
 }
 
 void EnergyHelper::dEdx_from_dQdx(std::vector<double> &dedx,
-                                std::vector<double> &dqdx)
+                                  std::vector<double> dqdx)
 {
   for (size_t i = 0; i < dqdx.size(); i++)
   {
